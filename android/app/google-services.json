@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "1049541862968",
+    "project_id": "testalebrutto",
+    "storage_bucket": "testalebrutto.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1049541862968:android:08618ab4c347426cd528cd",
+        "android_client_info": {
+          "package_name": "com.example.ketchapp_flutter"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1049541862968-889r2k03phkb1c2gk6l75cobpid1k7m0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.ketchapp_flutter",
+            "certificate_hash": "afdee5f561f93622944557063e38bacbc4e1c368"
+          }
+        },
+        {
+          "client_id": "1049541862968-7fa3abk4ja0794u5822ou6h9hem1j2go.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMA14zU26YiyDeh-HlemBrCSVaoqbtiu0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1049541862968-7fa3abk4ja0794u5822ou6h9hem1j2go.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1049541862968-fklmqnvph4ven6tmfci521n13h6bndqu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.ketchappFlutter"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
