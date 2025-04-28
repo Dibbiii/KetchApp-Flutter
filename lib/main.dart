@@ -1,54 +1,28 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:ketchapp_flutter/screens/AuthWrapper.dart';
-import 'package:ketchapp_flutter/screens/HomeScreen.dart';
-import 'package:ketchapp_flutter/screens/LoginScreen.dart';
-import 'package:ketchapp_flutter/screens/RegisterScreen.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:ketchapp_flutter/app/themes/theme_provider.dart';
+import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
 import 'firebase_options.dart';
+import 'package:ketchapp_flutter/app/app.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
-  // Assicura che i binding di Flutter siano inizializzati
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inizializza Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform, // Usa le opzioni generate
-  );
+  usePathUrlStrategy();
 
-  runApp(const MainApp());
-}
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final GoRouter _router = GoRouter(
-      initialLocation: '/',
-      routes: [
-        GoRoute(
-          path: '/',
-          // builder: (context, state) => const HomeScreen(),
-          builder: (context, state) => AuthWrapper(),
-        ),
-        GoRoute(
-          path: '/login',
-          builder: (context, state) => const LoginScreen(),
-        ),
-        GoRoute(
-          path: '/register',
-          builder: (context, state) => const RegisterScreen(),
-        ),
+  runApp(
+    MultiProvider(
+      providers: [
+        Provider<AuthBloc>(create: (_) => AuthBloc(firebaseAuth: FirebaseAuth.instance)),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        // altri provider...
       ],
-    );
-
-    return MaterialApp.router(
-      title: 'Flutter Firebase Auth Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      routerConfig: _router,
-    );
-  }
+      child: const MyApp(),
+    ),
+  );
 }
