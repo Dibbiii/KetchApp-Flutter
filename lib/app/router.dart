@@ -14,7 +14,6 @@ import 'package:ketchapp_flutter/features/auth/presentation/pages/login_page.dar
 import 'package:ketchapp_flutter/features/auth/presentation/pages/register_page.dart';
 import 'package:ketchapp_flutter/features/home/presentation/pages/home_page.dart';
 import 'package:ketchapp_flutter/features/plan/layouts/plan_layout.dart';
-import 'package:ketchapp_flutter/features/plan/presentation/pages/automatic/subject_page.dart';
 import 'package:ketchapp_flutter/features/welcome/presentation/pages/welcome_page.dart';
 
 // Helper class per GoRouter per ascoltare lo stream di AuthStateChanges

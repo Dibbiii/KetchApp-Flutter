@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ketchapp_flutter/features/plan/bloc/plan_bloc.dart';
 import 'package:ketchapp_flutter/features/plan/presentation/pages/automatic/appointments_page.dart';
+import 'package:ketchapp_flutter/features/plan/presentation/pages/automatic/session_page.dart';
 import 'package:ketchapp_flutter/features/plan/presentation/pages/automatic/subject_page.dart';
 
 enum PlanMode { automatic, manual }
@@ -22,7 +21,7 @@ class _PlanLayoutState extends State<PlanLayout> {
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
 
-    final List<Widget> automaticList = [SubjectPage(), AppointmentsPage()];
+    final List<Widget> automaticList = [SubjectPage(), SessionPage()];
     final List<Widget> manualList = [SubjectPage()];
     final bool isAutomatic = widget.mode == PlanMode.automatic;
     final List<Widget> list = isAutomatic ? automaticList : manualList;
@@ -30,7 +29,7 @@ class _PlanLayoutState extends State<PlanLayout> {
     return Scaffold(
       appBar: AppBar(title: const Text('Plan Layout')),
       body: Column(
-        children: [
+        children: [ 
           const SizedBox(height: 16),
           Text(
             'Step: ${currentIndex + 1}/${list.length}',
@@ -43,40 +42,48 @@ class _PlanLayoutState extends State<PlanLayout> {
       floatingActionButton: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 32.0),
-            child: SizedBox(
-              width: 150,
-              height: 70,
-              child: FloatingActionButton(
-                backgroundColor: colors.primary,
-                onPressed: currentIndex > 0
-                    ? () => setState(() => currentIndex--)
-                    : null,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'Indietro',
-                  style: TextStyle(fontSize: 24, color: colors.onPrimary),
+          // Mostra "Indietro" solo dallo step 2 in poi
+          if (currentIndex > 0)
+            Padding(
+              padding: const EdgeInsets.only(left: 32.0),
+              child: SizedBox(
+                width: 100,
+                height: 32, // Più basso
+                child: FloatingActionButton(
+                  backgroundColor: colors.primary,
+                  onPressed: () => setState(() => currentIndex--),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Indietro',
+                    style: TextStyle(fontSize: 14, color: colors.onPrimary),
+                  ),
                 ),
               ),
-            ),
-          ),
+            )
+          else
+            const SizedBox(width: 100), // Spazio vuoto per allineamento
+
           SizedBox(
-            width: 150,
-            height: 70,
+            width: 100,
+            height: 32, // Più basso
             child: FloatingActionButton(
               backgroundColor: colors.primary,
               onPressed: currentIndex < list.length - 1
                   ? () => setState(() => currentIndex++)
-                  : null,
+                  : () {
+                      // Azione finale, ad esempio Navigator.pop o altro
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Fine del percorso!')),
+                      );
+                    },
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                'Successivo',
-                style: TextStyle(fontSize: 24, color: colors.onPrimary),
+                currentIndex < list.length - 1 ? 'Successivo' : 'Vai',
+                style: TextStyle(fontSize: 14, color: colors.onPrimary),
               ),
             ),
           ),

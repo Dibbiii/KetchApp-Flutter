@@ -20,7 +20,6 @@ void main() async {
       providers: [
         Provider<AuthBloc>(create: (_) => AuthBloc(firebaseAuth: FirebaseAuth.instance)),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        // altri provider...
       ],
       child: const MyApp(),
     ),

@@ -45,7 +45,7 @@ class DefaultFirebaseOptions {
     appId: '1:1049541862968:web:1ce1149572d42bd6d528cd',
     messagingSenderId: '1049541862968',
     projectId: 'testalebrutto',
-    authDomain: 'testalebrutto.firebaseapp.com',
+    authDomain: 'testalebrutto.firebaseapp.com', // TODO: Da Cambiare
     storageBucket: 'testalebrutto.firebasestorage.app',
     measurementId: 'G-6B1DP28B0T',
   );
