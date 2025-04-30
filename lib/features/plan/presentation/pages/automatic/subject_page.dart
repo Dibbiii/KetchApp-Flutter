@@ -39,7 +39,7 @@ class _SubjectPageState extends State<SubjectPage> {
                           Navigator.of(context).pop(null);
                           },
                           style: TextButton.styleFrom(
-                          foregroundColor: colors.error, // Imposta il colore su Colors.red
+                          foregroundColor: colors.error, 
                           ),
                           child: const Text('Annulla'),
                         ),

@@ -73,7 +73,6 @@ class _PlanLayoutState extends State<PlanLayout> {
               onPressed: currentIndex < list.length - 1
                   ? () => setState(() => currentIndex++)
                   : () {
-                      // Azione finale, ad esempio Navigator.pop o altro
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Fine del percorso!')),
                       );
@@ -82,7 +81,7 @@ class _PlanLayoutState extends State<PlanLayout> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                currentIndex < list.length - 1 ? 'Successivo' : 'Vai',
+                currentIndex < list.length - 1 ? 'Successivo' : 'Vai', 
                 style: TextStyle(fontSize: 14, color: colors.onPrimary),
               ),
             ),
