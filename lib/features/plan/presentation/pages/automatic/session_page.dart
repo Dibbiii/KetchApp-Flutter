@@ -19,9 +19,9 @@ class _SessionPageState extends State<SessionPage> {
   double _breakLastAngle = 0;
   int _breakTurns = 0;
 
-  static const double minClockSize = 80.0;
-  static const double maxClockSize = 200.0;
-  static const double verticalPadding = 24 + 32 + 24 + 32 + 2 * (20 + 16);
+  static const double minClockSize = 80.0; //così non diventa troppo piccolo su schermi piccoli
+  static const double maxClockSize = 200.0; //così non diventa troppo grande su schermi grandi
+  static const double verticalPadding = 24 + 32 + 24 + 32 + 2 * (20 + 16); //calcola quanto spazio c'è sopra e sotto i due orologi -> adatta la dim degli orologi in base a quello -> evita overflow
 
   void _updateHourHand({
     required Offset localPosition,
@@ -32,64 +32,63 @@ class _SessionPageState extends State<SessionPage> {
     final dx = localPosition.dx - center.dx;
     final dy = localPosition.dy - center.dy;
     double angle = atan2(dy, dx);
-    if (angle < 0) angle += 2 * pi;
-    angle = (angle + pi / 2) % (2 * pi);
-    if (angle < 0) angle += 2 * pi;
+    angle = angle + pi / 2; // l'angolo di norma partirebbe ruotato di 90° in senso antiorario -> lo porto sul 12
+    if (angle < 0) angle += 2 * pi; //la funzione atan2 può restituire angoli negativi -> li rendiamo positivi (da 0 a 360°)
 
     if (isSession) {
       double delta = angle - _sessionLastAngle;
-      if (delta > pi) {
-        _sessionTurns--;
-      } else if (delta < -pi) {
+
+      if (delta < -pi) { 
         _sessionTurns++;
+        
       }
+      else if (delta > pi) {
+        _sessionTurns--;
+      }
+
       _sessionLastAngle = angle;
       setState(() {
-        sessionHourAngle = angle;
-        sessionSelectedHours = _sessionTurns + angle / (2 * pi);
-        if (sessionSelectedHours < 0) {
-          sessionSelectedHours = 0;
-          _sessionTurns = 0;
-          sessionHourAngle = 0;
-        }
+        sessionHourAngle = angle; 
+        sessionSelectedHours = _sessionTurns + angle / (2 * pi); 
       });
     } else {
       double delta = angle - _breakLastAngle;
-      if (delta > pi) {
-        _breakTurns--;
-      } else if (delta < -pi) {
+
+      if (delta < -pi) {
         _breakTurns++;
+      } else if (delta > pi) {
+        _breakTurns--;
       }
+
       _breakLastAngle = angle;
       setState(() {
         breakHourAngle = angle;
         breakSelectedHours = _breakTurns + angle / (2 * pi);
-        if (breakSelectedHours < 0) {
-          breakSelectedHours = 0;
-          _breakTurns = 0;
-          breakHourAngle = 0;
-        }
       });
     }
   }
 
-  void _onPanStart({
+  void _onPanStart({ //la funzione viene chiamata quando inizia il movimento del dito sullo schermo
     required Offset local,
     required Size size,
     required bool isSession,
   }) {
     final center = Offset(size.width / 2, size.height / 2);
-    final dx = local.dx - center.dx;
+    final dx = local.dx - center.dx; //differenza tra la posizione del dito e il centro dell'orologio
     final dy = local.dy - center.dy;
-    double angle = atan2(dy, dx);
-    if (angle < 0) angle += 2 * pi;
-    angle = (angle - pi / 2) % (2 * pi);
-    if (angle < 0) angle += 2 * pi;
-    setState(() {
+    double angle = atan2(dy, dx); // restituisce l'angolo -> così aggiorno la posizione della lancetta in base al movimento del dito
+    angle = angle + pi / 2; //l'angolo zero viene posizionato sul 12 -> perchè atan2 restituisce un angolo ruotato di 90° in senso antiorario
+    if (angle < 0) angle += 2 * pi; //porta l'angolo da 0 a 2π -> da 0 a 360°
+    setState(() { //appena inizio a muovere la lancetta
       if (isSession) {
-        _sessionLastAngle = angle;
+        _sessionLastAngle = angle; //angolo di partenza
+        // Reset anche i turni per partire sempre da zero
+        _sessionTurns = 0;
+        sessionSelectedHours = 0;
       } else {
         _breakLastAngle = angle;
+        _breakTurns = 0;
+        breakSelectedHours = 0;
       }
     });
   }
@@ -110,7 +109,7 @@ class _SessionPageState extends State<SessionPage> {
           style: TextStyle(fontSize: 20, color: colors.onSurface),
         ),
         Text(
-          'Ore selezionate: ${selectedHours.toStringAsFixed(2)}',
+          'Ore selezionate: ${selectedHours.toStringAsFixed(2)}', // Mostra le ore selezionate con 2 decimali
           style: TextStyle(fontSize: 16, color: colors.primary),
         ),
         SizedBox(

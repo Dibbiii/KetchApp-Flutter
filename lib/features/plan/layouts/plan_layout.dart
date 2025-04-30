@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ketchapp_flutter/features/plan/presentation/pages/automatic/appointments_page.dart';
+import 'package:ketchapp_flutter/features/plan/presentation/pages/automatic/hours_page.dart';
 import 'package:ketchapp_flutter/features/plan/presentation/pages/automatic/session_page.dart';
 import 'package:ketchapp_flutter/features/plan/presentation/pages/automatic/subject_page.dart';
 
@@ -21,7 +21,7 @@ class _PlanLayoutState extends State<PlanLayout> {
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
 
-    final List<Widget> automaticList = [SubjectPage(), SessionPage()];
+    final List<Widget> automaticList = [SubjectPage(), SessionPage(), HoursPage()];
     final List<Widget> manualList = [SubjectPage()];
     final bool isAutomatic = widget.mode == PlanMode.automatic;
     final List<Widget> list = isAutomatic ? automaticList : manualList;
@@ -67,7 +67,7 @@ class _PlanLayoutState extends State<PlanLayout> {
 
           SizedBox(
             width: 100,
-            height: 32, // Più basso
+            height: 32, 
             child: FloatingActionButton(
               backgroundColor: colors.primary,
               onPressed: currentIndex < list.length - 1
