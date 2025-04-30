@@ -38,18 +38,27 @@ class _SessionPageState extends State<SessionPage> {
     if (isSession) {
       double delta = angle - _sessionLastAngle;
 
-      if (delta < -pi) { 
+      if (delta < -pi) {
         _sessionTurns++;
-        
-      }
-      else if (delta > pi) {
+      } else if (delta > pi) {
         _sessionTurns--;
       }
 
       _sessionLastAngle = angle;
       setState(() {
-        sessionHourAngle = angle; 
-        sessionSelectedHours = _sessionTurns + angle / (2 * pi); 
+        sessionHourAngle = angle;
+        // Calcola le ore e i minuti in formato decimale (es: 0.59 invece di 0.99)
+        final totalHours = _sessionTurns + angle / (2 * pi);
+
+        // Se le ore totali sono < 0, mostra 0 -> così anche se muovo la lancetta in senso antiorario i minuti non vanno sotto zero
+        double safeTotalHours = totalHours < 0 ? 0 : totalHours;
+        int hours = safeTotalHours.floor();
+        int minutes = ((safeTotalHours - hours) * 60).round();
+        if (minutes == 60) {
+          hours += 1;
+          minutes = 0;
+        }
+        sessionSelectedHours = double.parse('$hours.${minutes.toString().padLeft(2, '0')}');
       });
     } else {
       double delta = angle - _breakLastAngle;
@@ -63,7 +72,16 @@ class _SessionPageState extends State<SessionPage> {
       _breakLastAngle = angle;
       setState(() {
         breakHourAngle = angle;
-        breakSelectedHours = _breakTurns + angle / (2 * pi);
+        final totalHours = _breakTurns + angle / (2 * pi);
+
+        double safeTotalHours = totalHours < 0 ? 0 : totalHours;
+        int hours = safeTotalHours.floor();
+        int minutes = ((safeTotalHours - hours) * 60).round();
+        if (minutes == 60) {
+          hours += 1;
+          minutes = 0;
+        }
+        breakSelectedHours = double.parse('$hours.${minutes.toString().padLeft(2, '0')}');
       });
     }
   }
@@ -109,7 +127,17 @@ class _SessionPageState extends State<SessionPage> {
           style: TextStyle(fontSize: 20, color: colors.onSurface),
         ),
         Text(
-          'Ore selezionate: ${selectedHours.toStringAsFixed(2)}', // Mostra le ore selezionate con 2 decimali
+          () { //queste parentesi si mettono quando si vuole calcolare dinamicamente il testo da mostrare
+            int hours = selectedHours.floor();
+            int minutes = (((selectedHours - hours) * 100).round());
+            if (hours == 0) {
+              // Mostra solo i minuti (es: 50 m)
+              return '$minutes m';
+            } else {
+              // Mostra ore e minuti (es: 1:30 h)
+              return '$hours:${minutes.toString().padLeft(2, '0')} h';
+            }
+          }(),
           style: TextStyle(fontSize: 16, color: colors.primary),
         ),
         SizedBox(

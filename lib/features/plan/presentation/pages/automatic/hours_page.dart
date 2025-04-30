@@ -59,7 +59,9 @@ class _HoursPageState extends State<HoursPage> {
             const SizedBox(height: 24),
             RulerPicker(
               controller: _rulerPickerController!,
-              ranges: [RulerRange(begin: 0, end: 1440, scale: 15)], // 15 minuti
+              ranges: [
+                RulerRange(begin: 0, end: 1440, scale: 15), // 15 minuti, più spazio tra tacche
+              ],
               onValueChanged: (value) {
                 setState(() {
                   selectedHour = value / 60.0; // salva il valore in ore
@@ -84,7 +86,6 @@ class _HoursPageState extends State<HoursPage> {
                 ),
               ],
               onBuildRulerScaleText: (int index, num rulerScaleValue) {
-                // Mostra il numero solo ogni ora (multipli di 60 minuti)
                 if (rulerScaleValue > 0 && rulerScaleValue % 60 == 0 && rulerScaleValue <= 1440) {
                   return (rulerScaleValue ~/ 60).toString();
                 }
@@ -92,11 +93,24 @@ class _HoursPageState extends State<HoursPage> {
               },
             ),
             const SizedBox(height: 16),
-            _buildPositionBtn(8),
-            const SizedBox(height: 16),
             Text(
               'Ore selezionate: $formattedHour',
               style: TextStyle(fontSize: 16, color: colors.primary),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    // TODO: da fare
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.onPrimary,
+                  ),
+                  child: const Text('Invita amici'),
+                ),
+              ],
             ),
           ],
         ),

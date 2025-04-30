@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:ketchapp_flutter/features/plan/presentation/pages/automatic/appointments_page.dart';
 import 'package:ketchapp_flutter/features/plan/presentation/pages/automatic/hours_page.dart';
 import 'package:ketchapp_flutter/features/plan/presentation/pages/automatic/session_page.dart';
 import 'package:ketchapp_flutter/features/plan/presentation/pages/automatic/subject_page.dart';
+import 'package:ketchapp_flutter/features/plan/presentation/pages/automatic/summary_page.dart';
 
 enum PlanMode { automatic, manual }
 
@@ -21,7 +23,7 @@ class _PlanLayoutState extends State<PlanLayout> {
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
 
-    final List<Widget> automaticList = [SubjectPage(), SessionPage(), HoursPage()];
+    final List<Widget> automaticList = [SubjectPage(), AppointmentsPage(), HoursPage(), SummaryPage()];
     final List<Widget> manualList = [SubjectPage()];
     final bool isAutomatic = widget.mode == PlanMode.automatic;
     final List<Widget> list = isAutomatic ? automaticList : manualList;
@@ -42,13 +44,12 @@ class _PlanLayoutState extends State<PlanLayout> {
       floatingActionButton: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Mostra "Indietro" solo dallo step 2 in poi
-          if (currentIndex > 0)
+          if (currentIndex > 0 && currentIndex < list.length - 1)
             Padding(
               padding: const EdgeInsets.only(left: 32.0),
               child: SizedBox(
                 width: 100,
-                height: 32, // Più basso
+                height: 32,
                 child: FloatingActionButton(
                   backgroundColor: colors.primary,
                   onPressed: () => setState(() => currentIndex--),
@@ -63,29 +64,29 @@ class _PlanLayoutState extends State<PlanLayout> {
               ),
             )
           else
-            const SizedBox(width: 100), // Spazio vuoto per allineamento
+            const SizedBox(width: 100),
 
-          SizedBox(
-            width: 100,
-            height: 32, 
-            child: FloatingActionButton(
-              backgroundColor: colors.primary,
-              onPressed: currentIndex < list.length - 1
-                  ? () => setState(() => currentIndex++)
-                  : () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Fine del percorso!')),
-                      );
-                    },
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          if (currentIndex < list.length - 1)
+            SizedBox(
+              width: 100,
+              height: 32,
+              child: FloatingActionButton(
+                backgroundColor: colors.primary,
+                onPressed: () {
+                  // Se siamo nella penultima pagina, vai all'ultima
+                    setState(() => currentIndex++);
+                },
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  currentIndex < list.length - 2 ? 'Successivo' : 'Vai',
+                  style: TextStyle(fontSize: 14, color: colors.onPrimary),
+                ),
               ),
-              child: Text(
-                currentIndex < list.length - 1 ? 'Successivo' : 'Vai', 
-                style: TextStyle(fontSize: 14, color: colors.onPrimary),
-              ),
-            ),
-          ),
+            )
+          else
+            const SizedBox(width: 100),
         ],
       ),
     );
