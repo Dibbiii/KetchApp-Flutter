@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class ErrorPage extends StatelessWidget {
   const ErrorPage({super.key, error});
@@ -23,6 +24,14 @@ class ErrorPage extends StatelessWidget {
               'An error occurred: ',
               style: TextStyle(fontSize: 24),
             ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+                onPressed: () {
+                  context.go('/');
+                },
+                child: const Text(
+                  'Go Back',
+                )),
           ],
         ),
       ),

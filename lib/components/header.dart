@@ -8,9 +8,11 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final AppBarTheme colors = Theme.of(context).appBarTheme;
 
     return AppBar(
-      title: const Text('Ketchapp Header'),
+      backgroundColor: colors.backgroundColor,
+      title: const Text('Ketchapp AppBar'),
       actions: [
         PopupMenuButton<ThemeMode>(
           icon: const Icon(Icons.palette_outlined),
@@ -38,5 +40,5 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight); // Usa altezza standard
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }

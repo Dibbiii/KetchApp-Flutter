@@ -1,52 +1,65 @@
 import 'package:flutter/material.dart';
-import 'app_colors.dart'; // Assumendo che tu abbia definito kPrimaryBlue, kDarkBackground, ecc.
+import 'app_colors.dart';
 
-// Tema Chiaro
 final ThemeData lightTheme = ThemeData(
-  brightness: Brightness.light, // Importante per l'adattamento del sistema
+  brightness: Brightness.light,
   colorScheme: ColorScheme.fromSeed(
-    seedColor: kPrimaryBlue,
-    primary: kPrimaryBlue,
-    secondary: kPrimaryBlue.withAlpha(
-      (0.8 * 255).toInt(),
-    ), 
-    error: kErrorRed,
-    brightness: Brightness.light,
-    surface: kWhite,
-    onPrimary: kWhite,
-    onSurface: kBlack,
-    secondaryContainer: kSuccessGreen, // Success color
-    tertiaryContainer: kWarningYellow, // Warning color
+    seedColor: seedColor,
+    primary: primaryColor,
+    onPrimary: onPrimaryColor,
+    secondary: secondaryColor,
+    onSecondary: onSecondaryColor,
+    tertiary: tertiaryColor,
+    onTertiary: onTertiaryColor,
+    error: errorColor,
+    onError: onErrorColor,
+    surface: surfaceColor,
+    onSurface: onSurfaceColor,
   ),
-  scaffoldBackgroundColor: kWhite,
+  snackBarTheme: const SnackBarThemeData(
+    backgroundColor: snackBarBackgroundColor,
+  ),
   appBarTheme: const AppBarTheme(
-    backgroundColor: kPrimaryBlue,
-    foregroundColor: kWhite,
+    backgroundColor: backgroundColor,
+    foregroundColor: foregroundColor,
+    elevation: elevationHeight,
   ),
-  iconTheme: const IconThemeData(color: kBlack),
-  // ... altre proprietà del tema chiaro ...
+  bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+    backgroundColor: backgroundColor,
+    selectedItemColor: secondaryColor,
+    unselectedItemColor: primaryColor,
+    elevation: elevationHeight,
+  ),
 );
 
-// Tema Scuro
+// TODO: Da Cambiare il Dark Theme
 final ThemeData darkTheme = ThemeData(
-  brightness: Brightness.dark,
+  brightness: Brightness.light,
   colorScheme: ColorScheme.fromSeed(
-    seedColor: kPrimaryBlue,
-    primary: kDarkPrimaryBlue,
-    secondary: kDarkSecondaryBlue,
-    error: kDarkErrorRed,
-    brightness: Brightness.dark,
-    surface: kDarkBackground,
-    onPrimary: kDarkWhite,
-    onSurface: kDarkWhite,
-    secondaryContainer: kDarkSuccessGreen, // Slightly darker success color
-    tertiaryContainer: kDarkWarningYellow, // Slightly darker warning color
+    seedColor: seedColor,
+    primary: primaryColor,
+    onPrimary: onPrimaryColor,
+    secondary: secondaryColor,
+    onSecondary: onSecondaryColor,
+    tertiary: tertiaryColor,
+    onTertiary: onTertiaryColor,
+    error: errorColor,
+    onError: onErrorColor,
+    surface: surfaceColor,
+    onSurface: onSurfaceColor,
   ),
-  scaffoldBackgroundColor: kDarkBackground,
-  appBarTheme: AppBarTheme(
-    backgroundColor: kDarkPrimaryBlue,
-    foregroundColor: kDarkWhite,
+  snackBarTheme: const SnackBarThemeData(
+    backgroundColor: snackBarBackgroundColor,
   ),
-  iconTheme: const IconThemeData(color: kDarkGray),
-  // ... altre proprietà del tema scuro ...
+  appBarTheme: const AppBarTheme(
+    backgroundColor: backgroundColor,
+    foregroundColor: foregroundColor,
+    elevation: elevationHeight,
+  ),
+  bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+    backgroundColor: backgroundColor,
+    selectedItemColor: secondaryColor,
+    unselectedItemColor: primaryColor,
+    elevation: elevationHeight,
+  ),
 );

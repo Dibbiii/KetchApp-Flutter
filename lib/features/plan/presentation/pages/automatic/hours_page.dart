@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ruler_picker/flutter_ruler_picker.dart';
 
@@ -9,37 +10,19 @@ class HoursPage extends StatefulWidget {
 }
 
 class _HoursPageState extends State<HoursPage> {
-  double selectedHour = 1.0;
+  double selectedHour = 0;
   RulerPickerController? _rulerPickerController;
+  final int maxMinutes = 24 * 60; // 1440
 
   @override
   void initState() {
     super.initState();
-    _rulerPickerController = RulerPickerController(value: selectedHour);
+    _rulerPickerController = RulerPickerController(value: selectedHour * 60);
     _rulerPickerController?.addListener(() {
       setState(() {
-        selectedHour = _rulerPickerController!.value.toDouble();
+        selectedHour = _rulerPickerController!.value.toDouble() / 60.0;
       });
     });
-  }
-
-  String get formattedHour {
-    int hours = selectedHour.floor();
-    int minutes = ((selectedHour - hours) * 60).round();
-    return '${hours}h${minutes.toString().padLeft(2, '0')}';
-  }
-
-  Widget _buildPositionBtn(num value) {
-    return InkWell(
-      onTap: () {
-        _rulerPickerController?.value = value;
-      },
-      child: Container(
-        padding: EdgeInsets.fromLTRB(10, 5, 10, 5),
-        color: Colors.blue,
-        child: Text(value.toString(), style: TextStyle(color: Colors.white)),
-      ),
-    );
   }
 
   @override
@@ -47,7 +30,7 @@ class _HoursPageState extends State<HoursPage> {
     final ColorScheme colors = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: colors.background,
+      backgroundColor: colors.surface,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -57,64 +40,112 @@ class _HoursPageState extends State<HoursPage> {
               style: TextStyle(fontSize: 20, color: colors.onSurface),
             ),
             const SizedBox(height: 24),
-            RulerPicker(
-              controller: _rulerPickerController!,
-              ranges: [
-                RulerRange(begin: 0, end: 1440, scale: 15), // 15 minuti, più spazio tra tacche
-              ],
-              onValueChanged: (value) {
-                setState(() {
-                  selectedHour = value / 60.0; // salva il valore in ore
-                });
-              },
-              rulerBackgroundColor: Colors.transparent,
-              width: MediaQuery.of(context).size.width - 32,
-              height: 80,
-              marker: Container(width: 4, height: 60, color: colors.primary),
-              scaleLineStyleList: const [
-                ScaleLineStyle(
-                  color: Colors.grey,
-                  width: 1.5,
-                  height: 30,
-                  scale: 0, // Tacche principali (ogni ora = 60 minuti)
-                ),
-                ScaleLineStyle(
-                  color: Colors.grey,
-                  width: 1,
-                  height: 20,
-                  scale: 1, // Tacche ogni 15 minuti
-                ),
-              ],
-              onBuildRulerScaleText: (int index, num rulerScaleValue) {
-                if (rulerScaleValue > 0 && rulerScaleValue % 60 == 0 && rulerScaleValue <= 1440) {
-                  return (rulerScaleValue ~/ 60).toString();
+            Listener(
+              onPointerSignal: (pointerSignal) {
+                if (pointerSignal is PointerScrollEvent) {
+                  const double scrollIncrement = 10.0;
+                  double newValue = _rulerPickerController!.value.toDouble();
+                  if (pointerSignal.scrollDelta.dy > 0) {
+                    newValue -= scrollIncrement;
+                  } else if (pointerSignal.scrollDelta.dy < 0) {
+                    newValue += scrollIncrement;
+                  }
+                  _rulerPickerController!.value = newValue.clamp(0, maxMinutes);
                 }
-                return '';
               },
+              child: GestureDetector(
+                onPanUpdate: (details) {
+                  final double dragSensitivity = 0.8;
+                  final double currentVal =
+                      _rulerPickerController!.value.toDouble();
+                  final newValue =
+                      currentVal - details.delta.dx * dragSensitivity;
+                  _rulerPickerController!.value = newValue.clamp(0, maxMinutes);
+                },
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.resizeLeftRight,
+                  child: RulerPicker(
+                    controller: _rulerPickerController!,
+                    ranges: [RulerRange(begin: 0, end: maxMinutes, scale: 10)],
+                    onValueChanged: (value) {
+                      setState(() {
+                        selectedHour = value.toDouble() / 60.0;
+                      });
+                    },
+                    rulerBackgroundColor: Colors.transparent,
+                    width: MediaQuery.of(context).size.width - 32,
+                    height: 80,
+                    marker: Container(
+                      width: 4,
+                      height: 60,
+                      color: colors.primary,
+                    ),
+                    scaleLineStyleList: const [
+                      ScaleLineStyle(
+                        color: Colors.yellow,
+                        width: 2,
+                        height: 30,
+                        scale: 6,
+                      ),
+                      ScaleLineStyle(
+                        color: Colors.orange,
+                        width: 1.5,
+                        height: 25,
+                        scale: 3,
+                      ),
+                      ScaleLineStyle(
+                        color: Colors.green,
+                        width: 1.2,
+                        height: 20,
+                        scale: 1,
+                      ),
+                      ScaleLineStyle(
+                        color: Colors.grey,
+                        width: 1,
+                        height: 15,
+                        scale: 0,
+                      ),
+                    ],
+                    onBuildRulerScaleText: (int index, num rulerScaleValue) {
+                      if (rulerScaleValue % 60 == 0) {
+                        return '${(rulerScaleValue ~/ 60)}h';
+                      }
+                      return '';
+                    },
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 16),
             Text(
-              'Ore selezionate: $formattedHour',
+              'Ore selezionate: ${_formatDuration(Duration(minutes: (selectedHour * 60).round()))}',
               style: TextStyle(fontSize: 16, color: colors.primary),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    // TODO: da fare
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.onPrimary,
-                  ),
-                  child: const Text('Invita amici'),
-                ),
-              ],
             ),
           ],
         ),
       ),
     );
   }
+}
+
+String _formatDuration(Duration duration) {
+  final hours = duration.inHours;
+  final minutes = duration.inMinutes.remainder(60);
+  String result = '';
+
+  if (hours > 0) {
+    result += '${hours}h';
+  }
+
+  if (hours > 0 || minutes > 0) {
+    if (result.isNotEmpty) {
+      result += ' e ';
+    }
+    result += '${minutes}m';
+  }
+
+  if (result.isEmpty) {
+    return '0h e 0m';
+  }
+  return result;
 }

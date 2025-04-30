@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; // Per la navigazione
+import 'package:go_router/go_router.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Questa pagina è semplice, potrebbe non necessitare di un BLoC dedicato
     return Scaffold(
       body: Center(
         child: Padding(
@@ -22,7 +21,6 @@ class WelcomePage extends StatelessWidget {
               const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: () {
-                  // Naviga alla pagina di login
                   context.push('/login');
                 },
                 style: ElevatedButton.styleFrom(minimumSize: const Size(200, 50)),
@@ -31,7 +29,6 @@ class WelcomePage extends StatelessWidget {
               const SizedBox(height: 20),
               OutlinedButton(
                 onPressed: () {
-                  // Naviga alla pagina di registrazione
                   context.push('/register');
                 },
                  style: OutlinedButton.styleFrom(minimumSize: const Size(200, 50)),

@@ -1,4 +1,3 @@
-// filepath: lib/features/home/bloc/home_state.dart
 part of 'home_bloc.dart';
 
 @immutable
@@ -10,11 +9,8 @@ class HomeInitial extends HomeState {}
 
 class HomeLoading extends HomeState {}
 
-// Esempio: Stato con i dati caricati
 class HomeLoaded extends HomeState {
-  // final List<YourDataModel> data; // I dati caricati
-  // const HomeLoaded(this.data);
-  const HomeLoaded(); // Semplificato per ora
+  const HomeLoaded();
 }
 
 class HomeError extends HomeState {

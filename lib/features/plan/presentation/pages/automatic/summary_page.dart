@@ -29,7 +29,7 @@ class _SummaryPageState extends State<SummaryPage> {
   @override
   void initState() {
     super.initState();
-    remainingSeconds = sessionDuration * 60; // Imposta il timer a 50 minuti in secondi
+    remainingSeconds = sessionDuration * 60;
     _startTimer();
   }
 
@@ -55,7 +55,7 @@ class _SummaryPageState extends State<SummaryPage> {
     });
   }
 
-  String formatTimer(int seconds) { // mostra il timer in formato mm:ss
+  String formatTimer(int seconds) {
     final m = (seconds ~/ 60).toString().padLeft(2, '0');
     final s = (seconds % 60).toString().padLeft(2, '0');
     return '$m:$s';
@@ -101,19 +101,8 @@ class _SummaryPageState extends State<SummaryPage> {
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              'Step',
-              style: TextStyle(fontSize: 20, color: colors.onSurface),
-            ),
-            Text(
-              '1/$numeroPomodori',
-              style: TextStyle(fontSize: 32, color: colors.onSurface),
-            ),
-            const SizedBox(height: 16),
-            // Pomodoro grande centrale
             Icon(Icons.apple, color: Colors.red, size: 48),
             const SizedBox(height: 24),
-            // Pomodori piccoli in fila con orari allineati sotto
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(numeroPomodori, (index) {
