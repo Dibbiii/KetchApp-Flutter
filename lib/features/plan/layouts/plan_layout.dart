@@ -28,7 +28,8 @@ class _PlanLayoutState extends State<PlanLayout> {
       SubjectPage(),
       AppointmentsPage(),
       HoursPage(),
-      SummaryPage()];
+      SummaryPage(),
+    ];
     final List<Widget> manualList = [SubjectPage()];
     final bool isAutomatic = widget.mode == PlanMode.automatic;
     final List<Widget> list = isAutomatic ? automaticList : manualList;
@@ -36,7 +37,7 @@ class _PlanLayoutState extends State<PlanLayout> {
     return Scaffold(
       appBar: AppBar(title: const Text('Plan Layout')),
       body: Column(
-        children: [ 
+        children: [
           const SizedBox(height: 16),
           Text(
             'Step: ${currentIndex + 1}/${list.length}',
@@ -79,7 +80,7 @@ class _PlanLayoutState extends State<PlanLayout> {
                 backgroundColor: colors.primary,
                 onPressed: () {
                   // Se siamo nella penultima pagina, vai all'ultima
-                    setState(() => currentIndex++);
+                  setState(() => currentIndex++);
                 },
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

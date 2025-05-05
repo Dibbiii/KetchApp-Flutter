@@ -14,7 +14,10 @@ import 'package:ketchapp_flutter/features/auth/presentation/pages/login_page.dar
 import 'package:ketchapp_flutter/features/auth/presentation/pages/register_page.dart';
 import 'package:ketchapp_flutter/features/home/presentation/pages/home_page.dart';
 import 'package:ketchapp_flutter/features/plan/layouts/plan_layout.dart';
+
+// --- Import the missing pages ---
 import 'package:ketchapp_flutter/features/welcome/presentation/pages/welcome_page.dart';
+import 'package:ketchapp_flutter/features/welcome/presentation/pages/auth_options_page.dart';
 
 // Helper class per GoRouter per ascoltare lo stream di AuthStateChanges
 class GoRouterRefreshStream extends ChangeNotifier {
@@ -46,20 +49,21 @@ final GoRouter router = GoRouter(
     // Definisci le rotte pubbliche/di autenticazione
     final isAuthRoute = location == '/login' || location == '/register';
     final isWelcomeRoute = location == '/';
+    final isAuthOptionsRoute = location == '/auth-options';
 
     // --- Utente NON loggato ---
     if (!loggedIn) {
-      // Se tenta di accedere a rotte protette (non auth/welcome), reindirizza a welcome/login
-      if (!isAuthRoute && !isWelcomeRoute) {
+      // Se tenta di accedere a rotte protette (non auth/welcome/auth-options), reindirizza a welcome
+      if (!isAuthRoute && !isWelcomeRoute && !isAuthOptionsRoute) {
         return '/'; // O '/login' se preferisci
       }
-      // Altrimenti permette l'accesso a welcome/login/register
+      // Altrimenti permette l'accesso a welcome/login/register/auth-options
       return null;
     }
 
     // --- Utente È loggato ---
-    // Se tenta di accedere a welcome/login/register, reindirizza a home
-    if (isAuthRoute || isWelcomeRoute) {
+    // Se tenta di accedere a welcome/login/register/auth-options, reindirizza a home
+    if (isAuthRoute || isWelcomeRoute || isAuthOptionsRoute) {
       return '/home';
     }
 
@@ -70,10 +74,15 @@ final GoRouter router = GoRouter(
   routes: [
     // Rotte pubbliche (fuori dalla ShellRoute)
     GoRoute(path: '/', builder: (context, state) => const WelcomePage()),
+    // Now recognized
     GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
     GoRoute(
       path: '/register',
       builder: (context, state) => const RegisterPage(),
+    ),
+    GoRoute(
+      path: '/auth-options',
+      builder: (context, state) => const AuthOptionsPage(), // Now recognized
     ),
 
     // ShellRoute per le pagine che necessitano del layout principale (con Footer)
@@ -81,42 +90,26 @@ final GoRouter router = GoRouter(
       builder: (context, state, child) {
         // Usa MainLayout come guscio E fornisci HomeBloc
         return BlocProvider(
-          // <-- Aggiungi BlocProvider qui
-          create: (context) => HomeBloc(), // Crea l'istanza di HomeBloc
-          child: MainLayout(
-            child: child,
-          ), // MainLayout è ora figlio del BlocProvider
+          create: (context) => HomeBloc(),
+          child: MainLayout(child: child),
         );
       },
       routes: [
         // Rotte protette all'interno della Shell
-        GoRoute(
-          path: '/home',
-          // HomePage ora può accedere a HomeBloc perché è fornito sopra
-          builder: (context, state) => const HomePage(),
-        ),
+        GoRoute(path: '/home', builder: (context, state) => const HomePage()),
         // Aggiungi qui altre rotte che necessitano di MainLayout e potenzialmente di HomeBloc
-        // Esempio:
-        // GoRoute(
-        //   path: '/profile',
-        //   builder: (context, state) => const ProfilePage(),
-        // ),
       ],
     ),
     GoRoute(
       path: '/plan/:mode',
       builder: (context, state) {
-        final mode =
-            state.pathParameters['mode'] ??
-            'automatic'; //se non viene fornuto un mode, usa 'automatic' come predefinito
+        final mode = state.pathParameters['mode'] ?? 'automatic';
         PlanMode planMode;
         switch (mode) {
           case 'manual':
             planMode = PlanMode.manual;
             break;
           case 'automatic':
-            planMode = PlanMode.automatic;
-            break;
           default:
             planMode = PlanMode.automatic;
         }

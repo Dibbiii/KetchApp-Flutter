@@ -41,6 +41,8 @@ dependencies:
   flutter_bloc: ^9.1.0
   carousel_slider: ^5.0.0
   flutter_ruler_picker: ^1.0.6   # <--- QUI è corretto!
+  introduction_screen: ^3.1.17
+  equatable: ^2.0.7
 
 dev_dependencies:
   flutter_test:

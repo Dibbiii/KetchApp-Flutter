@@ -44,3 +44,6 @@ const Color foregroundColor = Color.fromARGB(255, 240, 240, 240);
 
 // * Elevation NavBar/AppBar
 const double elevationHeight = 50.00;
+
+// * Custom Colors
+const Color kTomatoRed = Color(0xFFD9534F); // Adjusted Tomato Red (less orange)
