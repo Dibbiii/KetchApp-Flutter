@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ketchapp_flutter/features/home/bloc/home_bloc.dart';
 import 'package:ketchapp_flutter/app/themes/app_colors.dart'; // Import app_colors
-import 'package:ketchapp_flutter/features/home/models/session_model.dart'; // Import Session model
+import 'package:ketchapp_flutter/features/home/models/session_model.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

@@ -4,6 +4,7 @@ const Color kPrimaryBlue = Color.fromARGB(255, 32, 159, 222);
 const Color kSecondaryBlue = Color.fromARGB(255, 0, 0, 255);
 const Color kErrorRed = Color.fromARGB(255, 255, 0, 0);
 const Color kSuccessGreen = Color.fromARGB(255, 0, 255, 0);
+const Color kGold = Color.fromARGB(255, 175, 146, 0);
 const Color kWarningYellow = Color.fromARGB(255, 255, 255, 0);
 const Color kWhite = Colors.white;
 const Color kBlack = Colors.black;

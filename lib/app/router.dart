@@ -19,6 +19,8 @@ import 'package:ketchapp_flutter/features/plan/layouts/plan_layout.dart';
 import 'package:ketchapp_flutter/features/welcome/presentation/pages/welcome_page.dart';
 import 'package:ketchapp_flutter/features/welcome/presentation/pages/auth_options_page.dart';
 
+import '../features/statistics/presentation/statistics_page.dart';
+
 // Helper class per GoRouter per ascoltare lo stream di AuthStateChanges
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<dynamic> stream) {
@@ -97,7 +99,8 @@ final GoRouter router = GoRouter(
       routes: [
         // Rotte protette all'interno della Shell
         GoRoute(path: '/home', builder: (context, state) => const HomePage()),
-        // Aggiungi qui altre rotte che necessitano di MainLayout e potenzialmente di HomeBloc
+        GoRoute(path: '/statistics', builder: (context, state) => const StatisticsPage()),
+        GoRoute(path: '/ranking', builder: (context, state) => const StatisticsPage()),
       ],
     ),
     GoRoute(

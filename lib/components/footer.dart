@@ -13,7 +13,7 @@ class Footer extends StatefulWidget {
 }
 
 class _FooterState extends State<Footer> {
-  // Index mapping: 0: Home, 1: Profile, 2: Explore, 3: Logout
+  // Index mapping: 0: Home, 1: Statistics, 2: Trophy, 3: Profile
   int _selectedIndex = 0;
 
   @override
@@ -23,10 +23,12 @@ class _FooterState extends State<Footer> {
     int newIndex = 0;
     if (location.startsWith('/home')) {
       newIndex = 0;
-    } else if (location.startsWith('/profile')) {
+    } else if (location.startsWith('/statistics')) {
       newIndex = 1;
-    } else if (location.startsWith('/explore')) { // Assuming '/explore' route
+    } else if (location.startsWith('/ranking')) { //
       newIndex = 2;
+    } else if (location.startsWith('/profile')) {
+      newIndex = 3;
     }
     if (newIndex != _selectedIndex) {
       setState(() {
@@ -36,17 +38,19 @@ class _FooterState extends State<Footer> {
   }
 
   void _onItemTapped(int index) {
-    if (index == 0 || index == 1 || index == 2) {
+    if (index == 0 || index == 1 || index == 2 || index == 3) {
       final String currentLocation = GoRouterState
           .of(context)
           .matchedLocation;
       bool shouldNavigate = true;
       if (index == 0 && currentLocation.startsWith('/home'))
         shouldNavigate = false;
-      if (index == 1 && currentLocation.startsWith('/profile'))
+      if (index == 1 && currentLocation.startsWith('/statistics'))
         shouldNavigate = false;
-      if (index == 2 && currentLocation.startsWith('/explore'))
-        shouldNavigate = false; // Assuming '/explore' route
+      if (index == 2 && currentLocation.startsWith('/ranking'))
+        shouldNavigate = false; // Assuming '/trophy' route
+      if (index == 3 && currentLocation.startsWith('/profile'))
+        shouldNavigate = false;
 
       if (index != _selectedIndex) {
         setState(() {
@@ -60,26 +64,18 @@ class _FooterState extends State<Footer> {
             context.go('/home');
             break;
           case 1:
-            context.go('/profile');
+            context.go('/statistics');
             break;
           case 2:
-          // TODO: Implement navigation for Explore if it has a route
-          // context.go('/explore');
-            print("Explore navigation triggered (if route exists)");
+          // TODO: Implement navigation for Trophy if it has a route
+          // context.go('/trophy');
+            print("Trophy navigation triggered (if route exists)");
+            break;
+          case 3:
+            context.go('/profile');
             break;
         }
       }
-    } else if (index == 3) { // Logout Action
-      context.read<AuthBloc>().add(AuthLogoutRequested());
-    } else if (index == 2 && !GoRouterState
-        .of(context)
-        .matchedLocation
-        .startsWith('/explore')) {
-      print("Explore action tapped!");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Explore tapped!'), duration: Duration(seconds: 1)),
-      );
     }
   }
 
@@ -112,32 +108,34 @@ class _FooterState extends State<Footer> {
             isSelected: _selectedIndex == 0,
             onTap: () => _onItemTapped(0),
           ),
+          const Spacer(),
+          _buildNavItem(
+            context: context,
+            icon: Icons.insert_chart_outlined,
+            activeIcon: Icons.insert_chart,
+            label: 'Statistics',
+            index: 1,
+            isSelected: _selectedIndex == 1,
+            onTap: () => _onItemTapped(1),
+          ),
+          const Spacer(),
+          _buildNavItem(
+            context: context,
+            icon: Icons.emoji_events_outlined,
+            activeIcon: Icons.emoji_events,
+            label: 'Ranking',
+            index: 2,
+            isSelected: _selectedIndex == 2,
+            onTap: () => _onItemTapped(2),
+          ),
+          const Spacer(),
           _buildNavItem(
             context: context,
             icon: Icons.person_outline,
             activeIcon: Icons.person,
             label: 'Profile',
-            index: 1,
-            isSelected: _selectedIndex == 1,
-            onTap: () => _onItemTapped(1),
-          ),
-          // Increased Spacer width to better accommodate larger notch margin
-          const SizedBox(width: 70),
-          _buildNavItem(
-            context: context,
-            icon: Icons.explore_outlined,
-            activeIcon: Icons.explore,
-            label: 'Explore',
-            index: 2,
-            isSelected: _selectedIndex == 2,
-            onTap: () => _onItemTapped(2),
-          ),
-          _buildNavItem(
-            context: context,
-            icon: Icons.logout,
-            label: 'Logout',
             index: 3,
-            isSelected: false,
+            isSelected: _selectedIndex == 3,
             onTap: () => _onItemTapped(3),
           ),
         ],

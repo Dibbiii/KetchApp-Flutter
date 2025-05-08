@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:ketchapp_flutter/features/plan/presentation/pages/automatic/summary_state.dart';
+import 'package:provider/provider.dart';
 
-class SummaryPage extends StatefulWidget{
+class SummaryPage extends StatefulWidget {
   const SummaryPage({super.key});
 
   @override
@@ -13,7 +15,7 @@ class _SummaryPageState extends State<SummaryPage> {
   bool rumoriBianchiAttivi = false;
   int remainingSeconds = 0;
   Timer? _timer;
-  bool isPaused = false; 
+  bool isPaused = false;
 
   void _pauseOrResumeTimer() {
     setState(() {
@@ -44,7 +46,7 @@ class _SummaryPageState extends State<SummaryPage> {
   final int totalHours = 4;
 
   void _startTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) { 
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (remainingSeconds > 0) {
         setState(() {
           remainingSeconds--;
@@ -64,11 +66,18 @@ class _SummaryPageState extends State<SummaryPage> {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
+    final summaryState = Provider.of<SummaryState>(context, listen: false);
 
     // Calcolo numero di pomodori necessari per coprire totalHours
     final totalMinutes = totalHours * 60;
     int numeroPomodori = (totalMinutes / sessionDuration).ceil();
     int pomodoriCompletati = 2;
+
+    // Calcola le ore completate
+    final double totalCompletedHours = (pomodoriCompletati * sessionDuration) / 60;
+
+    // Aggiorna il valore nel SummaryState
+    summaryState.updateTotalCompletedHours(totalCompletedHours);
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -112,7 +121,7 @@ class _SummaryPageState extends State<SummaryPage> {
                 final end = start.add(Duration(minutes: sessionDuration));
                 String formatTime(DateTime t) =>
                     '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
-                
+
                 return Column(
                   children: [
                     Padding(
@@ -175,6 +184,13 @@ class _SummaryPageState extends State<SummaryPage> {
                   },
                 ),
               ],
+            ),
+            const SizedBox(height: 16),
+            Consumer<SummaryState>(
+              builder: (context, summaryState, child) => Text(
+                'Ore completate oggi: ${summaryState.totalCompletedHours.toStringAsFixed(2)}',
+                style: TextStyle(fontSize: 18, color: colors.primary),
+              ),
             ),
           ],
         ),
