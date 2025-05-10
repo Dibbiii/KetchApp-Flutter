@@ -1,72 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:ketchapp_flutter/app/themes/theme_provider.dart';
-import 'package:ketchapp_flutter/app/themes/app_colors.dart'; // Import app_colors
+import 'package:ketchapp_flutter/app/themes/app_colors.dart';
 
 class Header extends StatelessWidget implements PreferredSizeWidget {
   const Header({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final ColorScheme colors = Theme
-        .of(context)
-        .colorScheme;
-    final TextTheme textTheme = Theme
-        .of(context)
-        .textTheme;
-
-    // Removed the gradient definition
-
+    final colorScheme = Theme.of(context).colorScheme;
+    final canPop = Navigator.canPop(context);
     return AppBar(
-      // Removed flexibleSpace
-      backgroundColor: kTomatoRed, // Set solid background color like footer
-      elevation: 0, // Remove shadow for a flatter look
-      title: Text(
-        'Ketchapp', // App Title
-        style: textTheme.titleLarge?.copyWith(
-          // Use color that contrasts with kTomatoRed (likely white)
-          color: colors.onPrimary,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      actions: [
-        PopupMenuButton<ThemeMode>(
-          icon: Icon(
-            Icons.palette_outlined,
-            // Use color that contrasts with kTomatoRed
-            color: colors.onPrimary,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      leading:
+          canPop
+              ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                color: colorScheme.onSurface,
+                onPressed: () => Navigator.of(context).maybePop(),
+                tooltip: 'Back',
+              )
+              : null,
+      actions: const [
+        Padding(
+          padding: EdgeInsets.only(right: 16.0),
+          child: CircleAvatar(
+            backgroundImage: NetworkImage('https://via.placeholder.com/150'),
+            radius: 20,
           ),
-          tooltip: 'Select Theme',
-          // English tooltip
-          color: colors.surface,
-          // Background color for the popup menu
-          onSelected: (ThemeMode newMode) {
-            themeProvider.setThemeMode(newMode);
-          },
-          itemBuilder: (BuildContext context) => <PopupMenuEntry<ThemeMode>>[
-            PopupMenuItem<ThemeMode>(
-              value: ThemeMode.system,
-              child: Text(
-                'System Default', // English text
-                style: textTheme.bodyMedium?.copyWith(color: colors.onSurface),
-              ),
-            ),
-            PopupMenuItem<ThemeMode>(
-              value: ThemeMode.light,
-              child: Text(
-                'Light', // English text
-                style: textTheme.bodyMedium?.copyWith(color: colors.onSurface),
-              ),
-            ),
-            PopupMenuItem<ThemeMode>(
-              value: ThemeMode.dark,
-              child: Text(
-                'Dark', // English text
-                style: textTheme.bodyMedium?.copyWith(color: colors.onSurface),
-              ),
-            ),
-          ],
         ),
       ],
     );

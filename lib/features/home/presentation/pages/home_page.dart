@@ -21,7 +21,8 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     // Avoid potential build context issues in initState
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) { // Check if the widget is still in the tree
+      if (mounted) {
+        // Check if the widget is still in the tree
         context.read<HomeBloc>().add(LoadHomeData());
       }
     });
@@ -29,15 +30,9 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = Theme
-        .of(context)
-        .colorScheme;
-    final TextTheme textTheme = Theme
-        .of(context)
-        .textTheme;
-    final Size size = MediaQuery
-        .of(context)
-        .size;
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    final Size size = MediaQuery.of(context).size;
 
     final SystemUiOverlayStyle systemUiOverlayStyle = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -59,7 +54,7 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CircularProgressIndicator(color: kTomatoRed),
+                    CircularProgressIndicator(color: colors.primary),
                     const SizedBox(height: 16),
                     Text(
                       'Loading your focus...', // Slightly more descriptive
@@ -92,14 +87,14 @@ class _HomePageState extends State<HomePage> {
                       Container(
                         padding: const EdgeInsets.all(18), // Adjusted padding
                         decoration: BoxDecoration(
-                          color: kTomatoRed.withOpacity(0.1),
+                          color: colors.primary.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           Icons.lightbulb_outline,
                           // Changed icon to represent 'focus'
                           size: 60.0, // Adjusted size
-                          color: kTomatoRed,
+                          color: colors.primary,
                         ),
                       ),
                       const SizedBox(height: 16), // Adjusted spacing
@@ -131,7 +126,8 @@ class _HomePageState extends State<HomePage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                           // Slightly larger radius
-                          side: BorderSide( // Add a subtle border
+                          side: BorderSide(
+                            // Add a subtle border
                             color: colors.outline.withOpacity(0.2),
                             width: 1.0,
                           ),
@@ -144,13 +140,15 @@ class _HomePageState extends State<HomePage> {
                             // Stretch children horizontally
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Padding( // Add padding for the title
+                              Padding(
+                                // Add padding for the title
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 16.0),
+                                  horizontal: 16.0,
+                                ),
                                 child: Text(
                                   "Today's Focus",
                                   style: textTheme.titleLarge?.copyWith(
-                                    color: kTomatoRed,
+                                    color: colors.primary,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -158,19 +156,22 @@ class _HomePageState extends State<HomePage> {
                               const SizedBox(height: 8),
                               // Space before divider or content
                               if (todaySessions.isEmpty)
-                                Padding( // Improved Empty State
+                                Padding(
+                                  // Improved Empty State
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 24.0,
                                     horizontal: 16.0,
                                   ),
-                                  child: Column( // Use column for icon + text
+                                  child: Column(
+                                    // Use column for icon + text
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
                                         Icons.add_task_rounded,
                                         size: 40,
                                         color: colors.onSurface.withOpacity(
-                                            0.4),
+                                          0.4,
+                                        ),
                                       ),
                                       const SizedBox(height: 12),
                                       Text(
@@ -184,79 +185,86 @@ class _HomePageState extends State<HomePage> {
                                     ],
                                   ),
                                 )
-                              else
-                                ...[ // Use spread operator for list content
-                                  const Divider(height: 1,
-                                      thickness: 1,
-                                      indent: 16,
-                                      endIndent: 16), // Divider below title
-                                  ConstrainedBox( // Keep constrained box for scrollable list
-                                    constraints: BoxConstraints(
-                                      // Max height based on screen size, but capped
-                                      maxHeight: math.min(size.height * 0.35,
-                                          300), // Example: max 35% or 300px
-                                    ),
-                                    child: ListView.separated(
-                                      shrinkWrap: true,
-                                      padding: EdgeInsets.zero,
-                                      // Remove ListView padding
-                                      itemCount: todaySessions.length,
-                                      separatorBuilder: (_, __) =>
-                                          Divider(
-                                            height: 1,
-                                            thickness: 1,
-                                            // Make divider slightly thicker
-                                            color: colors.outline.withOpacity(
-                                                0.2),
-                                            // Subtle divider
-                                            indent: 16,
-                                            // Indent divider
-                                            endIndent: 16,
-                                          ),
-                                      itemBuilder: (context, index) {
-                                        final session = todaySessions[index]; // session is now a Session object
-                                        return ListTile(
-                                          dense: false,
-                                          // Make list tiles slightly taller
-                                          contentPadding: const EdgeInsets
-                                              .symmetric(
-                                            vertical: 6.0,
-                                            // Adjust vertical padding
-                                            horizontal: 16.0, // Match card padding
-                                          ),
-                                          leading: Icon( // Use specific icons per subject? (Future idea)
-                                            Icons.menu_book_rounded,
-                                            // Consistent icon
-                                            color: kTomatoRed.withOpacity(0.9),
-                                            size: 22,
-                                          ),
-                                          title: Text(
-                                            session.subject,
-                                            // Access subject property
-                                            style: textTheme.bodyLarge
-                                                ?.copyWith(
-                                              fontWeight: FontWeight.w500,
-                                              color: colors.onSurface,
-                                            ),
-                                          ),
-                                          subtitle: Text(
-                                            session.task,
-                                            // Access task property
-                                            style: textTheme.bodyMedium
-                                                ?.copyWith(
-                                              color: colors.onSurfaceVariant,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          // Add trailing icon/action later (e.g., checkbox, arrow)
-                                          // trailing: Icon(Icons.chevron_right),
-                                          // onTap: () { /* Navigate to session details? */ },
-                                        );
-                                      },
-                                    ),
+                              else ...[
+                                // Use spread operator for list content
+                                const Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  indent: 16,
+                                  endIndent: 16,
+                                ), // Divider below title
+                                ConstrainedBox(
+                                  // Keep constrained box for scrollable list
+                                  constraints: BoxConstraints(
+                                    // Max height based on screen size, but capped
+                                    maxHeight: math.min(
+                                      size.height * 0.35,
+                                      300,
+                                    ), // Example: max 35% or 300px
                                   ),
-                                ]
+                                  child: ListView.separated(
+                                    shrinkWrap: true,
+                                    padding: EdgeInsets.zero,
+                                    // Remove ListView padding
+                                    itemCount: todaySessions.length,
+                                    separatorBuilder:
+                                        (_, __) => Divider(
+                                          height: 1,
+                                          thickness: 1,
+                                          // Make divider slightly thicker
+                                          color: colors.outline.withOpacity(
+                                            0.2,
+                                          ),
+                                          // Subtle divider
+                                          indent: 16,
+                                          // Indent divider
+                                          endIndent: 16,
+                                        ),
+                                    itemBuilder: (context, index) {
+                                      final session =
+                                          todaySessions[index]; // session is now a Session object
+                                      return ListTile(
+                                        dense: false,
+                                        // Make list tiles slightly taller
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              vertical: 6.0,
+                                              // Adjust vertical padding
+                                              horizontal:
+                                                  16.0, // Match card padding
+                                            ),
+                                        leading: Icon(
+                                          // Use specific icons per subject? (Future idea)
+                                          Icons.menu_book_rounded,
+                                          // Consistent icon
+                                          color: colors.primary.withOpacity(0.9),
+                                          size: 22,
+                                        ),
+                                        title: Text(
+                                          session.subject,
+                                          // Access subject property
+                                          style: textTheme.bodyLarge?.copyWith(
+                                            fontWeight: FontWeight.w500,
+                                            color: colors.onSurface,
+                                          ),
+                                        ),
+                                        subtitle: Text(
+                                          session.task,
+                                          // Access task property
+                                          style: textTheme.bodyMedium?.copyWith(
+                                            color: colors.onSurfaceVariant,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        // Add trailing icon/action later (e.g., checkbox, arrow)
+                                        // trailing: Icon(Icons.chevron_right),
+                                        // onTap: () { /* Navigate to session details? */ },
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -280,16 +288,18 @@ class _HomePageState extends State<HomePage> {
                       const SizedBox(height: 16),
                       Text(
                         'Oops! Something went wrong.',
-                        style: textTheme.titleMedium?.copyWith(color: colors
-                            .error),
+                        style: textTheme.titleMedium?.copyWith(
+                          color: colors.error,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         state.message,
                         style: textTheme.bodyMedium?.copyWith(
-                          color: colors
-                              .onSurfaceVariant, // Use a readable color on surface
+                          color:
+                              colors
+                                  .onSurfaceVariant, // Use a readable color on surface
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -297,10 +307,10 @@ class _HomePageState extends State<HomePage> {
                       FilledButton.icon(
                         icon: const Icon(Icons.refresh),
                         label: const Text('Retry'),
-                        onPressed: () =>
-                            context.read<HomeBloc>().add(LoadHomeData()),
+                        onPressed:
+                            () => context.read<HomeBloc>().add(LoadHomeData()),
                         style: FilledButton.styleFrom(
-                          backgroundColor: kTomatoRed,
+                          backgroundColor: colors.primary,
                           foregroundColor: colors.onPrimary,
                         ),
                       ),

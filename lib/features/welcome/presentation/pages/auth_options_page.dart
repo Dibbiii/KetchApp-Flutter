@@ -25,7 +25,7 @@ class _AuthOptionsPageState extends State<AuthOptionsPage> {
       end: Alignment.bottomCenter,
       colors: [
         colors.surface.withOpacity(0.0), // Start transparent
-        kTomatoRed.withOpacity(0.4), // Slightly stronger accent at bottom
+        colors.primary.withOpacity(0.4), // Slightly stronger accent at bottom
       ],
       stops: const [0.0, 1.0], // Control gradient spread
     );
@@ -62,7 +62,7 @@ class _AuthOptionsPageState extends State<AuthOptionsPage> {
                     height: 80,
                     width: 80,
                     decoration: BoxDecoration(
-                      color: kTomatoRed.withOpacity(0.1),
+                      color: colors.primary.withOpacity(0.1),
                       // Use accent color background
                       shape:
                           BoxShape.circle, // Make it circular like WelcomePage
@@ -71,7 +71,7 @@ class _AuthOptionsPageState extends State<AuthOptionsPage> {
                       Icons.auto_stories_outlined,
                       // Example: Use a relevant icon
                       size: 40,
-                      color: kTomatoRed, // Use accent color for icon
+                      color: colors.primary, // Use accent color for icon
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -96,8 +96,8 @@ class _AuthOptionsPageState extends State<AuthOptionsPage> {
                         },
                     style: FilledButton.styleFrom(
                       minimumSize: const Size(double.infinity, 55),
-                      backgroundColor: kTomatoRed,
-                      // Use kTomatoRed
+                      backgroundColor: colors.primary,
+                      // Use primary
                       foregroundColor: colors.onPrimary,
                       // Match WelcomePage
                       shape: RoundedRectangleBorder(
@@ -135,10 +135,10 @@ class _AuthOptionsPageState extends State<AuthOptionsPage> {
                         },
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 55),
-                      foregroundColor: kTomatoRed,
-                      // Use kTomatoRed
-                      side: BorderSide(color: kTomatoRed, width: 1.5),
-                      // Use kTomatoRed
+                      foregroundColor: colors.primary,
+                      // Use primary
+                      side: BorderSide(color: colors.primary, width: 1.5),
+                      // Use primary
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(
                           8,

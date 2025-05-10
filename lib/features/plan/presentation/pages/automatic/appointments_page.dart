@@ -15,15 +15,9 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = Theme
-        .of(context)
-        .colorScheme;
-    final TextTheme textTheme = Theme
-        .of(context)
-        .textTheme;
-    final Size size = MediaQuery
-        .of(context)
-        .size;
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    final Size size = MediaQuery.of(context).size;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: size.width * 0.1, vertical: 40),
@@ -38,7 +32,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: kTomatoRed.withOpacity(0.1), // Use accent color background
+              color: colors.primary.withOpacity(0.1), // Use accent color background
               shape: BoxShape.circle, // Make it circular like WelcomePage
             ),
             child: Icon(
@@ -50,8 +44,8 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
           // Title
           Text(
             'Add Your Appointments',
-            style: textTheme.headlineSmall
-                ?.copyWith( // Use headlineSmall for page titles
+            style: textTheme.headlineSmall?.copyWith(
+              // Use headlineSmall for page titles
               fontWeight: FontWeight.bold,
               color: colors.onSurface,
             ),
@@ -75,14 +69,16 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
             style: FilledButton.styleFrom(
               minimumSize: const Size(double.infinity, 50),
               // Make button wider
-              backgroundColor: kTomatoRed,
+              backgroundColor: colors.primary,
               foregroundColor: colors.onPrimary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(
-                    8), // Match WelcomePage radius
+                  8,
+                ), // Match WelcomePage radius
               ),
               textStyle: textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.bold),
+                fontWeight: FontWeight.bold,
+              ),
             ).copyWith(
               // Remove splash/highlight like WelcomePage
               overlayColor: const MaterialStatePropertyAll(Colors.transparent),
@@ -110,20 +106,21 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                         },
                         style: TextButton.styleFrom(
                           foregroundColor: colors.onSurface.withOpacity(
-                              0.6), // Muted cancel
+                            0.6,
+                          ), // Muted cancel
                         ),
                         child: const Text('Cancel'), // Updated text
                       ),
                       TextButton(
                         onPressed: () {
-                          if (input
-                              .trim()
-                              .isNotEmpty) { // Only pop if not empty
+                          if (input.trim().isNotEmpty) {
+                            // Only pop if not empty
                             Navigator.of(context).pop(input.trim());
                           }
                         },
                         style: TextButton.styleFrom(
-                          foregroundColor: kTomatoRed, // Use accent color for confirm
+                          foregroundColor:
+                              colors.primary, // Use accent color for confirm
                         ),
                         child: const Text('Add'), // Updated text
                       ),
@@ -134,7 +131,8 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
 
               if (subjectName != null && subjectName.isNotEmpty) {
                 setState(() {
-                  if (!_subjects.contains(subjectName)) { // Avoid duplicates
+                  if (!_subjects.contains(subjectName)) {
+                    // Avoid duplicates
                     _subjects.add(subjectName);
                   }
                 });
@@ -143,58 +141,67 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
           ),
           const SizedBox(height: 24), // Space between button and list
           // Subject List (Improved Styling)
-          Expanded( // Allow list to take remaining space
-            child: _subjects.isEmpty
-                ? Center(
-              child: Text(
-                'No appointments added yet.',
-                style: textTheme.bodyMedium?.copyWith(
-                    color: colors.onSurface.withOpacity(0.6)),
-              ),
-            )
-                : ListView.builder(
-              shrinkWrap: true,
-              // Important if inside another Column without Expanded
-              itemCount: _subjects.length,
-              itemBuilder: (context, index) {
-                return Card( // Use Card for better visual separation
-                  margin: const EdgeInsets.symmetric(vertical: 4.0),
-                  color: colors.surfaceVariant.withOpacity(0.5),
-                  // Subtle background
-                  elevation: 0,
-                  // No shadow to match flat style
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    side: BorderSide(color: colors.outline.withOpacity(0.2),
-                        width: 1), // Subtle border
-                  ),
-                  child: ListTile(
-                    title: Text(
-                      _subjects[index],
-                      style: textTheme.bodyLarge?.copyWith(
-                          color: colors.onSurfaceVariant),
-                    ),
-                    trailing: IconButton( // Add delete button
-                      icon: Icon(Icons.delete_outline, color: colors
-                          .onSurfaceVariant.withOpacity(0.7)),
-                      onPressed: () {
-                        setState(() {
-                          _subjects.removeAt(index);
-                        });
+          Expanded(
+            // Allow list to take remaining space
+            child:
+                _subjects.isEmpty
+                    ? Center(
+                      child: Text(
+                        'No appointments added yet.',
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colors.onSurface.withOpacity(0.6),
+                        ),
+                      ),
+                    )
+                    : ListView.builder(
+                      shrinkWrap: true,
+                      // Important if inside another Column without Expanded
+                      itemCount: _subjects.length,
+                      itemBuilder: (context, index) {
+                        return Card(
+                          // Use Card for better visual separation
+                          margin: const EdgeInsets.symmetric(vertical: 4.0),
+                          color: colors.surfaceVariant.withOpacity(0.5),
+                          // Subtle background
+                          elevation: 0,
+                          // No shadow to match flat style
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: BorderSide(
+                              color: colors.outline.withOpacity(0.2),
+                              width: 1,
+                            ), // Subtle border
+                          ),
+                          child: ListTile(
+                            title: Text(
+                              _subjects[index],
+                              style: textTheme.bodyLarge?.copyWith(
+                                color: colors.onSurfaceVariant,
+                              ),
+                            ),
+                            trailing: IconButton(
+                              // Add delete button
+                              icon: Icon(
+                                Icons.delete_outline,
+                                color: colors.onSurfaceVariant.withOpacity(0.7),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _subjects.removeAt(index);
+                                });
+                              },
+                              tooltip: 'Remove Appointment',
+                            ),
+                          ),
+                        );
                       },
-                      tooltip: 'Remove Appointment',
                     ),
-                  ),
-                );
-              },
-            ),
           ),
         ],
       ),
     );
   }
 }
-
 
 //TODO
 // 1. Appointments Page

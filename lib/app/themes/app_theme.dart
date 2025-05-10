@@ -30,9 +30,9 @@ final ThemeData lightTheme = ThemeData(
     unselectedItemColor: primaryColor,
     elevation: elevationHeight,
   ),
+  useMaterial3: true,
 );
 
-// TODO: Da Cambiare il Dark Theme
 final ThemeData darkTheme = ThemeData(
   brightness: Brightness.light,
   colorScheme: ColorScheme.fromSeed(
@@ -62,4 +62,5 @@ final ThemeData darkTheme = ThemeData(
     unselectedItemColor: primaryColor,
     elevation: elevationHeight,
   ),
+  useMaterial3: true,
 );

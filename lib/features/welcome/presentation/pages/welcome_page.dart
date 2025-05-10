@@ -13,7 +13,7 @@ class WelcomePage extends StatelessWidget {
     required String body,
     required IconData icon,
     required ColorScheme colors, // Base colorscheme
-    required Color primaryAccentColor, // Specific accent color (kTomatoRed)
+    required Color primaryAccentColor, // Specific accent color (primary)
     // Removed backgroundGradient parameter
   }) {
     return PageViewModel(
@@ -64,8 +64,8 @@ class WelcomePage extends StatelessWidget {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [
-        kTomatoRed.withOpacity(0.1), // Start with a light red tint
-        kTomatoRed.withOpacity(0.7), // Increase opacity for more visibility
+        colors.primary.withOpacity(0.1), // Start with a light red tint
+        colors.primary.withOpacity(0.7), // Increase opacity for more visibility
       ],
       stops: const [0.0, 1.0], // Control gradient spread
     );
@@ -80,7 +80,7 @@ class WelcomePage extends StatelessWidget {
             'Monitor your study sessions and visualize your improvements over time.',
         icon: Icons.trending_up,
         colors: colors,
-        primaryAccentColor: kTomatoRed,
+        primaryAccentColor: colors.primary,
         // Removed backgroundGradient argument
       ),
       _buildPageViewModel(
@@ -88,7 +88,7 @@ class WelcomePage extends StatelessWidget {
         body: 'Use customizable timers to optimize concentration and breaks.',
         icon: Icons.timer,
         colors: colors,
-        primaryAccentColor: kTomatoRed,
+        primaryAccentColor: colors.primary,
         // Removed backgroundGradient argument
       ),
       _buildPageViewModel(
@@ -96,7 +96,7 @@ class WelcomePage extends StatelessWidget {
         body: 'Let the app generate a study plan tailored to your goals.',
         icon: Icons.auto_awesome,
         colors: colors,
-        primaryAccentColor: kTomatoRed,
+        primaryAccentColor: colors.primary,
         // Removed backgroundGradient argument
       ),
     ];
@@ -139,7 +139,7 @@ class WelcomePage extends StatelessWidget {
             skip: TextButton(
               onPressed: () => goToAuthOptions(context),
               style: TextButton.styleFrom(
-                foregroundColor: kTomatoRed, // Use kTomatoRed
+                foregroundColor: colors.primary, // Use primary
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 12,
@@ -150,7 +150,7 @@ class WelcomePage extends StatelessWidget {
               ).copyWith(
                 // Restore subtle overlay for feedback
                 overlayColor: MaterialStatePropertyAll(
-                  kTomatoRed.withOpacity(0.1),
+                  colors.primary.withOpacity(0.1),
                 ),
               ),
               child: Text('Skip', style: textTheme.labelLarge),
@@ -160,15 +160,15 @@ class WelcomePage extends StatelessWidget {
               // Handled by the package
               icon: const Icon(Icons.arrow_forward),
               iconSize: 24,
-              color: kTomatoRed,
+              color: colors.primary,
               style: IconButton.styleFrom(
-                backgroundColor: kTomatoRed.withOpacity(0.1),
+                backgroundColor: colors.primary.withOpacity(0.1),
                 padding: const EdgeInsets.all(12),
                 shape: const CircleBorder(),
               ).copyWith(
                 // Restore subtle overlay for feedback
                 overlayColor: MaterialStatePropertyAll(
-                  kTomatoRed.withOpacity(0.1),
+                  colors.primary.withOpacity(0.1),
                 ),
               ),
               tooltip: 'Next',
@@ -176,7 +176,7 @@ class WelcomePage extends StatelessWidget {
             done: FilledButton(
               onPressed: () => goToAuthOptions(context),
               style: FilledButton.styleFrom(
-                backgroundColor: kTomatoRed,
+                backgroundColor: colors.primary,
                 foregroundColor: colors.onPrimary, // Ensure text contrast
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -187,7 +187,7 @@ class WelcomePage extends StatelessWidget {
                 ),
               ).copyWith(
                 // Restore subtle overlay for feedback (using white for contrast)
-                overlayColor: MaterialStatePropertyAll(kWhite.withOpacity(0.1)),
+                overlayColor: MaterialStatePropertyAll(Colors.white.withOpacity(0.1)),
               ),
               child: Text(
                 'Get Started',
@@ -199,7 +199,7 @@ class WelcomePage extends StatelessWidget {
             dotsDecorator: DotsDecorator(
               size: const Size.square(8.0),
               activeSize: const Size(20.0, 8.0),
-              activeColor: kTomatoRed,
+              activeColor: colors.primary,
               color: colors.onSurface.withOpacity(0.2),
               spacing: const EdgeInsets.symmetric(horizontal: 4.0),
               activeShape: RoundedRectangleBorder(

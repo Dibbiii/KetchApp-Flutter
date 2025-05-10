@@ -66,7 +66,7 @@ class _RegisterPageState extends State<RegisterPage> {
       end: Alignment.bottomCenter,
       colors: [
         colors.surface.withOpacity(0.0), // Start transparent
-        kTomatoRed.withOpacity(0.4), // Slightly stronger accent at bottom
+        colors.primary.withOpacity(0.4), // Slightly stronger accent at bottom
       ],
       stops: const [0.0, 1.0], // Control gradient spread
     );
@@ -127,13 +127,13 @@ class _RegisterPageState extends State<RegisterPage> {
                       Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: kTomatoRed.withOpacity(0.1),
+                          color: colors.primary.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           Icons.person_add_alt_1, // Registration icon
                           size: 60.0, // Consistent size
-                          color: kTomatoRed,
+                          color: colors.primary,
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -187,10 +187,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: kTomatoRed,
-                              width: 1.5,
-                            ),
+                            borderSide: BorderSide(color: colors.primary, width: 1.5),
                           ),
                           filled: true,
                           fillColor: colors.surfaceVariant.withOpacity(0.3),
@@ -236,10 +233,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: kTomatoRed,
-                              width: 1.5,
-                            ),
+                            borderSide: BorderSide(color: colors.primary, width: 1.5),
                           ),
                           filled: true,
                           fillColor: colors.surfaceVariant.withOpacity(0.3),
@@ -290,10 +284,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: kTomatoRed,
-                              width: 1.5,
-                            ),
+                            borderSide: BorderSide(color: colors.primary, width: 1.5),
                           ),
                           filled: true,
                           fillColor: colors.surfaceVariant.withOpacity(0.3),
@@ -330,7 +321,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                     : _submitRegister, // Call _submitRegister
                             style: FilledButton.styleFrom(
                               minimumSize: const Size(double.infinity, 50),
-                              backgroundColor: kTomatoRed,
+                              backgroundColor: colors.primary,
                               foregroundColor: colors.onPrimary,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
@@ -372,7 +363,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                       context.go('/login');
                                     },
                             style: TextButton.styleFrom(
-                              foregroundColor: kTomatoRed,
+                              foregroundColor: colors.primary,
                               // Explicitly set foreground (text) color
                               padding: const EdgeInsets.symmetric(vertical: 10),
                             ).copyWith(
@@ -384,7 +375,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               // Ensure Text widget uses the button's foreground color
                               'Already have an account? Log In', // English text
                               style: textTheme.labelLarge?.copyWith(
-                                color: kTomatoRed,
+                                color: colors.primary,
                               ), // Explicitly set color
                             ),
                           );

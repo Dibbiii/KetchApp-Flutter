@@ -23,17 +23,15 @@ class _PlanLayoutState extends State<PlanLayout> {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-
-    final List<Widget> automaticList = [
+    final List<Widget> automaticList = const [
       SubjectPage(),
       AppointmentsPage(),
       HoursPage(),
       SummaryPage(),
     ];
-    final List<Widget> manualList = [SubjectPage()];
+    final List<Widget> manualList = const [SubjectPage()];
     final bool isAutomatic = widget.mode == PlanMode.automatic;
     final List<Widget> list = isAutomatic ? automaticList : manualList;
-
     return Scaffold(
       appBar: AppBar(title: const Text('Plan Layout')),
       body: Column(
@@ -71,17 +69,13 @@ class _PlanLayoutState extends State<PlanLayout> {
             )
           else
             const SizedBox(width: 100),
-
           if (currentIndex < list.length - 1)
             SizedBox(
               width: 100,
               height: 32,
               child: FloatingActionButton(
                 backgroundColor: colors.primary,
-                onPressed: () {
-                  // Se siamo nella penultima pagina, vai all'ultima
-                  setState(() => currentIndex++);
-                },
+                onPressed: () => setState(() => currentIndex++),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

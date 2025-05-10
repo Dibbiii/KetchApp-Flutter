@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
-import 'package:ketchapp_flutter/app/themes/theme_provider.dart';
 import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
 import 'features/plan/presentation/pages/automatic/summary_state.dart';
 import 'firebase_options.dart';
@@ -19,11 +18,10 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        Provider<AuthBloc>(create: (_) => AuthBloc(firebaseAuth: FirebaseAuth.instance)),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        //crea un change notifier provider per summary state
+        Provider<AuthBloc>(
+          create: (_) => AuthBloc(firebaseAuth: FirebaseAuth.instance),
+        ),
         ChangeNotifierProvider(create: (_) => SummaryState()),
-
       ],
       child: const MyApp(),
     ),
