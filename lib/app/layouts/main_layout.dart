@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ketchapp_flutter/components/footer.dart'; // Import Footer
-// app_colors.dart is likely superseded by Theme.of(context).colorScheme
+import 'package:ketchapp_flutter/components/footer.dart';
 import 'package:ketchapp_flutter/components/animated_gradient_text.dart';
-import 'package:ketchapp_flutter/components/header.dart'; // Import the new widget
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ketchapp_flutter/app/layouts/bloc/main_layout_bloc.dart';
 import 'package:ketchapp_flutter/app/layouts/widgets/action_button_widget.dart';
@@ -193,7 +191,6 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
           final bool isOverlayOpen = state.isOverlayVisible;
 
           return Scaffold(
-            appBar: Header(),
             body: widget.child,
             floatingActionButton: FloatingActionButton(
               onPressed:

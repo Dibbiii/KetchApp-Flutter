@@ -23,7 +23,8 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
         Padding(
           padding: EdgeInsets.only(right: 16.0),
           child: CircleAvatar(
-            backgroundImage: NetworkImage('https://via.placeholder.com/150'),
+            backgroundImage: NetworkImage(
+                'https://hd2.tudocdn.net/1142397?w=824&h=494'),
             radius: 20,
           ),
         ),
