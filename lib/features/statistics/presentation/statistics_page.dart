@@ -237,9 +237,9 @@ class _StatisticsPageState extends State<StatisticsPage>
                             _formatTotalHours(
                               state.weeklyStudyData.isNotEmpty
                                   ? state.weeklyStudyData[state
-                                  .displayedCalendarDate
-                                  .weekday -
-                                  1]
+                                          .displayedCalendarDate
+                                          .weekday -
+                                      1]
                                   : 0.0,
                             ),
                             style: textTheme.displaySmall?.copyWith(
@@ -250,14 +250,14 @@ class _StatisticsPageState extends State<StatisticsPage>
                           const SizedBox(height: 2),
                           Text(
                             DateUtils.isSameDay(
-                              state.displayedCalendarDate,
-                              DateTime.now(),
-                            )
+                                  state.displayedCalendarDate,
+                                  DateTime.now(),
+                                )
                                 ? 'Oggi'
                                 : DateFormat(
-                              'E, d MMM',
-                              'it_IT',
-                            ).format(state.displayedCalendarDate),
+                                  'E, d MMM',
+                                  'it_IT',
+                                ).format(state.displayedCalendarDate),
                             style: textTheme.bodyMedium?.copyWith(
                               color: colors.onSurfaceVariant,
                             ),
@@ -276,16 +276,16 @@ class _StatisticsPageState extends State<StatisticsPage>
                             size: 20,
                           ),
                           onPressed:
-                              () =>
-                              statisticsBloc.add(
+                              () => statisticsBloc.add(
                                 StatisticsPreviousDayRequested(),
                               ),
                           tooltip: 'Giorno precedente',
                         ),
                         TextButton(
                           onPressed:
-                              () =>
-                              statisticsBloc.add(StatisticsTodayRequested()),
+                              () => statisticsBloc.add(
+                                StatisticsTodayRequested(),
+                              ),
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
@@ -313,8 +313,7 @@ class _StatisticsPageState extends State<StatisticsPage>
                             size: 20,
                           ),
                           onPressed:
-                              () =>
-                              statisticsBloc.add(
+                              () => statisticsBloc.add(
                                 StatisticsNextDayRequested(),
                               ),
                           tooltip: 'Giorno successivo',
@@ -326,8 +325,7 @@ class _StatisticsPageState extends State<StatisticsPage>
                       displayedCalendarDate: state.displayedCalendarDate,
                       weeklyStudyData: state.weeklyStudyData,
                       onDateSelected:
-                          (date) =>
-                          statisticsBloc.add(
+                          (date) => statisticsBloc.add(
                             StatisticsDateSelectedFromHistogram(date),
                           ),
                     ),
