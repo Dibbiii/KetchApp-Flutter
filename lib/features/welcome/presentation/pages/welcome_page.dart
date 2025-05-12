@@ -3,126 +3,54 @@ import 'package:flutter/services.dart'; // Import services
 import 'package:go_router/go_router.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 
-// import 'package:ketchapp_flutter/app/themes/app_colors.dart'; // Removed unused import
-import './auth_options_page.dart'; // Ensure AuthOptionsPage is imported
+// Imports for the new page view model files
+import './page_one_view.dart';
+import './page_two_view.dart';
+import './page_three_view.dart';
+import './page_four_auth_view.dart';
 
 class WelcomePage extends StatefulWidget {
-  // Changed to StatefulWidget
   const WelcomePage({super.key});
 
   @override
-  _WelcomePageState createState() => _WelcomePageState(); // Create state
+  _WelcomePageState createState() => _WelcomePageState();
 }
 
 class _WelcomePageState extends State<WelcomePage> {
-  // State class
-  final _introKey =
-      GlobalKey<IntroductionScreenState>(); // Key for IntroductionScreen
+  final _introKey = GlobalKey<IntroductionScreenState>();
 
-  // Helper method to build page view models with enhanced styling
-  PageViewModel _buildPageViewModel({
-    required String title,
-    required String body,
-    required IconData icon, // Kept for semantic meaning, not direct display
-    required ColorScheme colors, // Base colorscheme
-    required Color primaryAccentColor, // Specific accent color (primary)
-  }) {
-    return PageViewModel(
-      title: title,
-      body: body,
-      image: Center(
-        child: Container(
-          padding: const EdgeInsets.all(
-            4,
-          ), // Adjust padding if needed for images
-          decoration: BoxDecoration(
-            color: primaryAccentColor.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: ClipOval(
-            // Clip image to be circular
-            child: Image.network(
-              'https://picsum.photos/seed/${title.hashCode}/200/200',
-              // Use title hashcode for a unique seed, increased size
-              width: 200.0, // Increased width
-              height: 200.0, // Increased height
-              fit: BoxFit.cover,
-              errorBuilder:
-                  (context, error, stackTrace) => Icon(
-                    Icons.broken_image, // Corrected fallback icon
-                    size: 200.0, // Match image size
-                    color: primaryAccentColor,
-                  ),
-            ),
-          ),
-        ),
-      ),
-      decoration: PageDecoration(
-        // Keep PageDecoration for text styles etc.
-        titleTextStyle: TextStyle(
-          fontSize: 26.0,
-          fontWeight: FontWeight.bold,
-          color: colors.onSurface, // Ensure contrast on surface
-          height: 1.3, // Adjusted line height
-        ),
-        bodyTextStyle: TextStyle(
-          fontSize: 16.0,
-          color: colors.onSurface.withOpacity(0.8), // Slightly muted text
-          height: 1.5,
-        ),
-        // Adjust padding for better visual balance and centering
-        imagePadding: const EdgeInsets.only(top: 60, bottom: 20),
-        titlePadding: const EdgeInsets.only(top: 24, bottom: 12),
-        bodyPadding: const EdgeInsets.symmetric(
-          horizontal: 32.0,
-          vertical: 12.0,
-        ),
-        pageColor: Colors.transparent, // Ensure page itself is transparent
-        // Content is centered by default by the package.
-        // Use contentFlex and imageFlex for proportional sizing if needed.
-      ),
-    );
-  }
+  // REMOVED _buildPageViewModel method as it's now split into separate files
+  // The old _buildPageViewModel logic is now in page_one_view.dart, page_two_view.dart, and page_three_view.dart
+  // The inlined AuthOptionsPage logic is now in page_four_auth_view.dart
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
+    // REMOVED: final Size size = MediaQuery.of(context).size; // This is now handled within page_four_auth_view.dart if needed
+    // REMOVED: final Gradient globalBackgroundGradient = LinearGradient(...); // This is now handled within page_four_auth_view.dart
 
     final List<PageViewModel> pages = [
-      _buildPageViewModel(
-        title: 'Track Your Progress',
-        body:
-            'Monitor your study sessions and visualize your improvements over time.',
-        icon: Icons.trending_up,
+      buildPageOneViewModel(
+        // Called from page_one_view.dart
         colors: colors,
         primaryAccentColor: colors.primary,
       ),
-      _buildPageViewModel(
-        title: 'Pomodoro Technique',
-        body: 'Use customizable timers to optimize concentration and breaks.',
-        icon: Icons.timer,
+      buildPageTwoViewModel(
+        // Called from page_two_view.dart
         colors: colors,
         primaryAccentColor: colors.primary,
       ),
-      _buildPageViewModel(
-        title: 'Smart Planning',
-        body: 'Let the app generate a study plan tailored to your goals.',
-        icon: Icons.auto_awesome,
+      buildPageThreeViewModel(
+        // Called from page_three_view.dart
         colors: colors,
         primaryAccentColor: colors.primary,
       ),
-      PageViewModel(
-        // Added AuthOptionsPage
-        title: "Create Account or Sign In",
-        bodyWidget: const AuthOptionsPage(),
-        decoration: const PageDecoration(
-          pageColor: Colors.transparent,
-          bodyPadding:
-              EdgeInsets.zero, // AuthOptionsPage handles its own padding
-          fullScreen: true,
-          imagePadding: EdgeInsets.zero, // No image for this page type
-        ),
+      buildPageFourAuthViewModel(
+        // Called from page_four_auth_view.dart
+        context: context, // context is needed for MediaQuery and GoRouter
+        colors: colors,
+        textTheme: textTheme,
       ),
     ];
 

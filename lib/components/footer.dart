@@ -99,15 +99,16 @@ class _FooterState extends State<Footer> {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    // final TextTheme texts = Theme.of(context).textTheme; // Not used directly in BNB items
+    final BottomNavigationBarThemeData bottomNavBarTheme = Theme
+        .of(context)
+        .bottomNavigationBarTheme;
 
-    // Define icons for clarity
     const IconData homeOutlined = Icons.home_outlined;
     const IconData homeFilled = Icons.home;
     const IconData statsOutlined = Icons.bar_chart_outlined;
     const IconData statsFilled = Icons.bar_chart;
-    const IconData trophyOutlined = Icons.emoji_events_outlined; // Example
-    const IconData trophyFilled = Icons.emoji_events; // Example
+    const IconData trophyOutlined = Icons.emoji_events_outlined;
+    const IconData trophyFilled = Icons.emoji_events;
     const IconData profileOutlined = Icons.person_outline;
     const IconData profileFilled = Icons.person;
 
@@ -146,7 +147,7 @@ class _FooterState extends State<Footer> {
       showSelectedLabels: true,
       // Ensure selected labels are visible
       // To make the background of the BottomNavigationBar match the previous BottomAppBar
-      backgroundColor: const Color(0xFFF0F3F8),
+      backgroundColor: bottomNavBarTheme.backgroundColor,
       elevation: 4.0,
       type: BottomNavigationBarType.fixed,
       // Ensures all items are shown and labels are consistent

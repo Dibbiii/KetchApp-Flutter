@@ -133,44 +133,59 @@ class _RankingPageState extends State<RankingPage> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Friends'),
-            Tab(text: 'Global'),
-          ],
-          labelColor: Theme.of(context).colorScheme.primary,
-          unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-          indicatorColor: Theme.of(context).colorScheme.primary, // Reverted to simple indicator color
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: TextField(
-            decoration: InputDecoration(
-              hintText: 'Search...',
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
-                borderSide: BorderSide.none,
-              ),
-              filled: true,
-              fillColor: Theme.of(context).colorScheme.surfaceVariant, // Use theme color
-            ),
-            onChanged: _filterUsers,
-          ),
-        ),
-        Expanded(
-          child: TabBarView(
+    return SafeArea(
+      child: Column(
+        children: [
+          TabBar(
             controller: _tabController,
-            children: [
-              _buildRankingList(),
-              _buildRankingList(),
+            tabs: const [
+              Tab(text: 'Friends'),
+              Tab(text: 'Global'),
             ],
+            labelColor: Theme
+                .of(context)
+                .colorScheme
+                .primary,
+            unselectedLabelColor: Theme
+                .of(context)
+                .colorScheme
+                .onSurface
+                .withOpacity(0.7),
+            indicatorColor: Theme
+                .of(context)
+                .colorScheme
+                .primary, // Reverted to simple indicator color
           ),
-        ),
-      ],
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Search...',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Theme
+                    .of(context)
+                    .colorScheme
+                    .surfaceVariant, // Use theme color
+              ),
+              onChanged: _filterUsers,
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildRankingList(),
+                _buildRankingList(),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

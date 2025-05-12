@@ -13,7 +13,7 @@ import 'package:ketchapp_flutter/features/plan/layouts/plan_layout.dart';
 import 'package:ketchapp_flutter/features/rankings/presentation/ranking_page.dart';
 import 'package:ketchapp_flutter/features/statistics/bloc/statistics_bloc.dart';
 import 'package:ketchapp_flutter/features/welcome/presentation/pages/welcome_page.dart';
-import 'package:ketchapp_flutter/features/welcome/presentation/pages/auth_options_page.dart';
+import 'package:ketchapp_flutter/features/profile/presentation/pages/profile_page.dart';
 import '../features/statistics/presentation/statistics_page.dart';
 
 class GoRouterRefreshStream extends ChangeNotifier {
@@ -21,7 +21,9 @@ class GoRouterRefreshStream extends ChangeNotifier {
     notifyListeners();
     _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
   }
+
   late final StreamSubscription<dynamic> _subscription;
+
   @override
   void dispose() {
     _subscription.cancel();
@@ -54,10 +56,6 @@ final GoRouter router = GoRouter(
       path: '/register',
       builder: (context, state) => const RegisterPage(),
     ),
-    GoRoute(
-      path: '/auth-options',
-      builder: (context, state) => const AuthOptionsPage(),
-    ),
     ShellRoute(
       builder:
           (context, state, child) => BlocProvider(
@@ -77,6 +75,10 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: '/ranking',
           builder: (context, state) => const RankingPage(),
+        ),
+        GoRoute(
+          path: '/profile',
+          builder: (context, state) => const ProfilePage(),
         ),
       ],
     ),

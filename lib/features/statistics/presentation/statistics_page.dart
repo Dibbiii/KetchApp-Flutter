@@ -189,194 +189,199 @@ class _StatisticsPageState extends State<StatisticsPage>
           );
         }
 
-        return Scaffold(
-          body: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Dettagli Attività',
-                    style: textTheme.headlineSmall?.copyWith(
-                      color: colors.onSurface,
-                      fontWeight: FontWeight.w600,
+        return SafeArea(
+          child: Scaffold(
+            body: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Dettagli Attività',
+                      style: textTheme.headlineSmall?.copyWith(
+                        color: colors.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Center(
-                    child: Column(
-                      children: [
-                        ActionChip(
-                          label: Text(
-                            _selectedOverlayOption,
-                            style: TextStyle(
+                    const SizedBox(height: 16),
+                    Center(
+                      child: Column(
+                        children: [
+                          ActionChip(
+                            label: Text(
+                              _selectedOverlayOption,
+                              style: TextStyle(
+                                color: colors.onSecondaryContainer,
+                              ),
+                            ),
+                            avatar: Icon(
+                              Icons.arrow_drop_down,
                               color: colors.onSecondaryContainer,
+                              size: 18,
+                            ),
+                            onPressed: () => _showTagSelector(context),
+                            backgroundColor: colors.secondaryContainer
+                                .withOpacity(0.7),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                              side: BorderSide.none,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12.0,
+                              vertical: 8.0,
                             ),
                           ),
-                          avatar: Icon(
-                            Icons.arrow_drop_down,
-                            color: colors.onSecondaryContainer,
-                            size: 18,
+                          const SizedBox(height: 12),
+                          Text(
+                            _formatTotalHours(
+                              state.weeklyStudyData.isNotEmpty
+                                  ? state.weeklyStudyData[state
+                                  .displayedCalendarDate
+                                  .weekday -
+                                  1]
+                                  : 0.0,
+                            ),
+                            style: textTheme.displaySmall?.copyWith(
+                              color: colors.onSurface,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                          onPressed: () => _showTagSelector(context),
-                          backgroundColor: colors.secondaryContainer
-                              .withOpacity(0.7),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16.0),
-                            side: BorderSide.none,
+                          const SizedBox(height: 2),
+                          Text(
+                            DateUtils.isSameDay(
+                              state.displayedCalendarDate,
+                              DateTime.now(),
+                            )
+                                ? 'Oggi'
+                                : DateFormat(
+                              'E, d MMM',
+                              'it_IT',
+                            ).format(state.displayedCalendarDate),
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colors.onSurfaceVariant,
+                            ),
                           ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12.0,
-                            vertical: 8.0,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          _formatTotalHours(
-                            state.weeklyStudyData.isNotEmpty
-                                ? state.weeklyStudyData[state
-                                        .displayedCalendarDate
-                                        .weekday -
-                                    1]
-                                : 0.0,
-                          ),
-                          style: textTheme.displaySmall?.copyWith(
-                            color: colors.onSurface,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          DateUtils.isSameDay(
-                                state.displayedCalendarDate,
-                                DateTime.now(),
-                              )
-                              ? 'Oggi'
-                              : DateFormat(
-                                'E, d MMM',
-                                'it_IT',
-                              ).format(state.displayedCalendarDate),
-                          style: textTheme.bodyMedium?.copyWith(
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            Icons.arrow_back_ios_new_rounded,
                             color: colors.onSurfaceVariant,
+                            size: 20,
                           ),
+                          onPressed:
+                              () =>
+                              statisticsBloc.add(
+                                StatisticsPreviousDayRequested(),
+                              ),
+                          tooltip: 'Giorno precedente',
+                        ),
+                        TextButton(
+                          onPressed:
+                              () =>
+                              statisticsBloc.add(StatisticsTodayRequested()),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text(
+                            DateFormat(
+                              'E, d MMM',
+                              'it_IT',
+                            ).format(state.displayedCalendarDate),
+                            style: textTheme.titleSmall?.copyWith(
+                              color: colors.onSurface,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            color: colors.onSurfaceVariant,
+                            size: 20,
+                          ),
+                          onPressed:
+                              () =>
+                              statisticsBloc.add(
+                                StatisticsNextDayRequested(),
+                              ),
+                          tooltip: 'Giorno successivo',
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          color: colors.onSurfaceVariant,
-                          size: 20,
-                        ),
-                        onPressed:
-                            () => statisticsBloc.add(
-                              StatisticsPreviousDayRequested(),
-                            ),
-                        tooltip: 'Giorno precedente',
-                      ),
-                      TextButton(
-                        onPressed:
-                            () =>
-                                statisticsBloc.add(StatisticsTodayRequested()),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
+                    const SizedBox(height: 12),
+                    WeeklyHistogramWidget(
+                      displayedCalendarDate: state.displayedCalendarDate,
+                      weeklyStudyData: state.weeklyStudyData,
+                      onDateSelected:
+                          (date) =>
+                          statisticsBloc.add(
+                            StatisticsDateSelectedFromHistogram(date),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text(
-                          DateFormat(
-                            'E, d MMM',
-                            'it_IT',
-                          ).format(state.displayedCalendarDate),
-                          style: textTheme.titleSmall?.copyWith(
-                            color: colors.onSurface,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          color: colors.onSurfaceVariant,
-                          size: 20,
-                        ),
-                        onPressed:
-                            () => statisticsBloc.add(
-                              StatisticsNextDayRequested(),
-                            ),
-                        tooltip: 'Giorno successivo',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  WeeklyHistogramWidget(
-                    displayedCalendarDate: state.displayedCalendarDate,
-                    weeklyStudyData: state.weeklyStudyData,
-                    onDateSelected:
-                        (date) => statisticsBloc.add(
-                          StatisticsDateSelectedFromHistogram(date),
-                        ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Dettaglio Materie Studiate',
-                    style: textTheme.titleMedium?.copyWith(
-                      color: colors.onSurface,
-                      fontWeight: FontWeight.w600,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  SubjectStatItemWidget(
-                    subjectIcon: Icons.calculate_rounded,
-                    iconColor: Colors.orange.shade700,
-                    subjectName: 'Matematica',
-                    studyTime: '1 ora, 25 min',
-                    trailingIcon: Icons.hourglass_empty_rounded,
-                    onTap: () => print('Matematica tapped'),
-                  ),
-                  SubjectStatItemWidget(
-                    subjectIcon: Icons.science_rounded,
-                    iconColor: Colors.green.shade700,
-                    subjectName: 'Fisica',
-                    studyTime: '55 min',
-                    trailingIcon: Icons.hourglass_empty_rounded,
-                    onTap: () => print('Fisica tapped'),
-                  ),
-                  SubjectStatItemWidget(
-                    subjectIcon: Icons.history_edu_rounded,
-                    iconColor: Colors.brown.shade700,
-                    subjectName: 'Storia',
-                    studyTime: '40 min',
-                    trailingIcon: Icons.info_outline_rounded,
-                    onTap: () => print('Storia tapped'),
-                  ),
-                  SubjectStatItemWidget(
-                    subjectIcon: Icons.translate_rounded,
-                    iconColor: Colors.blue.shade700,
-                    subjectName: 'Inglese',
-                    studyTime: '1 ora, 5 min',
-                    onTap: () => print('Inglese tapped'),
-                  ),
-                  SubjectStatItemWidget(
-                    subjectIcon: Icons.gavel_rounded,
-                    iconColor: Colors.red.shade700,
-                    subjectName: 'Diritto',
-                    studyTime: '30 min',
-                    trailingIcon: Icons.hourglass_empty_rounded,
-                    onTap: () => print('Diritto tapped'),
-                  ),
-                  const SizedBox(height: 20),
-                ],
+                    const SizedBox(height: 24),
+                    Text(
+                      'Dettaglio Materie Studiate',
+                      style: textTheme.titleMedium?.copyWith(
+                        color: colors.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SubjectStatItemWidget(
+                      subjectIcon: Icons.calculate_rounded,
+                      iconColor: Colors.orange.shade700,
+                      subjectName: 'Matematica',
+                      studyTime: '1 ora, 25 min',
+                      trailingIcon: Icons.hourglass_empty_rounded,
+                      onTap: () => print('Matematica tapped'),
+                    ),
+                    SubjectStatItemWidget(
+                      subjectIcon: Icons.science_rounded,
+                      iconColor: Colors.green.shade700,
+                      subjectName: 'Fisica',
+                      studyTime: '55 min',
+                      trailingIcon: Icons.hourglass_empty_rounded,
+                      onTap: () => print('Fisica tapped'),
+                    ),
+                    SubjectStatItemWidget(
+                      subjectIcon: Icons.history_edu_rounded,
+                      iconColor: Colors.brown.shade700,
+                      subjectName: 'Storia',
+                      studyTime: '40 min',
+                      trailingIcon: Icons.info_outline_rounded,
+                      onTap: () => print('Storia tapped'),
+                    ),
+                    SubjectStatItemWidget(
+                      subjectIcon: Icons.translate_rounded,
+                      iconColor: Colors.blue.shade700,
+                      subjectName: 'Inglese',
+                      studyTime: '1 ora, 5 min',
+                      onTap: () => print('Inglese tapped'),
+                    ),
+                    SubjectStatItemWidget(
+                      subjectIcon: Icons.gavel_rounded,
+                      iconColor: Colors.red.shade700,
+                      subjectName: 'Diritto',
+                      studyTime: '30 min',
+                      trailingIcon: Icons.hourglass_empty_rounded,
+                      onTap: () => print('Diritto tapped'),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
               ),
             ),
           ),
