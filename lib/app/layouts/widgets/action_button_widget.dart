@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ketchapp_flutter/app/layouts/bloc/main_layout_bloc.dart'; // We'll create this BLoC next
+import 'package:ketchapp_flutter/app/layouts/bloc/main_layout_bloc.dart';
 
+/// An animated action button with icon and text.
+///
+/// This widget provides a customized button with animations for overlay menus
+/// and handles toggling the overlay visibility through the MainLayoutBloc.
 class ActionButtonWidget extends StatelessWidget {
   final Widget titleContent;
   final IconData iconData;
-  final VoidCallback onTapAction; // Specific action for this button (e.g., navigation)
+  final VoidCallback onTapAction;
   final Animation<double> animation;
 
   const ActionButtonWidget({
@@ -18,18 +22,17 @@ class ActionButtonWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = Theme.of(context).colorScheme;
-    final TextTheme textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
-    final Animation<Offset> slideAnimation = Tween<Offset>(
+    // Create slide animation
+    final slideAnimation = Tween<Offset>(
       begin: const Offset(0.0, 0.6),
       end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: animation, curve: Curves.fastOutSlowIn), // Ensure curve is applied if animation is raw controller
-    );
+    ).animate(CurvedAnimation(parent: animation, curve: Curves.fastOutSlowIn));
 
     return FadeTransition(
-      opacity: CurvedAnimation(parent: animation, curve: Curves.easeIn), // Ensure curve is applied
+      opacity: CurvedAnimation(parent: animation, curve: Curves.easeIn),
       child: SlideTransition(
         position: slideAnimation,
         child: Padding(
@@ -38,39 +41,37 @@ class ActionButtonWidget extends StatelessWidget {
             icon: Icon(iconData, size: 20),
             label: titleContent,
             onPressed: () {
-              // Notify BLoC to toggle/close overlay
               context.read<MainLayoutBloc>().add(ToggleOverlayVisibility());
-              // Execute the button's specific action
               onTapAction();
             },
             style: ButtonStyle(
-              backgroundColor: WidgetStateProperty.resolveWith<Color?>((
-                Set<WidgetState> states,
+              backgroundColor: MaterialStateProperty.resolveWith<Color?>((
+                Set<MaterialState> states,
               ) {
-                if (states.contains(WidgetState.pressed)) {
-                  return colors.primaryContainer.withOpacity(0.5);
+                if (states.contains(MaterialState.pressed)) {
+                  return colorScheme.primaryContainer.withOpacity(0.5);
                 }
-                return colors.primaryContainer.withOpacity(0.95);
+                return colorScheme.primaryContainer.withOpacity(0.95);
               }),
-              foregroundColor: WidgetStateProperty.all<Color>(
-                colors.onPrimaryContainer,
+              foregroundColor: MaterialStateProperty.all<Color>(
+                colorScheme.onPrimaryContainer,
               ),
-              overlayColor: WidgetStateProperty.resolveWith<Color?>((
-                Set<WidgetState> states,
+              overlayColor: MaterialStateProperty.resolveWith<Color?>((
+                Set<MaterialState> states,
               ) {
-                if (states.contains(WidgetState.pressed)) {
-                  return colors.onPrimaryContainer.withOpacity(0.12);
+                if (states.contains(MaterialState.pressed)) {
+                  return colorScheme.onPrimaryContainer.withOpacity(0.12);
                 }
                 return null;
               }),
-              padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
+              padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
                 const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               ),
-              shape: WidgetStateProperty.all<OutlinedBorder>(
+              shape: MaterialStateProperty.all<OutlinedBorder>(
                 const StadiumBorder(),
               ),
-              elevation: WidgetStateProperty.all<double>(2),
-              textStyle: WidgetStateProperty.all<TextStyle?>(
+              elevation: MaterialStateProperty.all<double>(2),
+              textStyle: MaterialStateProperty.all<TextStyle?>(
                 textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500),
               ),
             ),

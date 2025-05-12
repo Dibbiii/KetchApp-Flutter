@@ -2,34 +2,58 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Import services
 import 'package:go_router/go_router.dart';
 import 'package:introduction_screen/introduction_screen.dart';
-import 'package:ketchapp_flutter/app/themes/app_colors.dart'; // Import app_colors
 
-class WelcomePage extends StatelessWidget {
+// import 'package:ketchapp_flutter/app/themes/app_colors.dart'; // Removed unused import
+import './auth_options_page.dart'; // Ensure AuthOptionsPage is imported
+
+class WelcomePage extends StatefulWidget {
+  // Changed to StatefulWidget
   const WelcomePage({super.key});
+
+  @override
+  _WelcomePageState createState() => _WelcomePageState(); // Create state
+}
+
+class _WelcomePageState extends State<WelcomePage> {
+  // State class
+  final _introKey =
+      GlobalKey<IntroductionScreenState>(); // Key for IntroductionScreen
 
   // Helper method to build page view models with enhanced styling
   PageViewModel _buildPageViewModel({
     required String title,
     required String body,
-    required IconData icon,
+    required IconData icon, // Kept for semantic meaning, not direct display
     required ColorScheme colors, // Base colorscheme
     required Color primaryAccentColor, // Specific accent color (primary)
-    // Removed backgroundGradient parameter
   }) {
     return PageViewModel(
       title: title,
       body: body,
       image: Center(
         child: Container(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(
+            4,
+          ), // Adjust padding if needed for images
           decoration: BoxDecoration(
-            color: primaryAccentColor.withOpacity(0.1), // Use accent color
+            color: primaryAccentColor.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(
-            icon,
-            size: 80.0,
-            color: primaryAccentColor, // Use accent color
+          child: ClipOval(
+            // Clip image to be circular
+            child: Image.network(
+              'https://picsum.photos/seed/${title.hashCode}/200/200',
+              // Use title hashcode for a unique seed, increased size
+              width: 200.0, // Increased width
+              height: 200.0, // Increased height
+              fit: BoxFit.cover,
+              errorBuilder:
+                  (context, error, stackTrace) => Icon(
+                    Icons.broken_image, // Corrected fallback icon
+                    size: 200.0, // Match image size
+                    color: primaryAccentColor,
+                  ),
+            ),
           ),
         ),
       ),
@@ -39,17 +63,23 @@ class WelcomePage extends StatelessWidget {
           fontSize: 26.0,
           fontWeight: FontWeight.bold,
           color: colors.onSurface, // Ensure contrast on surface
+          height: 1.3, // Adjusted line height
         ),
         bodyTextStyle: TextStyle(
           fontSize: 16.0,
           color: colors.onSurface.withOpacity(0.8), // Slightly muted text
           height: 1.5,
         ),
-        imagePadding: const EdgeInsets.only(top: 80, bottom: 30),
-        bodyPadding: const EdgeInsets.symmetric(horizontal: 32.0),
-        // Removed boxDecoration to let global gradient show through
-        // Ensure page itself is transparent
-        pageColor: Colors.transparent,
+        // Adjust padding for better visual balance and centering
+        imagePadding: const EdgeInsets.only(top: 60, bottom: 20),
+        titlePadding: const EdgeInsets.only(top: 24, bottom: 12),
+        bodyPadding: const EdgeInsets.symmetric(
+          horizontal: 32.0,
+          vertical: 12.0,
+        ),
+        pageColor: Colors.transparent, // Ensure page itself is transparent
+        // Content is centered by default by the package.
+        // Use contentFlex and imageFlex for proportional sizing if needed.
       ),
     );
   }
@@ -59,29 +89,14 @@ class WelcomePage extends StatelessWidget {
     final ColorScheme colors = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
 
-    // Define a global gradient for the entire screen background
-    final Gradient globalBackgroundGradient = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [
-        colors.primary.withOpacity(0.1), // Start with a light red tint
-        colors.primary.withOpacity(0.7), // Increase opacity for more visibility
-      ],
-      stops: const [0.0, 1.0], // Control gradient spread
-    );
-
-    // Removed gradient1, gradient2, gradient3 definitions
-
     final List<PageViewModel> pages = [
       _buildPageViewModel(
         title: 'Track Your Progress',
-        // Using English text as per previous changes
         body:
             'Monitor your study sessions and visualize your improvements over time.',
         icon: Icons.trending_up,
         colors: colors,
         primaryAccentColor: colors.primary,
-        // Removed backgroundGradient argument
       ),
       _buildPageViewModel(
         title: 'Pomodoro Technique',
@@ -89,7 +104,6 @@ class WelcomePage extends StatelessWidget {
         icon: Icons.timer,
         colors: colors,
         primaryAccentColor: colors.primary,
-        // Removed backgroundGradient argument
       ),
       _buildPageViewModel(
         title: 'Smart Planning',
@@ -97,100 +111,102 @@ class WelcomePage extends StatelessWidget {
         icon: Icons.auto_awesome,
         colors: colors,
         primaryAccentColor: colors.primary,
-        // Removed backgroundGradient argument
+      ),
+      PageViewModel(
+        // Added AuthOptionsPage
+        title: "Create Account or Sign In",
+        bodyWidget: const AuthOptionsPage(),
+        decoration: const PageDecoration(
+          pageColor: Colors.transparent,
+          bodyPadding:
+              EdgeInsets.zero, // AuthOptionsPage handles its own padding
+          fullScreen: true,
+          imagePadding: EdgeInsets.zero, // No image for this page type
+        ),
       ),
     ];
 
-    // Function to navigate to the auth options page
-    void goToAuthOptions(BuildContext ctx) {
-      ctx.pushReplacement('/auth-options');
+    // Function to navigate after intro completion or skip
+    void goToLoginOrRegister(BuildContext ctx) {
+      ctx.pushReplacement('/login'); // Navigate to login after intro
     }
 
-    // Define SystemUiOverlayStyle based on the top part of the gradient
     const SystemUiOverlayStyle systemUiOverlayStyle = SystemUiOverlayStyle(
-      // Assuming the top part (transparent surface) is light
       statusBarColor: Colors.transparent,
-      // Make status bar transparent
       statusBarIconBrightness: Brightness.dark,
-      // Icons for light background
       statusBarBrightness: Brightness.light,
-      // For iOS
       systemNavigationBarColor: Colors.transparent,
-      // Make nav bar transparent
-      systemNavigationBarIconBrightness:
-          Brightness.dark, // Icons for light background
+      systemNavigationBarIconBrightness: Brightness.dark,
     );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      // Wrap with AnnotatedRegion
       value: systemUiOverlayStyle,
       child: Scaffold(
-        // Scaffold background is transparent by default when wrapped
         body: Container(
-          decoration: BoxDecoration(
-            gradient: globalBackgroundGradient, // Apply global gradient here
-          ),
+          color: Theme.of(context).colorScheme.background,
           child: IntroductionScreen(
+            key: _introKey,
+            // Assign the key here
             pages: pages,
-            onDone: () => goToAuthOptions(context),
-            onSkip: () => goToAuthOptions(context),
+            onDone: () => goToLoginOrRegister(context),
+            // Updated navigation
+            onSkip: () => goToLoginOrRegister(context),
+            // Updated navigation
             showSkipButton: true,
-            // --- Footer Customization with Tomato Red ---
             skip: TextButton(
-              onPressed: () => goToAuthOptions(context),
+              onPressed:
+                  () => goToLoginOrRegister(context), // Updated navigation
               style: TextButton.styleFrom(
-                foregroundColor: colors.primary, // Use primary
+                foregroundColor: colors.primary,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
+                  horizontal: 24,
+                  vertical: 18, // Increased padding
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ).copyWith(
-                // Restore subtle overlay for feedback
-                overlayColor: MaterialStatePropertyAll(
-                  colors.primary.withOpacity(0.1),
-                ),
+                overlayColor: MaterialStateProperty.all(
+                  Colors.yellow.withOpacity(0.15),
+                ), // Yellow hover
               ),
               child: Text('Skip', style: textTheme.labelLarge),
             ),
-            next: IconButton(
-              onPressed: null,
-              // Handled by the package
-              icon: const Icon(Icons.arrow_forward),
-              iconSize: 24,
-              color: colors.primary,
-              style: IconButton.styleFrom(
-                backgroundColor: colors.primary.withOpacity(0.1),
-                padding: const EdgeInsets.all(12),
+            next: ElevatedButton(
+              onPressed: () {
+                _introKey.currentState?.next(); // Use key to go to next page
+              },
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.all(16), // Increased padding
                 shape: const CircleBorder(),
               ).copyWith(
-                // Restore subtle overlay for feedback
-                overlayColor: MaterialStatePropertyAll(
-                  colors.primary.withOpacity(0.1),
-                ),
+                overlayColor: MaterialStateProperty.all(
+                  Colors.yellow.withOpacity(0.15),
+                ), // Yellow hover
               ),
-              tooltip: 'Next',
+              child: Icon(
+                Icons.arrow_forward,
+                size: 30, // Increased icon size
+              ),
             ),
             done: FilledButton(
-              onPressed: () => goToAuthOptions(context),
+              onPressed:
+                  () => goToLoginOrRegister(context), // Updated navigation
               style: FilledButton.styleFrom(
-                backgroundColor: colors.primary,
-                foregroundColor: colors.onPrimary, // Ensure text contrast
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
+                  horizontal: 30,
+                  vertical: 18, // Increased padding
                 ),
               ).copyWith(
-                // Restore subtle overlay for feedback (using white for contrast)
-                overlayColor: MaterialStatePropertyAll(Colors.white.withOpacity(0.1)),
+                overlayColor: MaterialStateProperty.all(
+                  Colors.yellow.withOpacity(0.15),
+                ), // Yellow hover
               ),
               child: Text(
-                'Get Started',
+                'Get Started', // Text for the done button
                 style: textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -208,13 +224,17 @@ class WelcomePage extends StatelessWidget {
             ),
             // --- Behavior & Layout ---
             isProgressTap: false,
-            // Prevent tap on dots from changing page
             freeze: false,
-            // Allow swiping
             bodyPadding: EdgeInsets.zero,
-            // Let PageDecoration handle padding
+            // Let PageViewModel handle body padding
             controlsPadding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 32.0),
-            globalBackgroundColor: Colors.transparent, // Keep this transparent
+            globalBackgroundColor: Colors.transparent,
+            // When the last page is a custom widget (AuthOptionsPage),
+            // the 'Done' button will appear on that slide.
+            // The 'showDoneButton: true' is default.
+            // If AuthOptionsPage has its own "proceed" buttons, you might hide the global 'Done' button
+            // for the last slide using `overrideDone`.
+            // For now, the global "Done" button will appear.
           ),
         ),
       ),

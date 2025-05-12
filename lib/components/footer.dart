@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart'; // Import BlocProvider
 import 'package:go_router/go_router.dart';
-import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart'; // Import AuthBloc and AuthLogoutRequested
-import 'package:ketchapp_flutter/app/themes/app_colors.dart'; // Import app_colors
-import 'dart:ui'; // For ImageFilter
 
 class Footer extends StatefulWidget {
   const Footer({super.key});
