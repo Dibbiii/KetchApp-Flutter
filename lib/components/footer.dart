@@ -36,16 +36,20 @@ class _FooterState extends State<Footer> {
 
   void _onItemTapped(int index) {
     if (index == 0 || index == 1 || index == 2 || index == 3) {
+      final List<String> routes = [
+        '/home',
+        '/statistics',
+        '/ranking',
+        '/profile'
+      ];
       final String currentLocation = GoRouterState.of(context).matchedLocation;
+
       bool shouldNavigate = true;
-      if (index == 0 && currentLocation.startsWith('/home'))
-        shouldNavigate = false;
-      if (index == 1 && currentLocation.startsWith('/statistics'))
-        shouldNavigate = false;
-      if (index == 2 && currentLocation.startsWith('/ranking'))
-        shouldNavigate = false; // Assuming '/trophy' route
-      if (index == 3 && currentLocation.startsWith('/profile'))
-        shouldNavigate = false;
+      if (index >= 0 && index < routes.length) {
+        if (currentLocation.startsWith(routes[index])) {
+          shouldNavigate = false;
+        }
+      }
 
       if (index != _selectedIndex) {
         setState(() {
@@ -54,162 +58,102 @@ class _FooterState extends State<Footer> {
       }
 
       if (shouldNavigate) {
-        switch (index) {
-          case 0:
-            context.go('/home');
-            break;
-          case 1:
-            context.go('/statistics');
-            break;
-          case 2:
-            context.go('/ranking');
-            break;
-          case 3:
-            context.go('/profile');
-            break;
+        if (index >= 0 && index < routes.length) {
+          context.go(routes[index]);
         }
       }
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colors = Theme.of(context).colorScheme;
-    final TextTheme texts = Theme.of(context).textTheme;
-
-    // Use BottomAppBar for integration with centerDocked FAB
-    return BottomAppBar(
-      // Change background to a light gray
-      color: const Color(0xFFF0F3F8), // Custom light gray (#F0F3F8)
-      elevation: 4.0,
-      // Add back some elevation for depth
-      shape: const CircularNotchedRectangle(),
-      // Use CircularNotchedRectangle for notch
-      notchMargin: 10.0,
-      // Increase notch margin slightly
-      // Add vertical padding inside the bar
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          // Home Item
-          _buildNavItem(
-            outlinedIconData: Icons.home_outlined,
-            filledIconData: Icons.home,
-            label: "Home",
-            index: 0,
-            selectedIndex: _selectedIndex,
-            colors: colors,
-            texts: texts,
-          ),
-          // Statistics Item
-          _buildNavItem(
-            outlinedIconData:
-                Icons.bar_chart_outlined, // Or Icons.insert_chart_outlined
-            filledIconData: Icons.bar_chart, // Or Icons.insert_chart
-            label: "Statistics",
-            index: 1,
-            selectedIndex: _selectedIndex,
-            colors: colors,
-            texts: texts,
-          ),
-          // Ranking Item
-          _buildNavItem(
-            outlinedIconData: Icons.leaderboard_outlined,
-            filledIconData: Icons.leaderboard,
-            label: "Ranking",
-            index: 2,
-            selectedIndex: _selectedIndex,
-            colors: colors,
-            texts: texts,
-          ),
-          // Profile Item
-          _buildNavItem(
-            outlinedIconData: Icons.person_outline,
-            filledIconData: Icons.person,
-            label: "Profile",
-            index: 3,
-            selectedIndex: _selectedIndex,
-            colors: colors,
-            texts: texts,
-          ),
-        ],
+  Widget _buildIcon(IconData iconData, bool isSelected, ColorScheme colors) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      decoration: BoxDecoration(
+        color: isSelected ? colors.primary.withOpacity(0.1) : Colors
+            .transparent,
+        borderRadius: BorderRadius.circular(20.0),
+      ),
+      child: Icon(
+        iconData,
+        color: isSelected ? colors.primary : colors.onSurface,
       ),
     );
   }
 
-  Widget _buildNavItem({
-    required IconData outlinedIconData,
-    required IconData filledIconData,
-    required String label,
-    required int index,
-    required int selectedIndex,
-    required ColorScheme colors,
-    required TextTheme texts,
-  }) {
-    final bool isSelected = selectedIndex == index;
-
-    // Define colors based on the new style
-    final Color pillBackgroundColor =
-        isSelected ? colors.primary.withOpacity(0.1) : Colors.transparent;
-    final Color contentColor = // Combined icon and text color
-        isSelected ? colors.primary : colors.onSurface;
-
-    // Adjusted hover and splash to better match the new theme
-    final Color hoverColor =
-        isSelected
-            ? colors.primary.withOpacity(0.3)
-            : colors.onSurface.withOpacity(0.05);
-    final Color splashColor =
-        isSelected
-            ? colors.primary.withOpacity(0.2)
-            : colors.onSurface.withOpacity(0.1);
-
-    return Expanded(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => _onItemTapped(index),
-              borderRadius: BorderRadius.circular(20.0),
-              hoverColor: hoverColor,
-              splashColor: splashColor,
-              highlightColor: splashColor.withOpacity(
-                0.5,
-              ), // Can be same as splash or slightly different
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 2.0, // As per your selection
-                ),
-                decoration: BoxDecoration(
-                  color: pillBackgroundColor,
-                  borderRadius: BorderRadius.circular(20.0),
-                ),
-                child: Icon(
-                  isSelected
-                      ? filledIconData
-                      : outlinedIconData, // Conditional icon
-                  color: contentColor, // Use combined contentColor
-                  size: 24.0,
-                ),
-              ),
-            ),
-          ),
-          SizedBox(height: 4.0),
-          Text(
-            label,
-            style: texts.labelSmall?.copyWith(
-              color: contentColor,
-              fontSize: 10,
-            ), // Use combined contentColor
-          ),
-        ],
+  Widget _buildActiveIcon(IconData iconData, bool isSelected,
+      ColorScheme colors) {
+    // For activeIcon, we always want the primary color if it's selected,
+    // but the container styling is handled by the `icon` builder.
+    // So, we just return the icon with the primary color.
+    // The BottomNavigationBar will use this when the item is selected.
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      decoration: BoxDecoration(
+        color: colors.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20.0),
       ),
+      child: Icon(iconData, color: colors.primary),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    // final TextTheme texts = Theme.of(context).textTheme; // Not used directly in BNB items
+
+    // Define icons for clarity
+    const IconData homeOutlined = Icons.home_outlined;
+    const IconData homeFilled = Icons.home;
+    const IconData statsOutlined = Icons.bar_chart_outlined;
+    const IconData statsFilled = Icons.bar_chart;
+    const IconData trophyOutlined = Icons.emoji_events_outlined; // Example
+    const IconData trophyFilled = Icons.emoji_events; // Example
+    const IconData profileOutlined = Icons.person_outline;
+    const IconData profileFilled = Icons.person;
+
+    return BottomNavigationBar(
+      items: <BottomNavigationBarItem>[
+        BottomNavigationBarItem(
+          icon: _buildIcon(homeOutlined, _selectedIndex == 0, colors),
+          activeIcon: _buildActiveIcon(homeFilled, _selectedIndex == 0, colors),
+          label: 'Home',
+        ),
+        BottomNavigationBarItem(
+          icon: _buildIcon(statsOutlined, _selectedIndex == 1, colors),
+          activeIcon:
+          _buildActiveIcon(statsFilled, _selectedIndex == 1, colors),
+          label: 'Statistics',
+        ),
+        BottomNavigationBarItem(
+          icon: _buildIcon(trophyOutlined, _selectedIndex == 2, colors),
+          activeIcon:
+          _buildActiveIcon(trophyFilled, _selectedIndex == 2, colors),
+          label: 'Ranking', // Label was Trophy, changed to Ranking to match route
+        ),
+        BottomNavigationBarItem(
+          icon: _buildIcon(profileOutlined, _selectedIndex == 3, colors),
+          activeIcon:
+          _buildActiveIcon(profileFilled, _selectedIndex == 3, colors),
+          label: 'Profile',
+        ),
+      ],
+      currentIndex: _selectedIndex,
+      selectedItemColor: colors.primary,
+      unselectedItemColor: colors.onSurface,
+      onTap: _onItemTapped,
+      showUnselectedLabels: true,
+      // Ensure unselected labels are visible
+      showSelectedLabels: true,
+      // Ensure selected labels are visible
+      // To make the background of the BottomNavigationBar match the previous BottomAppBar
+      backgroundColor: const Color(0xFFF0F3F8),
+      elevation: 4.0,
+      type: BottomNavigationBarType.fixed,
+      // Ensures all items are shown and labels are consistent
+      selectedLabelStyle: TextStyle(fontSize: 11, color: colors.primary),
+      unselectedLabelStyle: TextStyle(
+          fontSize: 11, color: colors.onSurface.withOpacity(0.7)),
+
     );
   }
 }
