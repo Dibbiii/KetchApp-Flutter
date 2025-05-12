@@ -1,19 +1,11 @@
 import 'package:flutter/material.dart';
-
-// Firebase imports
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
-
-// Routing
 import 'package:flutter_web_plugins/url_strategy.dart';
-
-// State management
 import 'package:provider/provider.dart';
 import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
 import 'package:ketchapp_flutter/features/plan/presentation/pages/automatic/summary_state.dart';
-
-// App entry
 import 'package:ketchapp_flutter/app/app.dart';
 
 Future<void> main() async {
