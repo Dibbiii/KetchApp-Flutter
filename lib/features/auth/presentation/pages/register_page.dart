@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Import services
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart'; // Import the BLoC
-import 'package:ketchapp_flutter/app/themes/app_colors.dart'; // Import app_colors
+import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+// Removed unused app_colors import as Theme.of(context) is used
 
 class RegisterPage extends StatefulWidget {
-  // Converted to StatefulWidget
   const RegisterPage({super.key});
 
   @override
@@ -14,41 +13,34 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  // State class
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
-  late final TextEditingController
-  _confirmPasswordController; // Added confirm password controller
+  late final TextEditingController _confirmPasswordController;
 
   @override
   void initState() {
     super.initState();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
-    _confirmPasswordController =
-        TextEditingController(); // Initialize confirm password controller
+    _confirmPasswordController = TextEditingController();
   }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _confirmPasswordController.dispose(); // Dispose confirm password controller
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
   void _submitRegister() {
-    // Unfocus to dismiss keyboard
     FocusScope.of(context).unfocus();
     if (_formKey.currentState!.validate()) {
-      // Dispatch registration event to BLoC
       context.read<AuthBloc>().add(
         AuthRegisterRequested(
-          // Ensure this event exists in your BLoC
           email: _emailController.text.trim(),
           password: _passwordController.text,
-          // Add other fields if necessary
         ),
       );
     }
@@ -60,23 +52,11 @@ class _RegisterPageState extends State<RegisterPage> {
     final TextTheme textTheme = Theme.of(context).textTheme;
     final Size size = MediaQuery.of(context).size;
 
-    // Define the global gradient like in LoginPage
-    final Gradient globalBackgroundGradient = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [
-        colors.surface.withOpacity(0.0), // Start transparent
-        colors.primary.withOpacity(0.4), // Slightly stronger accent at bottom
-      ],
-      stops: const [0.0, 1.0], // Control gradient spread
-    );
-
-    // Define SystemUiOverlayStyle like in LoginPage
+    // SystemUiOverlayStyle consistent with LoginPage
     const SystemUiOverlayStyle systemUiOverlayStyle = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      statusBarBrightness: Brightness.light,
-      // For iOS
+      statusBarIconBrightness:
+          Brightness.dark, // Assuming light theme for status bar icons
       systemNavigationBarColor: Colors.transparent,
       systemNavigationBarIconBrightness: Brightness.dark,
     );
@@ -84,115 +64,125 @@ class _RegisterPageState extends State<RegisterPage> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: systemUiOverlayStyle,
       child: Scaffold(
-        // Removed AppBar
-        backgroundColor:
-            Colors.transparent, // Make scaffold transparent for gradient
-        body: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(gradient: globalBackgroundGradient),
-          // Add BlocListener to handle error/success states
-          child: BlocListener<AuthBloc, AuthState>(
-            listener: (context, state) {
-              if (state is AuthError) {
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Registration Error: ${state.message}',
-                      ), // English text
-                      backgroundColor: colors.error,
+        backgroundColor: colors.surface, // Matched with LoginPage
+        body: BlocListener<AuthBloc, AuthState>(
+          listener: (context, state) {
+            if (state is AuthError) {
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: colors.error,
+                  ),
+                );
+            }
+            // Successful registration navigation is typically handled by the router based on AuthState changes
+          },
+          child: Center(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: size.width * 0.08,
+              ), // Matched with LoginPage
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Google logo style (copied from LoginPage)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 32),
+                      child: CircleAvatar(
+                        radius: 32,
+                        backgroundColor:
+                            Colors.white, // Assuming a light theme context
+                        child: Image.network(
+                          'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/1200px-Google_2015_logo.svg.png',
+                          width: 48,
+                          height: 48,
+                          fit: BoxFit.contain,
+                          loadingBuilder: (
+                            BuildContext context,
+                            Widget child,
+                            ImageChunkEvent? loadingProgress,
+                          ) {
+                            if (loadingProgress == null) return child;
+                            return SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.0,
+                                value:
+                                    loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress
+                                                .cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
+                              ),
+                            );
+                          },
+                          errorBuilder: (
+                            BuildContext context,
+                            Object error,
+                            StackTrace? stackTrace,
+                          ) {
+                            return Text(
+                              'G',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: colors.primary,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ),
-                  );
-              }
-              // Navigation on success is often handled by GoRouter's redirect based on auth state.
-            },
-            child: Center(
-              child: SingleChildScrollView(
-                // Allows scrolling if keyboard covers fields
-                padding: EdgeInsets.symmetric(
-                  horizontal: size.width * 0.1,
-                ), // Consistent padding
-                child: Form(
-                  // Use the Form key
-                  key: _formKey,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment:
-                        CrossAxisAlignment
-                            .center, // Center items like LoginPage
-                    children: [
-                      // Icon Placeholder (Styled like LoginPage icons)
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: colors.primary.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.person_add_alt_1, // Registration icon
-                          size: 60.0, // Consistent size
-                          color: colors.primary,
-                        ),
+                    Text(
+                      'Create account', // Changed title for registration
+                      style: textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colors.onSurface,
                       ),
-                      const SizedBox(height: 24),
-                      // Title styled like LoginPage
-                      Text(
-                        'Create Account', // English Title
-                        style: textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color:
-                              colors
-                                  .onSurface, // Explicitly use onSurface color
-                        ),
-                        textAlign: TextAlign.center,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'to get started with KetchApp', // Changed subtitle
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colors.onSurface.withOpacity(0.7),
                       ),
-                      const SizedBox(height: 12),
-                      // Subtitle/Description
-                      Text(
-                        'Enter your details to create an account.',
-                        // English text
-                        style: textTheme.bodyLarge?.copyWith(
-                          color: colors.onSurface.withOpacity(
-                            0.8,
-                          ), // Explicitly use onSurface color
-                          height: 1.5,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 40), // Increased spacing
-                      TextFormField(
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 32),
+                    Material(
+                      // TextFormField styling matched with LoginPage
+                      elevation: 1,
+                      borderRadius: BorderRadius.circular(8),
+                      child: TextFormField(
                         controller: _emailController,
                         style: textTheme.bodyLarge?.copyWith(
                           color: colors.onSurface,
                         ),
-                        // Set input text color
                         decoration: InputDecoration(
-                          // Styled like LoginPage
-                          labelText: 'Email',
-                          labelStyle: textTheme.bodyLarge?.copyWith(
-                            color: colors.onSurfaceVariant,
-                          ),
-                          // Set label color
-                          prefixIcon: Icon(
-                            Icons.email_outlined,
-                            color: colors.onSurfaceVariant,
-                          ),
+                          hintText: 'Email',
+                          // Changed hint text
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: colors.outline.withOpacity(0.5),
-                            ),
+                            borderSide: BorderSide.none,
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: colors.primary, width: 1.5),
+                            borderSide: BorderSide(
+                              color: colors.primary,
+                              width: 2.0,
+                            ),
                           ),
                           filled: true,
-                          fillColor: colors.surfaceVariant.withOpacity(0.3),
+                          fillColor: colors.onSurface.withOpacity(0.05),
                           contentPadding: const EdgeInsets.symmetric(
-                            vertical: 14,
+                            vertical: 18,
                             horizontal: 16,
                           ),
                         ),
@@ -202,136 +192,117 @@ class _RegisterPageState extends State<RegisterPage> {
                           if (value == null ||
                               value.isEmpty ||
                               !value.contains('@')) {
-                            return 'Please enter a valid email'; // English message
+                            return 'Enter a valid email';
                           }
                           return null;
                         },
                       ),
-                      const SizedBox(height: 16), // Consistent spacing
-                      TextFormField(
+                    ),
+                    const SizedBox(height: 16),
+                    Material(
+                      // TextFormField styling matched with LoginPage
+                      elevation: 1,
+                      borderRadius: BorderRadius.circular(8),
+                      child: TextFormField(
                         controller: _passwordController,
                         style: textTheme.bodyLarge?.copyWith(
                           color: colors.onSurface,
                         ),
-                        // Set input text color
                         decoration: InputDecoration(
-                          // Styled like LoginPage
-                          labelText: 'Password',
-                          labelStyle: textTheme.bodyLarge?.copyWith(
-                            color: colors.onSurfaceVariant,
-                          ),
-                          // Set label color
-                          prefixIcon: Icon(
-                            Icons.lock_outline,
-                            color: colors.onSurfaceVariant,
-                          ),
+                          hintText: 'Password',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: colors.outline.withOpacity(0.5),
-                            ),
+                            borderSide: BorderSide.none,
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: colors.primary, width: 1.5),
+                            borderSide: BorderSide(
+                              color: colors.primary,
+                              width: 2.0,
+                            ),
                           ),
                           filled: true,
-                          fillColor: colors.surfaceVariant.withOpacity(0.3),
+                          fillColor: colors.onSurface.withOpacity(0.05),
                           contentPadding: const EdgeInsets.symmetric(
-                            vertical: 14,
+                            vertical: 18,
                             horizontal: 16,
                           ),
                         ),
                         obscureText: true,
                         textInputAction: TextInputAction.next,
-                        // Change to next
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter a password'; // English message
+                            return 'Please enter a password';
                           }
                           if (value.length < 6) {
-                            // Password length check
-                            return 'Password must be at least 6 characters'; // English message
+                            return 'Password must be at least 6 characters';
                           }
                           return null;
                         },
                       ),
-                      const SizedBox(height: 16), // Consistent spacing
-                      // Add TextFormField for password confirmation
-                      TextFormField(
+                    ),
+                    const SizedBox(height: 16),
+                    Material(
+                      // TextFormField styling matched with LoginPage
+                      elevation: 1,
+                      borderRadius: BorderRadius.circular(8),
+                      child: TextFormField(
                         controller: _confirmPasswordController,
                         style: textTheme.bodyLarge?.copyWith(
                           color: colors.onSurface,
                         ),
-                        // Set input text color
                         decoration: InputDecoration(
-                          // Styled like LoginPage
-                          labelText: 'Confirm Password',
-                          // English label
-                          labelStyle: textTheme.bodyLarge?.copyWith(
-                            color: colors.onSurfaceVariant,
-                          ),
-                          // Set label color
-                          prefixIcon: Icon(
-                            Icons.lock_outline,
-                            color: colors.onSurfaceVariant,
-                          ),
+                          hintText: 'Confirm Password',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: colors.outline.withOpacity(0.5),
-                            ),
+                            borderSide: BorderSide.none,
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: colors.primary, width: 1.5),
+                            borderSide: BorderSide(
+                              color: colors.primary,
+                              width: 2.0,
+                            ),
                           ),
                           filled: true,
-                          fillColor: colors.surfaceVariant.withOpacity(0.3),
+                          fillColor: colors.onSurface.withOpacity(0.05),
                           contentPadding: const EdgeInsets.symmetric(
-                            vertical: 14,
+                            vertical: 18,
                             horizontal: 16,
                           ),
                         ),
                         obscureText: true,
                         textInputAction: TextInputAction.done,
-                        // Change to done
                         onFieldSubmitted: (_) => _submitRegister(),
-                        // Submit on done
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please confirm your password'; // English message
+                            return 'Please confirm your password';
                           }
                           if (value != _passwordController.text) {
-                            return 'Passwords do not match'; // English message
+                            return 'Passwords do not match';
                           }
                           return null;
                         },
                       ),
-                      const SizedBox(height: 30), // Increased spacing
-                      // Use BlocBuilder to show loading state on the button
-                      BlocBuilder<AuthBloc, AuthState>(
-                        builder: (context, state) {
-                          final isLoading = state is AuthLoading;
-                          return FilledButton(
-                            // Styled like LoginPage 'Log In'
-                            onPressed:
-                                isLoading
-                                    ? null
-                                    : _submitRegister, // Call _submitRegister
+                    ),
+                    const SizedBox(height: 28), // Adjusted spacing
+                    BlocBuilder<AuthBloc, AuthState>(
+                      builder: (context, state) {
+                        final isLoading = state is AuthLoading;
+                        return SizedBox(
+                          // Matched with LoginPage
+                          width: double.infinity,
+                          child: FilledButton(
+                            onPressed: isLoading ? null : _submitRegister,
                             style: FilledButton.styleFrom(
-                              minimumSize: const Size(double.infinity, 50),
                               backgroundColor: colors.primary,
                               foregroundColor: colors.onPrimary,
+                              minimumSize: const Size.fromHeight(48),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               textStyle: textTheme.labelLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
-                              ),
-                            ).copyWith(
-                              overlayColor: const MaterialStatePropertyAll(
-                                Colors.transparent,
                               ),
                             ),
                             child:
@@ -341,48 +312,50 @@ class _RegisterPageState extends State<RegisterPage> {
                                       width: 20,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2.5,
-                                        color: Colors.white, // Ensure contrast
+                                        color: Colors.white,
                                       ),
                                     )
-                                    : const Text('Register'), // English text
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 16), // Consistent spacing
-                      // Also disable the button to go to login during loading
-                      BlocBuilder<AuthBloc, AuthState>(
-                        builder: (context, state) {
-                          final isLoading = state is AuthLoading;
-                          return TextButton(
-                            // Styled like LoginPage secondary button
-                            onPressed:
-                                isLoading
-                                    ? null
-                                    : () {
-                                      // Navigate to login using GoRouter
-                                      context.go('/login');
-                                    },
-                            style: TextButton.styleFrom(
-                              foregroundColor: colors.primary,
-                              // Explicitly set foreground (text) color
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                            ).copyWith(
-                              overlayColor: const MaterialStatePropertyAll(
-                                Colors.transparent,
+                                    : const Text(
+                                      'Register',
+                                    ), // Changed button text
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 18), // Adjusted spacing
+                    BlocBuilder<AuthBloc, AuthState>(
+                      // Matched with LoginPage
+                      builder: (context, state) {
+                        final isLoading = state is AuthLoading;
+                        return Row(
+                          // Using Row for "Already have an account? Log In"
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Already have an account?",
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colors.onSurface.withOpacity(0.7),
                               ),
                             ),
-                            child: Text(
-                              // Ensure Text widget uses the button's foreground color
-                              'Already have an account? Log In', // English text
-                              style: textTheme.labelLarge?.copyWith(
-                                color: colors.primary,
-                              ), // Explicitly set color
+                            TextButton(
+                              onPressed:
+                                  isLoading ? null : () => context.go('/login'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: colors.primary,
+                                padding: const EdgeInsets.only(
+                                  left: 4.0,
+                                ), // Added padding for better spacing
+                                textStyle: textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              child: const Text('Log In'),
                             ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ),
             ),

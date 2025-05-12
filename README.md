@@ -1,3 +1,4 @@
-# ketchapp_flutter
+# TODO List:
 
-A new Flutter project.
+- [ ] Add more tests
+- [ ] Add more examples

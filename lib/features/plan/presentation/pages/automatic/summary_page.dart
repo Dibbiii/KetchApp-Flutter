@@ -33,10 +33,20 @@ class _SummaryPageState extends State<SummaryPage> {
     super.initState();
     remainingSeconds = sessionDuration * 60;
     _startTimer();
+
+    // Aggiorna il valore nel SummaryState dopo il primo frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final summaryState = Provider.of<SummaryState>(context, listen: false);
+      int pomodoriCompletati = 2;
+      summaryState.updateTotalCompletedHours(
+        (pomodoriCompletati * sessionDuration) / 60,
+      );
+    });
   }
 
   @override
   void dispose() {
+    _timer?.cancel(); // Cancel the timer to avoid setState after dispose
     super.dispose();
   }
 
@@ -47,6 +57,7 @@ class _SummaryPageState extends State<SummaryPage> {
 
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return; // Prevent setState if widget is disposed
       if (remainingSeconds > 0) {
         setState(() {
           remainingSeconds--;
@@ -66,18 +77,11 @@ class _SummaryPageState extends State<SummaryPage> {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    final summaryState = Provider.of<SummaryState>(context, listen: false);
 
     // Calcolo numero di pomodori necessari per coprire totalHours
     final totalMinutes = totalHours * 60;
     int numeroPomodori = (totalMinutes / sessionDuration).ceil();
     int pomodoriCompletati = 2;
-
-    // Calcola le ore completate
-    final double totalCompletedHours = (pomodoriCompletati * sessionDuration) / 60;
-
-    // Aggiorna il valore nel SummaryState
-    summaryState.updateTotalCompletedHours(totalCompletedHours);
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -116,8 +120,9 @@ class _SummaryPageState extends State<SummaryPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(numeroPomodori, (index) {
                 final bool isCompletato = index < pomodoriCompletati;
-                final start = DateTime(2020, 1, 1, hourStart, 0)
-                    .add(Duration(minutes: index * (sessionDuration + breakDuration)));
+                final start = DateTime(2020, 1, 1, hourStart, 0).add(
+                  Duration(minutes: index * (sessionDuration + breakDuration)),
+                );
                 final end = start.add(Duration(minutes: sessionDuration));
                 String formatTime(DateTime t) =>
                     '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
@@ -135,11 +140,7 @@ class _SummaryPageState extends State<SummaryPage> {
                             size: 32,
                           ),
                           if (isCompletato)
-                            Icon(
-                              Icons.circle,
-                              color: Colors.red,
-                              size: 28,
-                            ),
+                            Icon(Icons.circle, color: Colors.red, size: 28),
                         ],
                       ),
                     ),
@@ -151,12 +152,18 @@ class _SummaryPageState extends State<SummaryPage> {
                           Text(
                             formatTime(start),
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 12, color: colors.onSurface),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colors.onSurface,
+                            ),
                           ),
                           Text(
                             formatTime(end),
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 12, color: colors.onSurface),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colors.onSurface,
+                            ),
                           ),
                         ],
                       ),
@@ -187,10 +194,11 @@ class _SummaryPageState extends State<SummaryPage> {
             ),
             const SizedBox(height: 16),
             Consumer<SummaryState>(
-              builder: (context, summaryState, child) => Text(
-                'Ore completate oggi: ${summaryState.totalCompletedHours.toStringAsFixed(2)}',
-                style: TextStyle(fontSize: 18, color: colors.primary),
-              ),
+              builder:
+                  (context, summaryState, child) => Text(
+                    'Ore completate oggi: ${summaryState.totalCompletedHours.toStringAsFixed(2)}',
+                    style: TextStyle(fontSize: 18, color: colors.primary),
+                  ),
             ),
           ],
         ),

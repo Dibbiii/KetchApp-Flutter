@@ -94,7 +94,7 @@ class _WelcomePageState extends State<WelcomePage> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ).copyWith(
-                overlayColor: MaterialStateProperty.all(
+                overlayColor: WidgetStateProperty.all(
                   Colors.yellow.withOpacity(0.15),
                 ), // Yellow hover
               ),
@@ -108,7 +108,7 @@ class _WelcomePageState extends State<WelcomePage> {
                 padding: const EdgeInsets.all(16), // Increased padding
                 shape: const CircleBorder(),
               ).copyWith(
-                overlayColor: MaterialStateProperty.all(
+                overlayColor: WidgetStateProperty.all(
                   Colors.yellow.withOpacity(0.15),
                 ), // Yellow hover
               ),
@@ -129,7 +129,7 @@ class _WelcomePageState extends State<WelcomePage> {
                   vertical: 18, // Increased padding
                 ),
               ).copyWith(
-                overlayColor: MaterialStateProperty.all(
+                overlayColor: WidgetStateProperty.all(
                   Colors.yellow.withOpacity(0.15),
                 ), // Yellow hover
               ),
@@ -144,7 +144,7 @@ class _WelcomePageState extends State<WelcomePage> {
               size: const Size.square(8.0),
               activeSize: const Size(20.0, 8.0),
               activeColor: colors.primary,
-              color: colors.onSurface.withOpacity(0.2),
+              color: colors.onSurface.withValues(alpha: 0.2),
               spacing: const EdgeInsets.symmetric(horizontal: 4.0),
               activeShape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(25.0),

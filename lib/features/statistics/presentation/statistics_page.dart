@@ -197,14 +197,6 @@ class _StatisticsPageState extends State<StatisticsPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      'Dettagli Attività',
-                      style: textTheme.headlineSmall?.copyWith(
-                        color: colors.onSurface,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
                     Center(
                       child: Column(
                         children: [

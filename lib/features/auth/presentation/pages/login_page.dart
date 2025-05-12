@@ -13,6 +13,44 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = Theme
+        .of(context)
+        .colorScheme;
+    // Removed unused variables for performance
+    return Scaffold(
+      backgroundColor: colors.surface,
+      body: BlocListener<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is AuthError) {
+            // Use mounted check for safety
+            if (!mounted) return;
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: colors.error,
+                ),
+              );
+          }
+        },
+        child:
+        const _LoginForm(), // Extracted widget for better rebuild performance
+      ),
+    );
+  }
+}
+
+class _LoginForm extends StatefulWidget {
+  const _LoginForm();
+
+  @override
+  State<_LoginForm> createState() => _LoginFormState();
+}
+
+class _LoginFormState extends State<_LoginForm> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
@@ -32,7 +70,6 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _submitLogin() {
-    // Unfocus to dismiss keyboard
     FocusScope.of(context).unfocus();
     if (_formKey.currentState!.validate()) {
       context.read<AuthBloc>().add(
@@ -49,258 +86,230 @@ class _LoginPageState extends State<LoginPage> {
     final ColorScheme colors = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
     final Size size = MediaQuery.of(context).size;
-
-    // Define the global gradient like in WelcomePage
-    final Gradient globalBackgroundGradient = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [
-        colors.surface.withOpacity(0.0), // Start transparent
-        colors.primary.withOpacity(0.4), // Slightly stronger accent at bottom
-      ],
-      stops: const [0.0, 1.0], // Control gradient spread
-    );
-
-    // Define SystemUiOverlayStyle like in WelcomePage
-    const SystemUiOverlayStyle systemUiOverlayStyle = SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      statusBarBrightness: Brightness.light,
-      // For iOS
-      systemNavigationBarColor: Colors.transparent,
-      systemNavigationBarIconBrightness: Brightness.dark,
-    );
-
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: systemUiOverlayStyle,
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        // Make scaffold transparent for gradient
-        body: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(gradient: globalBackgroundGradient),
-          child: BlocListener<AuthBloc, AuthState>(
-            listener: (context, state) {
-              if (state is AuthError) {
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(
-                    SnackBar(
-                      content: Text('Login Error: ${state.message}'),
-                      backgroundColor: colors.error,
-                    ),
-                  );
-              }
-              // Navigation on success is handled by the router redirect
-            },
-            child: Center(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: size.width * 0.1),
-                // Consistent padding
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    // Center items
-                    children: [
-                      // Icon Placeholder (Styled like WelcomePage icons)
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: colors.primary.withOpacity(0.1),
-                          shape: BoxShape.circle,
+    return Center(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(horizontal: size.width * 0.08),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Google logo style
+              Container(
+                margin: const EdgeInsets.only(bottom: 32),
+                child: CircleAvatar(
+                  radius: 32,
+                  backgroundColor:
+                  Colors.white, // Assuming a light theme context
+                  child: Image.network(
+                    'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/1200px-Google_2015_logo.svg.png',
+                    width: 48,
+                    // Slightly increased size
+                    height: 48,
+                    // Slightly increased size
+                    fit: BoxFit.contain,
+                    loadingBuilder: (BuildContext context,
+                        Widget child,
+                        ImageChunkEvent? loadingProgress,) {
+                      if (loadingProgress == null) return child;
+                      return SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.0,
+                          value:
+                          loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                              : null,
                         ),
-                        child: Icon(
-                          Icons.login, // Login icon
-                          size: 60.0, // Consistent size
+                      );
+                    },
+                    errorBuilder: (BuildContext context,
+                        Object error,
+                        StackTrace? stackTrace,) {
+                      return Text(
+                        'G',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
                           color: colors.primary,
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      // Title styled like WelcomePage
-                      Text(
-                        'Welcome Back!', // Changed Title
-                        style: textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color:
-                              colors
-                                  .onSurface, // Explicitly use onSurface color
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 12),
-                      // Subtitle/Description
-                      Text(
-                        'Please enter your details to log in.',
-                        style: textTheme.bodyLarge?.copyWith(
-                          color: colors.onSurface.withOpacity(0.8),
-                          // Explicitly use onSurface color
-                          height: 1.5,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 40), // Increased spacing
-                      TextFormField(
-                        controller: _emailController,
-                        style: textTheme.bodyLarge?.copyWith(
-                          color: colors.onSurface,
-                        ),
-                        // Set input text color
-                        decoration: InputDecoration(
-                          labelText: 'Email',
-                          labelStyle: textTheme.bodyLarge?.copyWith(
-                            color: colors.onSurfaceVariant,
-                          ),
-                          // Set label color
-                          prefixIcon: Icon(
-                            Icons.email_outlined,
-                            color: colors.onSurfaceVariant,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: colors.outline.withOpacity(0.5),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: colors.primary, width: 1.5),
-                          ),
-                          filled: true,
-                          fillColor: colors.surfaceVariant.withOpacity(0.3),
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 14,
-                            horizontal: 16,
-                          ),
-                        ),
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                        validator: (value) {
-                          if (value == null ||
-                              value.isEmpty ||
-                              !value.contains('@')) {
-                            return 'Please enter a valid email'; // Updated message
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16), // Consistent spacing
-                      TextFormField(
-                        controller: _passwordController,
-                        style: textTheme.bodyLarge?.copyWith(
-                          color: colors.onSurface,
-                        ),
-                        // Set input text color
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          labelStyle: textTheme.bodyLarge?.copyWith(
-                            color: colors.onSurfaceVariant,
-                          ),
-                          // Set label color
-                          prefixIcon: Icon(
-                            Icons.lock_outline,
-                            color: colors.onSurfaceVariant,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: colors.outline.withOpacity(0.5),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: colors.primary, width: 1.5),
-                          ),
-                          filled: true,
-                          fillColor: colors.surfaceVariant.withOpacity(0.3),
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 14,
-                            horizontal: 16,
-                          ),
-                        ),
-                        obscureText: true,
-                        textInputAction: TextInputAction.done,
-                        onFieldSubmitted: (_) => _submitLogin(),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your password'; // Updated message
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 30), // Increased spacing
-                      BlocBuilder<AuthBloc, AuthState>(
-                        builder: (context, state) {
-                          final isLoading = state is AuthLoading;
-                          return FilledButton(
-                            onPressed: isLoading ? null : _submitLogin,
-                            style: FilledButton.styleFrom(
-                              minimumSize: const Size(double.infinity, 50),
-                              backgroundColor: colors.primary,
-                              foregroundColor: colors.onPrimary,
-                              // Text color for FilledButton
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              textStyle: textTheme.labelLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ).copyWith(
-                              overlayColor: const MaterialStatePropertyAll(
-                                Colors.transparent,
-                              ),
-                            ),
-                            child:
-                                isLoading
-                                    ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2.5,
-                                        color: Colors.white, // Ensure contrast
-                                      ),
-                                    )
-                                    : const Text('Log In'),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 16), // Consistent spacing
-                      BlocBuilder<AuthBloc, AuthState>(
-                        builder: (context, state) {
-                          final isLoading = state is AuthLoading;
-                          return TextButton(
-                            onPressed:
-                                isLoading
-                                    ? null
-                                    : () {
-                                      context.go('/register');
-                                    },
-                            style: TextButton.styleFrom(
-                              foregroundColor: colors.primary,
-                              // Explicitly set foreground (text) color
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                            ).copyWith(
-                              overlayColor: const MaterialStatePropertyAll(
-                                Colors.transparent,
-                              ),
-                            ),
-                            child: Text(
-                              // Ensure Text widget uses the button's foreground color
-                              'Don\'t have an account? Register',
-                              style: textTheme.labelLarge?.copyWith(
-                                color: colors.primary,
-                              ), // Explicitly set color
-                            ),
-                          );
-                        },
-                      ),
-                    ],
+                      );
+                    },
                   ),
                 ),
               ),
-            ),
+              Text(
+                'Sign in',
+                style: textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colors.onSurface,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'to continue to KetchApp',
+                style: textTheme.bodyMedium?.copyWith(
+                  // Changed from bodyLarge
+                  color: colors.onSurface.withOpacity(0.7),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              Material(
+                elevation: 1,
+                borderRadius: BorderRadius.circular(8),
+                child: TextFormField(
+                  controller: _emailController,
+                  style: textTheme.bodyLarge?.copyWith(color: colors.onSurface),
+                  decoration: InputDecoration(
+                    hintText: 'Email or phone',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      // Added focusedBorder
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: colors.primary, width: 2.0),
+                    ),
+                    filled: true,
+                    fillColor: colors.onSurface.withOpacity(
+                      0.05,
+                    ),
+                    // Subtle fill color
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 18,
+                      horizontal: 16,
+                    ),
+                  ),
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  validator: (value) {
+                    if (value == null ||
+                        value.isEmpty ||
+                        !value.contains('@')) {
+                      return 'Enter a valid email';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              Material(
+                elevation: 1,
+                borderRadius: BorderRadius.circular(8),
+                child: TextFormField(
+                  controller: _passwordController,
+                  style: textTheme.bodyLarge?.copyWith(color: colors.onSurface),
+                  decoration: InputDecoration(
+                    hintText: 'Password',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      // Added focusedBorder
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: colors.primary, width: 2.0),
+                    ),
+                    filled: true,
+                    fillColor: colors.onSurface.withOpacity(
+                      0.05,
+                    ),
+                    // Subtle fill color
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 18,
+                      horizontal: 16,
+                    ),
+                  ),
+                  obscureText: true,
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => _submitLogin(),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Enter your password';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () {}, // Implement forgot password logic
+                  style: TextButton.styleFrom(
+                    foregroundColor: colors.primary,
+                    padding: EdgeInsets.zero,
+                    textStyle: textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  child: const Text('Forgot password?'),
+                ),
+              ),
+              const SizedBox(height: 24),
+              BlocBuilder<AuthBloc, AuthState>(
+                builder: (context, state) {
+                  final isLoading = state is AuthLoading;
+                  return SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: isLoading ? null : _submitLogin,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: colors.primary,
+                        foregroundColor: colors.onPrimary,
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        textStyle: textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      child:
+                      isLoading
+                          ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
+                      )
+                          : const Text('Next'),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Don't have an account?",
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colors.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => context.go('/register'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: colors.primary,
+                      padding: EdgeInsets.zero,
+                      textStyle: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    child: const Text('Create account'),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),

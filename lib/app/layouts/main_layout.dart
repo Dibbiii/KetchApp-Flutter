@@ -5,6 +5,7 @@ import 'package:ketchapp_flutter/components/animated_gradient_text.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ketchapp_flutter/app/layouts/bloc/main_layout_bloc.dart';
 import 'package:ketchapp_flutter/app/layouts/widgets/action_button_widget.dart';
+import 'package:ketchapp_flutter/components/header.dart';
 
 class MainLayout extends StatefulWidget {
   final Widget child;
@@ -191,6 +192,7 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
           final bool isOverlayOpen = state.isOverlayVisible;
 
           return Scaffold(
+            appBar: const Header(),
             body: widget.child,
             floatingActionButton: FloatingActionButton(
               onPressed:
