@@ -62,9 +62,7 @@ class _FooterState extends State<Footer> {
             context.go('/statistics');
             break;
           case 2:
-            // TODO: Implement navigation for Trophy if it has a route
-            // context.go('/trophy');
-            print("Trophy navigation triggered (if route exists)");
+            context.go('/ranking');
             break;
           case 3:
             context.go('/profile');
