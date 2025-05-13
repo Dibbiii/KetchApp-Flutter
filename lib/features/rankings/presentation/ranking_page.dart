@@ -1,8 +1,12 @@
 import 'dart:async'; // Import for Timer
-import 'dart:math'; // Import for pi for confetti
 
 import 'package:confetti/confetti.dart'; // Import for confetti
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../bloc/ranking_bloc.dart';
+import '../bloc/ranking_event.dart';
+import '../bloc/ranking_state.dart';
 
 // Define a class to hold user data including rank and hours
 class UserRankData {
@@ -11,6 +15,16 @@ class UserRankData {
   final int hours;
 
   UserRankData({required this.name, required this.rank, required this.hours});
+
+  static List<UserRankData> mockList() {
+    // Puoi personalizzare questa lista per test
+    return List.generate(50, (index) {
+      final name = 'User ${index + 1}';
+      final rank = index + 1;
+      final hours = 120 - index * 2;
+      return UserRankData(name: name, rank: rank, hours: hours);
+    });
+  }
 }
 
 class RankingPage extends StatefulWidget {
@@ -76,15 +90,12 @@ class _RankingPageState extends State<RankingPage>
     } else {
       _activeList = _allGlobalUsers;
     }
-    // Cancel any pending debounce from typing in the previous tab
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-    // Filter immediately with the current search query for the new active list
     _performFiltering();
-
     // Play confetti if there's a top-ranked user
-    if (_filteredUsers.isNotEmpty && _filteredUsers.first.rank == 1) {
+    if (_filteredUsers.isNotEmpty &&
+        _filteredUsers.first.rank == 1 &&
+        _currentSearchQuery.isEmpty) {
       if (_confettiController.state != ConfettiControllerState.playing) {
-        // Play only if not already playing
         _confettiController.play();
       }
     } else {
@@ -106,13 +117,17 @@ class _RankingPageState extends State<RankingPage>
   // Called when text changes in TextField
   void _filterUsers(String query) {
     _currentSearchQuery = query;
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () {
-      if (mounted) {
-        // Check mounted before performing filter logic
-        _performFiltering();
+    _performFiltering();
+    // Play confetti if there's a top-ranked user
+    if (_filteredUsers.isNotEmpty &&
+        _filteredUsers.first.rank == 1 &&
+        _currentSearchQuery.isEmpty) {
+      if (_confettiController.state != ConfettiControllerState.playing) {
+        _confettiController.play();
       }
-    });
+    } else {
+      _confettiController.stop();
+    }
   }
 
   // Performs the actual filtering logic
@@ -132,250 +147,405 @@ class _RankingPageState extends State<RankingPage>
         _filteredUsers = filtered;
       });
     }
-    // After filtering, check again if confetti should play for the new filtered list
-    // This ensures confetti plays/stops correctly after search
-    if (_filteredUsers.isNotEmpty &&
-        _filteredUsers.first.rank == 1 &&
-        _currentSearchQuery.isEmpty) {
-      // Only play if no search query or top user is still #1
-      if (_confettiController.state != ConfettiControllerState.playing &&
-          _tabController.indexIsChanging == false) {
-        // Check if tab is not changing to avoid playing during swipe
-        _confettiController.play();
-      }
-    } else {
-      _confettiController.stop();
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
-        children: [
-          TabBar(
-            controller: _tabController,
-            tabs: const [Tab(text: 'Friends'), Tab(text: 'Global')],
-            labelColor: Theme.of(context).colorScheme.primary,
-            unselectedLabelColor: Theme.of(
-              context,
-            ).colorScheme.onSurface.withValues(alpha: 0.7),
-            indicatorColor:
-                Theme.of(
-                  context,
-                ).colorScheme.primary, // Reverted to simple indicator color
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: 8.0,
-              horizontal: 16.0,
-            ),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Search',
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+    return BlocProvider(
+      create: (_) => RankingBloc()..add(LoadRanking()),
+      child: BlocBuilder<RankingBloc, RankingState>(
+        builder: (context, state) {
+          return SafeArea(
+            child: Stack(
+              alignment: Alignment.topCenter,
+              children: [
+                Column(
+                  children: [
+                    TabBar(
+                      controller: _tabController,
+                      tabs: const [Tab(text: 'Friends'), Tab(text: 'Global')],
+                      labelColor: Theme.of(context).colorScheme.primary,
+                      unselectedLabelColor: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.7),
+                      indicatorColor: Theme.of(context).colorScheme.primary,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 10.0,
+                        horizontal: 20.0,
+                      ),
+                      child: Material(
+                        elevation: 2,
+                        borderRadius: BorderRadius.circular(16.0),
+                        color: Theme.of(context).colorScheme.surface,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  hintText: 'Cerca utente...',
+                                  prefixIcon: Icon(
+                                    Icons.search,
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                  ),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                    horizontal: 0,
+                                  ),
+                                ),
+                                style: Theme.of(context).textTheme.bodyLarge,
+                                onChanged: _filterUsers,
+                              ),
+                            ),
+                            DropdownButton<RankingFilter>(
+                              value:
+                                  state is RankingLoaded
+                                      ? state.filter
+                                      : RankingFilter.hours,
+                              underline: SizedBox.shrink(),
+                              icon: Icon(
+                                Icons.filter_list,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: RankingFilter.advancements,
+                                  child: Text('Advancements'),
+                                ),
+                                DropdownMenuItem(
+                                  value: RankingFilter.hours,
+                                  child: Text('Hours'),
+                                ),
+                                DropdownMenuItem(
+                                  value: RankingFilter.streak,
+                                  child: Text('Streak'),
+                                ),
+                              ],
+                              onChanged: (filter) {
+                                if (filter != null) {
+                                  context.read<RankingBloc>().add(
+                                    ChangeRankingFilter(filter),
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child:
+                          state is RankingLoading
+                              ? const Center(child: CircularProgressIndicator())
+                              : RefreshIndicator(
+                                onRefresh: () async {
+                                  context.read<RankingBloc>().add(
+                                    RefreshRanking(),
+                                  );
+                                },
+                                child: _buildRankingListBloc(state),
+                              ),
+                    ),
+                  ],
                 ),
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 10,
-                  horizontal: 0,
-                ),
-                filled: true,
-                fillColor: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              style: Theme.of(context).textTheme.bodyLarge,
-              onChanged: _filterUsers,
+                if (_filteredUsers.isNotEmpty &&
+                    _filteredUsers.first.rank == 1 &&
+                    _currentSearchQuery.isEmpty) ...[
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: ConfettiWidget(
+                      confettiController: _confettiController,
+                      blastDirection: 3.14 / 2,
+                      maxBlastForce: 10,
+                      // increased
+                      minBlastForce: 5,
+                      // increased
+                      emissionFrequency: 0.12,
+                      // more frequent
+                      numberOfParticles: 30,
+                      // more particles
+                      gravity: 0.08,
+                      // slightly slower fall
+                      shouldLoop: false,
+                      colors: const [
+                        Colors.green,
+                        Colors.blue,
+                        Colors.pink,
+                        Colors.orange,
+                        Colors.purple,
+                        Colors.amber,
+                        Colors.red,
+                      ],
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: ConfettiWidget(
+                      confettiController: _confettiController,
+                      blastDirection: 0,
+                      // right
+                      maxBlastForce: 8,
+                      minBlastForce: 4,
+                      emissionFrequency: 0.08,
+                      numberOfParticles: 15,
+                      gravity: 0.09,
+                      shouldLoop: false,
+                      colors: const [
+                        Colors.green,
+                        Colors.blue,
+                        Colors.pink,
+                        Colors.orange,
+                        Colors.purple,
+                      ],
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ConfettiWidget(
+                      confettiController: _confettiController,
+                      blastDirection: 3.14,
+                      // left
+                      maxBlastForce: 8,
+                      minBlastForce: 4,
+                      emissionFrequency: 0.08,
+                      numberOfParticles: 15,
+                      gravity: 0.09,
+                      shouldLoop: false,
+                      colors: const [
+                        Colors.green,
+                        Colors.blue,
+                        Colors.pink,
+                        Colors.orange,
+                        Colors.purple,
+                      ],
+                    ),
+                  ),
+                ],
+              ],
             ),
-          ),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [_buildRankingList(), _buildRankingList()],
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 
-  // Helper widget to build the list view, to avoid duplication in TabBarView
-  Widget _buildRankingList() {
-    if (_filteredUsers.isEmpty && _currentSearchQuery.isNotEmpty) {
-      return Center(child: Text('No users found for "$_currentSearchQuery"'));
+  Widget _buildRankingListBloc(RankingState state) {
+    // Use _filteredUsers for display
+    final users = _filteredUsers;
+    final filter = state is RankingLoaded ? state.filter : RankingFilter.hours;
+    // Ordina in base al filtro
+    List<UserRankData> sortedUsers = List.from(users);
+    if (filter == RankingFilter.hours) {
+      sortedUsers.sort((a, b) => b.hours.compareTo(a.hours));
+    } else if (filter == RankingFilter.streak) {
+      // Qui puoi aggiungere la logica per streak se hai il dato
+    } else if (filter == RankingFilter.advancements) {
+      // Qui puoi aggiungere la logica per advancements se hai il dato
     }
-    if (_filteredUsers.isEmpty && _currentSearchQuery.isEmpty) {
-      if (_activeList.isEmpty) {
-        return const Center(
-          child: Text('There are no users in this category.'),
-        );
+    // Soglie di ore per ogni rank
+    const int crystalThreshold = 100;
+    const int goldThreshold = 70;
+    const int ironThreshold = 40;
+    const int bronzeThreshold = 15;
+    List<UserRankData> crystal = [];
+    List<UserRankData> gold = [];
+    List<UserRankData> iron = [];
+    List<UserRankData> bronze = [];
+    List<UserRankData> rest = [];
+    for (int i = 0; i < sortedUsers.length; i++) {
+      final user = sortedUsers[i];
+      if (user.hours >= crystalThreshold) {
+        crystal.add(user);
+      } else if (user.hours >= goldThreshold) {
+        gold.add(user);
+      } else if (user.hours >= ironThreshold) {
+        iron.add(user);
+      } else if (user.hours >= bronzeThreshold) {
+        bronze.add(user);
+      } else {
+        rest.add(user);
       }
-      return const Center(child: Text('No users in this list.'));
     }
-
-    final UserRankData topUser = _filteredUsers.first;
-    final List<UserRankData> restOfUsers =
-        _filteredUsers.length > 1 ? _filteredUsers.sublist(1) : [];
-
-    // Conditionally play confetti here if not handled by _setActiveListAndFilter or _performFiltering
-    // This ensures it plays when the list is built with a rank 1 user.
-    // However, the logic in _setActiveListAndFilter and _performFiltering should be preferred.
-
-    return Stack(
-      alignment: Alignment.topCenter,
-      children: [
-        Column(
-          children: <Widget>[
-            // Top User Section (only if rank is 1)
-            if (topUser.rank == 1)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 16.0,
-                  horizontal: 8.0,
-                ),
-                child: Column(
-                  children: <Widget>[
-                    Icon(
-                      Icons.emoji_events,
-                      size: 50,
-                      color: Colors.amber[600],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      topUser.name,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    Text(
-                      'Rank: ${topUser.rank}',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.8),
-                      ),
-                    ),
-                    Text(
-                      '${topUser.hours} hrs',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.8),
-                      ),
-                    ),
-                  ],
-                ),
+    Widget buildSection(String title, List<UserRankData> users) {
+      if (users.isEmpty) return SizedBox.shrink();
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            child: Text(
+              title,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w600,
               ),
-            if (topUser.rank == 1) const Divider(height: 1),
-
-            // Rest of the list
-            Expanded(
-              child: ListView.builder(
-                itemCount:
-                    topUser.rank == 1
-                        ? restOfUsers.length
-                        : _filteredUsers.length,
-                itemBuilder: (context, index) {
-                  final userData =
-                      topUser.rank == 1
-                          ? restOfUsers[index]
-                          : _filteredUsers[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 4.0,
-                      horizontal: 8.0,
-                    ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8.0),
-                        // color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5), // Optional: item background
-                      ),
-                      child: ListTile(
-                        leading: Text(
-                          '${userData.rank}', // Use pre-calculated rank
-                          style: const TextStyle(
-                            fontSize: 18.0,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        title: Text(userData.name), // Use name from userData
-                        trailing: Text(
-                          '${userData.hours} hrs',
-                        ), // Use pre-calculated hours
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-        // Confetti Widget - aligned to top center
-        if (topUser.rank == 1) // Only show confetti if top user is rank 1
-          Align(
-            alignment: Alignment.topCenter,
-            child: ConfettiWidget(
-              confettiController: _confettiController,
-              blastDirection: pi / 2,
-              // Downwards
-              maxBlastForce: 5,
-              // Default is 20, Set a lower force
-              minBlastForce: 2,
-              // Default is 5
-              emissionFrequency: 0.03,
-              // How often it emits
-              numberOfParticles: 10,
-              // Number of particles
-              gravity: 0.1,
-              // How fast they fall
-              shouldLoop: false,
-              colors: const [
-                Colors.green,
-                Colors.blue,
-                Colors.pink,
-                Colors.orange,
-                Colors.purple,
-              ],
-              // createParticlePath: drawStar, // Optional: custom particle shape
             ),
           ),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 0),
+            itemCount: users.length,
+            separatorBuilder:
+                (context, index) => Divider(
+                  height: 0,
+                  thickness: 0.3,
+                  indent: 24,
+                  endIndent: 24,
+                  color: Theme.of(context).dividerColor.withOpacity(0.08),
+                ),
+            itemBuilder: (context, index) {
+              final userData = users[index];
+              final visuals = _getRankVisualsBySection(title);
+              Color ringColor = visuals['ringColor'];
+              double ringWidth = visuals['ringWidth'];
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 2.0,
+                  horizontal: 16.0,
+                ),
+                child: Card(
+                  elevation: 0,
+                  margin: EdgeInsets.zero,
+                  color: visuals['bg'],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14.0),
+                  ),
+                  child: ListTile(
+                    leading: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: ringColor, width: ringWidth),
+                      ),
+                      child: CircleAvatar(
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.primary.withOpacity(0.08),
+                        child: Text(
+                          userData.name.isNotEmpty ? userData.name[0] : '',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ),
+                    title: Text(
+                      userData.name,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                    subtitle: Text(
+                      '${userData.hours} hrs',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.5),
+                      ),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (visuals['icon'] != null)
+                          Icon(visuals['icon'], color: visuals['iconColor']),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primary.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '#${userData.rank}',
+                            style: Theme.of(
+                              context,
+                            ).textTheme.labelMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 4,
+                      horizontal: 12,
+                    ),
+                    dense: true,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      );
+    }
+
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        buildSection('100 Hours', crystal),
+        buildSection('70 Hours', gold),
+        buildSection('40 Hours', iron),
+        buildSection('15 Hours', bronze),
+        buildSection('0 Hours', rest),
       ],
     );
   }
+
+  Map<String, dynamic> _getRankVisualsBySection(String section) {
+    switch (section) {
+      case '100 Hours':
+        return {
+          'icon': Icons.brightness_5,
+          'iconColor': Colors.cyan[400],
+          'bg': Colors.cyan.withOpacity(0.13),
+          'ringColor': Colors.cyan[400],
+          'ringWidth': 3.0,
+        };
+      case '70 Hours':
+        return {
+          'icon': Icons.circle,
+          'iconColor': Colors.amber[400],
+          'bg': Colors.amber.withOpacity(0.10),
+          'ringColor': Colors.amber[400],
+          'ringWidth': 3.0,
+        };
+      case '40 Hours':
+        return {
+          'icon': Icons.circle,
+          'iconColor': Colors.grey[400],
+          'bg': Colors.grey.withOpacity(0.10),
+          'ringColor': Colors.grey[400],
+          'ringWidth': 3.0,
+        };
+      case '15 Hours':
+        return {
+          'icon': Icons.circle,
+          'iconColor': Colors.brown[400],
+          'bg': Colors.brown.withOpacity(0.10),
+          'ringColor': Colors.brown[400],
+          'ringWidth': 3.0,
+        };
+      default:
+        return {
+          'icon': null,
+          'iconColor': null,
+          'bg': Theme.of(
+            context,
+          ).colorScheme.surfaceContainerHighest.withOpacity(0.10),
+          'ringColor': Colors.transparent,
+          'ringWidth': 0.0,
+        };
+    }
+  }
 }
-
-// Optional: Helper function to draw a star path for confetti particles (example from package)
-// Path drawStar(Size size) {
-//   // Method to convert degree to radians
-//   double degToRad(double deg) => deg * (pi / 180.0);
-
-//   const numberOfPoints = 5;
-//   final halfWidth = size.width / 2;
-//   final externalRadius = halfWidth;
-//   final internalRadius = halfWidth / 2.5;
-//   final degreesPerPoint = 360 / numberOfPoints;
-//   final halfDegreesPerPoint = degreesPerPoint / 2;
-//   final path = Path();
-//   final fullAngle = degToRad(360);
-//   path.moveTo(size.width, halfWidth);
-
-//   for (double step = 0; step < fullAngle; step += fullAngle / numberOfPoints) {
-//     path.lineTo(halfWidth + externalRadius * cos(step),
-//         halfWidth + externalRadius * sin(step));
-//     path.lineTo(halfWidth + internalRadius * cos(step + halfDegreesPerPoint),
-//         halfWidth + internalRadius * sin(step + halfDegreesPerPoint));
-//   }
-//   path.close();
-//   return path;
-// }
