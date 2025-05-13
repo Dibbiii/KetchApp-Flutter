@@ -1,7 +1,8 @@
 import 'dart:async'; // Import for Timer
 import 'dart:math'; // Import for pi for confetti
-import 'package:flutter/material.dart';
+
 import 'package:confetti/confetti.dart'; // Import for confetti
+import 'package:flutter/material.dart';
 
 // Define a class to hold user data including rank and hours
 class UserRankData {
@@ -158,7 +159,7 @@ class _RankingPageState extends State<RankingPage>
             labelColor: Theme.of(context).colorScheme.primary,
             unselectedLabelColor: Theme.of(
               context,
-            ).colorScheme.onSurface.withOpacity(0.7),
+            ).colorScheme.onSurface.withValues(alpha: 0.7),
             indicatorColor:
                 Theme.of(
                   context,
@@ -184,7 +185,7 @@ class _RankingPageState extends State<RankingPage>
                 filled: true,
                 fillColor: Theme.of(
                   context,
-                ).colorScheme.surfaceVariant.withOpacity(0.5),
+                ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16.0),
                   borderSide: BorderSide.none,
@@ -261,7 +262,7 @@ class _RankingPageState extends State<RankingPage>
                         fontSize: 16,
                         color: Theme.of(
                           context,
-                        ).colorScheme.onSurface.withOpacity(0.8),
+                        ).colorScheme.onSurface.withValues(alpha: 0.8),
                       ),
                     ),
                     Text(
@@ -270,7 +271,7 @@ class _RankingPageState extends State<RankingPage>
                         fontSize: 16,
                         color: Theme.of(
                           context,
-                        ).colorScheme.onSurface.withOpacity(0.8),
+                        ).colorScheme.onSurface.withValues(alpha: 0.8),
                       ),
                     ),
                   ],
