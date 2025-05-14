@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class AppointmentsPage extends StatefulWidget {
   const AppointmentsPage({super.key});
 
@@ -30,7 +29,8 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: colors.primary.withOpacity(0.1), // Use accent color background
+              color: colors.primary.withValues(alpha: 0.1),
+              // Use accent color background
               shape: BoxShape.circle, // Make it circular like WelcomePage
             ),
             child: Icon(
@@ -54,7 +54,8 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
           Text(
             'Add your appointments for the day',
             style: textTheme.bodyLarge?.copyWith(
-              color: colors.onSurface.withOpacity(0.8), // Match text opacity
+              color: colors.onSurface.withValues(alpha: 0.8),
+              // Match text opacity
               height: 1.5,
             ),
             textAlign: TextAlign.center,
@@ -79,7 +80,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
               ),
             ).copyWith(
               // Remove splash/highlight like WelcomePage
-              overlayColor: const MaterialStatePropertyAll(Colors.transparent),
+              overlayColor: const WidgetStatePropertyAll(Colors.transparent),
             ),
             onPressed: () async {
               final subjectName = await showDialog<String>(
@@ -103,11 +104,11 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                           Navigator.of(context).pop(null);
                         },
                         style: TextButton.styleFrom(
-                          foregroundColor: colors.onSurface.withOpacity(
-                            0.6,
-                          ), // Muted cancel
+                          foregroundColor: colors.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
-                        child: const Text('Cancel'), // Updated text
+                        child: const Text('Cancel'),
                       ),
                       TextButton(
                         onPressed: () {
@@ -147,7 +148,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                       child: Text(
                         'No appointments added yet.',
                         style: textTheme.bodyMedium?.copyWith(
-                          color: colors.onSurface.withOpacity(0.6),
+                          color: colors.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                     )
@@ -159,14 +160,15 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                         return Card(
                           // Use Card for better visual separation
                           margin: const EdgeInsets.symmetric(vertical: 4.0),
-                          color: colors.surfaceVariant.withOpacity(0.5),
+                          color: colors.surfaceContainerHighest.withValues(
+                              alpha: 0.5),
                           // Subtle background
                           elevation: 0,
                           // No shadow to match flat style
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                             side: BorderSide(
-                              color: colors.outline.withOpacity(0.2),
+                              color: colors.outline.withValues(alpha: 0.2),
                               width: 1,
                             ), // Subtle border
                           ),
@@ -181,7 +183,8 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                               // Add delete button
                               icon: Icon(
                                 Icons.delete_outline,
-                                color: colors.onSurfaceVariant.withOpacity(0.7),
+                                color: colors.onSurfaceVariant.withValues(
+                                    alpha: 0.7),
                               ),
                               onPressed: () {
                                 setState(() {
@@ -200,10 +203,3 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
     );
   }
 }
-
-//TODO
-// 1. Appointments Page
-// 2. Statistiche
-// 3. Ranking
-// 4. Profilo
-// 5. Impostazioni
