@@ -11,6 +11,7 @@ import 'package:ketchapp_flutter/features/auth/presentation/pages/register_page.
 import 'package:ketchapp_flutter/features/home/presentation/pages/home_page.dart';
 import 'package:ketchapp_flutter/features/plan/layouts/plan_layout.dart';
 import 'package:ketchapp_flutter/features/rankings/presentation/ranking_page.dart';
+import 'package:ketchapp_flutter/features/settings/presentation/settings_page.dart';
 import 'package:ketchapp_flutter/features/statistics/bloc/statistics_bloc.dart';
 import 'package:ketchapp_flutter/features/welcome/presentation/pages/welcome_page.dart';
 import 'package:ketchapp_flutter/features/profile/presentation/pages/profile_page.dart';
@@ -75,6 +76,10 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: '/ranking',
           builder: (context, state) => const RankingPage(),
+        ),
+        GoRoute(
+          path: '/settings',
+          builder: (context, state) => const SettingsPage(),
         ),
         GoRoute(
           path: '/profile',
