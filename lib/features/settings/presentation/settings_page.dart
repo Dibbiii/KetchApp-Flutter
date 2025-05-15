@@ -21,86 +21,94 @@ class _SettingsPageState extends State<SettingsPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
+            if (context.canPop()) {
+              context.pop();
             }
           },
         ),
       ),
-      body: ListView( // Changed Column to ListView
-        padding: const EdgeInsets.symmetric(vertical: 8.0), // Add some vertical padding for the list
-        children: <Widget>[
-          _buildSettingsOptionTile(
-            context,
-            icon: Icons.person_outline,
-            text: 'EDIT PROFILE',
-            onTap: () {
-              context.push('/profile');
-              
-            },
-            trailing: const Icon(Icons.arrow_forward_ios, size: 18),
-          ),
-          _buildSettingsOptionTile(
-            context,
-            icon: Icons.volume_up_outlined,
-            text: 'WHITE NOISES',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('WHITE NOISES tapped')),
-              );
-              // TODO: Navigate to White Noises settings or show dialog
-            },
-            trailing: const Icon(Icons.arrow_forward_ios, size: 18),
-          ),
-          _buildSettingsOptionTile(
-            context,
-            icon: Icons.check_circle_outline,
-            text: 'WORK COMPLETED SOUND',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('WORK COMPLETED SOUND tapped')),
-              );
-              // TODO: Navigate to sound settings or show dialog
-            },
-            trailing: const Icon(Icons.arrow_forward_ios, size: 18),
-          ),
-          _buildSettingsOptionTile(
-            context,
-            icon: Icons.alarm_on_outlined,
-            text: 'END BREAK SOUND',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('END BREAK SOUND tapped')),
-              );
-              // TODO: Navigate to sound settings or show dialog
-            },
-            trailing: const Icon(Icons.arrow_forward_ios, size: 18),
-          ),
-          _buildSettingsOptionTile(
-            context,
-            icon: Icons.timer_outlined,
-            text: 'AUTO-START TIMER',
-            onTap: () { // Allow tapping the row to toggle the switch
-              setState(() {
-                _autoStartTimer = !_autoStartTimer;
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('AUTO-START TIMER ${_autoStartTimer ? "ON" : "OFF"}')),
-              );
-            },
-            trailing: Switch(
-              value: _autoStartTimer,
-              onChanged: (bool value) {
+      body: ListView.separated(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        itemCount: 5,
+        itemBuilder: (BuildContext context, int index) {
+          if (index == 0) {
+            return _buildSettingsOptionTile(
+              context,
+              icon: Icons.person_outline,
+              text: 'EDIT PROFILE',
+              onTap: () {
+                context.push('/profile');
+              },
+              trailing: const Icon(Icons.arrow_forward_ios, size: 18),
+            );
+          } else if (index == 1) {
+            return _buildSettingsOptionTile(
+              context,
+              icon: Icons.volume_up_outlined,
+              text: 'WHITE NOISES',
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('WHITE NOISES tapped')),
+                );
+                // TODO: Navigate to White Noises settings or show dialog
+              },
+              trailing: const Icon(Icons.arrow_forward_ios, size: 18),
+            );
+          } else if (index == 2) {
+            return _buildSettingsOptionTile(
+              context,
+              icon: Icons.check_circle_outline,
+              text: 'WORK COMPLETED SOUND',
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('WORK COMPLETED SOUND tapped')),
+                );
+                // TODO: Navigate to sound settings or show dialog
+              },
+              trailing: const Icon(Icons.arrow_forward_ios, size: 18),
+            );
+          } else if (index == 3) {
+            return _buildSettingsOptionTile(
+              context,
+              icon: Icons.alarm_on_outlined,
+              text: 'END BREAK SOUND',
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('END BREAK SOUND tapped')),
+                );
+                // TODO: Navigate to sound settings or show dialog
+              },
+              trailing: const Icon(Icons.arrow_forward_ios, size: 18),
+            );
+          } else if (index == 4) {
+            return _buildSettingsOptionTile(
+              context,
+              icon: Icons.timer_outlined,
+              text: 'AUTO-START TIMER',
+              onTap: () {
                 setState(() {
-                  _autoStartTimer = value;
+                  _autoStartTimer = !_autoStartTimer;
                 });
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('AUTO-START TIMER ${_autoStartTimer ? "ON" : "OFF"}')),
                 );
               },
-            ),
-          ),
-        ],
+              trailing: Switch(
+                value: _autoStartTimer,
+                onChanged: (bool value) {
+                  setState(() {
+                    _autoStartTimer = value;
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('AUTO-START TIMER ${_autoStartTimer ? "ON" : "OFF"}')),
+                  );
+                },
+              ),
+            );
+          }
+          return Container();
+        },
+        separatorBuilder: (BuildContext context, int index) => const Divider(height: 1),
       ),
     );
   }
@@ -112,9 +120,10 @@ class _SettingsPageState extends State<SettingsPage> {
     required VoidCallback onTap,
     Widget? trailing,
   }) {
+    final textTheme = Theme.of(context).textTheme;
     return ListTile(
       leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
-      title: Text(text),
+      title: Text(text, style: textTheme.titleMedium),
       trailing: trailing,
       onTap: onTap,
     );

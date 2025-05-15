@@ -192,7 +192,6 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
           final bool isOverlayOpen = state.isOverlayVisible;
 
           return Scaffold(
-            appBar: const Header(),
             body: widget.child,
             floatingActionButton: FloatingActionButton(
               onPressed:

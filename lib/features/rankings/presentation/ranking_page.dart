@@ -4,9 +4,9 @@ import 'package:confetti/confetti.dart'; // Import for confetti
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../bloc/ranking_bloc.dart';
-import '../bloc/ranking_event.dart';
-import '../bloc/ranking_state.dart';
+import 'package:ketchapp_flutter/features/rankings/bloc/ranking_bloc.dart';
+import 'package:ketchapp_flutter/features/rankings/bloc/ranking_event.dart';
+import 'package:ketchapp_flutter/features/rankings/bloc/ranking_state.dart';
 
 // Define a class to hold user data including rank and hours
 class UserRankData {
