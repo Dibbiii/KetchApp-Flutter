@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
 import 'package:ketchapp_flutter/features/plan/presentation/pages/automatic/summary_state.dart';
 import 'package:ketchapp_flutter/app/app.dart';
+import 'package:ketchapp_flutter/services/api_service.dart';
 
 Future<void> main() async {
   // Ensure Flutter is initialized
@@ -22,8 +23,14 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
+        Provider<ApiService>( // Ensure ApiService is provided before AuthBloc
+          create: (_) => ApiService(),
+        ),
         Provider<AuthBloc>(
-          create: (_) => AuthBloc(firebaseAuth: FirebaseAuth.instance),
+          create: (context) => AuthBloc(
+            firebaseAuth: FirebaseAuth.instance,
+            apiService: Provider.of<ApiService>(context, listen: false), // Pass ApiService
+          ),
         ),
         ChangeNotifierProvider(create: (_) => SummaryState()),
       ],
