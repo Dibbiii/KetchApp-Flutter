@@ -14,6 +14,7 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _usernameController; 
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
   late final TextEditingController _confirmPasswordController;
@@ -21,6 +22,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   void initState() {
     super.initState();
+    _usernameController = TextEditingController(); 
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
@@ -28,6 +30,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   void dispose() {
+    _usernameController.dispose(); 
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -38,11 +41,12 @@ class _RegisterPageState extends State<RegisterPage> {
     FocusScope.of(context).unfocus();
     if (_formKey.currentState!.validate()) {
       context.read<AuthBloc>().add(
-        AuthRegisterRequested(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        ),
-      );
+            AuthRegisterRequested(
+              username: _usernameController.text.trim(), // ADDED username
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+            ),
+          );
     }
   }
 
@@ -161,7 +165,48 @@ class _RegisterPageState extends State<RegisterPage> {
                       elevation: 1,
                       borderRadius: BorderRadius.circular(8),
                       child: TextFormField(
-                        controller: _emailController,
+                        controller: _usernameController, // CHANGED to _usernameController
+                        style: textTheme.bodyLarge?.copyWith(
+                          color: colors.onSurface,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Username',
+                          // Changed hint text
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: colors.primary,
+                              width: 2.0,
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: colors.onSurface.withOpacity(0.05),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 18,
+                            horizontal: 16,
+                          ),
+                        ),
+                        keyboardType: TextInputType.text,
+                        textInputAction: TextInputAction.next,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter a username';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    Material(
+                      // TextFormField styling matched with LoginPage
+                      elevation: 1,
+                      borderRadius: BorderRadius.circular(8),
+                      child: TextFormField(
+                        controller: _emailController, // Correct controller for email
                         style: textTheme.bodyLarge?.copyWith(
                           color: colors.onSurface,
                         ),

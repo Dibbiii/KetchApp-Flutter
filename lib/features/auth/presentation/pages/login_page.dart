@@ -3,7 +3,6 @@ import 'package:flutter/services.dart'; // Import services
 import 'package:go_router/go_router.dart';
 import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ketchapp_flutter/app/themes/app_colors.dart'; // Import app_colors
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -18,7 +17,6 @@ class _LoginPageState extends State<LoginPage> {
     final ColorScheme colors = Theme
         .of(context)
         .colorScheme;
-    // Removed unused variables for performance
     return Scaffold(
       backgroundColor: colors.surface,
       body: BlocListener<AuthBloc, AuthState>(
@@ -37,7 +35,7 @@ class _LoginPageState extends State<LoginPage> {
           }
         },
         child:
-        const _LoginForm(), // Extracted widget for better rebuild performance
+        const _LoginForm(), 
       ),
     );
   }
@@ -52,19 +50,19 @@ class _LoginForm extends StatefulWidget {
 
 class _LoginFormState extends State<_LoginForm> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _emailController;
+  late final TextEditingController _identifierController; 
   late final TextEditingController _passwordController;
 
   @override
   void initState() {
     super.initState();
-    _emailController = TextEditingController();
+    _identifierController = TextEditingController(); 
     _passwordController = TextEditingController();
   }
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _identifierController.dispose(); 
     _passwordController.dispose();
     super.dispose();
   }
@@ -73,11 +71,11 @@ class _LoginFormState extends State<_LoginForm> {
     FocusScope.of(context).unfocus();
     if (_formKey.currentState!.validate()) {
       context.read<AuthBloc>().add(
-        AuthLoginRequested(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        ),
-      );
+            AuthLoginRequested(
+              identifier: _identifierController.text.trim(), //trim serve per rimuovere gli spazi
+              password: _passwordController.text,
+            ),
+          );
     }
   }
 
@@ -163,10 +161,10 @@ class _LoginFormState extends State<_LoginForm> {
                 elevation: 1,
                 borderRadius: BorderRadius.circular(8),
                 child: TextFormField(
-                  controller: _emailController,
+                  controller: _identifierController, // MODIFICATO
                   style: textTheme.bodyLarge?.copyWith(color: colors.onSurface),
                   decoration: InputDecoration(
-                    hintText: 'Email or phone',
+                    hintText: 'Email or Username', // MODIFICATO
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide.none,
@@ -186,14 +184,13 @@ class _LoginFormState extends State<_LoginForm> {
                       horizontal: 16,
                     ),
                   ),
-                  keyboardType: TextInputType.emailAddress,
+                  keyboardType: TextInputType.text, // MODIFICATO: da emailAddress a text
                   textInputAction: TextInputAction.next,
                   validator: (value) {
-                    if (value == null ||
-                        value.isEmpty ||
-                        !value.contains('@')) {
-                      return 'Enter a valid email';
+                    if (value == null || value.isEmpty) {
+                      return 'Enter your email or username'; // MODIFICATO
                     }
+                    // Potresti aggiungere una validazione più specifica se necessario
                     return null;
                   },
                 ),

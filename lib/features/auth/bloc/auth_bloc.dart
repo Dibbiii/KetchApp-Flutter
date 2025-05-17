@@ -35,8 +35,42 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLoginRequested>((event, emit) async {
       emit(AuthLoading());
       try {
+        String emailToLogin;
+        // Determina se l'identifier è un'email o un username
+        if (event.identifier.contains('@') && event.identifier.contains('.')) { 
+          emailToLogin = event.identifier;
+        } else { //dall'username bisogna recuperare l'email perchè firebase utilizza l'email come identificatore primario per l'accesso con email e password
+          // È un username, recupera l'email dal backend
+          try {
+            final userData = await _apiService.findEmailByUsername(event.identifier);
+            // Assumendo che findEmailByUsername restituisca una mappa con la chiave 'email'
+            // o direttamente la stringa dell'email se il backend è strutturato così.
+            // Se userData è una mappa:
+            if (userData is Map<String, dynamic> && userData['email'] != null) {
+              emailToLogin = userData['email'] as String;
+            } 
+            // Se userData fosse direttamente la stringa email (meno probabile per un API RESTful JSON):
+            else if (userData is String) {
+              emailToLogin = userData;
+            }
+            else {
+              emit(const AuthError('Username non trovato o email non associata.'));
+              return;
+            }
+          } on NotFoundException { // Specifica per l'username non trovato
+             emit(const AuthError('Username non trovato.'));
+             return;
+          } on ApiException catch (e) { 
+            emit(AuthError('Errore nel recuperare l\'email per l\'username: ${e.message}'));
+            return;
+          } catch (e) {
+            emit(const AuthError('Errore sconosciuto nel recuperare l\'email per l\'username.'));
+            return;
+          }
+        }
+    
         await _firebaseAuth.signInWithEmailAndPassword(
-          email: event.email,
+          email: emailToLogin,
           password: event.password,
         );
         // Non emettere Authenticated qui, lo stream authStateChanges lo farà
@@ -63,7 +97,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           await _apiService.postData('users', { // Sostituisci 'users/register'
             'firebaseUid': userCredential.user!.uid,
             'email': event.email,
-            'username': "test",
+            'username': event.username,
             // Aggiungi altri campi se necessario
           });
           // Se la chiamata al backend ha successo, lo stream authStateChanges
@@ -75,24 +109,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         }
       } on FirebaseAuthException catch (e) {
         emit(AuthError(_mapAuthErrorCodeToMessage(e.code)));
-      } on UserAlreadyExistsException catch (e) { // MODIFICA: Gestisci UserAlreadyExistsException
-        // L'utente Firebase è stato creato, ma esiste già nel tuo backend.
-        // Potresti voler eliminare l'utente Firebase per mantenere la consistenza.
-        // Questo richiede che l'utente sia stato recentemente autenticato.
-        // Se l'utente è stato appena creato, userCredential.user?.delete() potrebbe funzionare.
-        await userCredential?.user?.delete(); // Tenta di eliminare l'utente Firebase
-        emit(AuthError(e.message)); // Usa il messaggio dall'eccezione
-      } on ApiException catch (e) { // MODIFICA: Gestisci altre eccezioni API generiche
-        // Errore durante la comunicazione con il backend
-        // Se l'utente Firebase è stato creato, considera di eliminarlo.
+      } on UsernameAlreadyExistsException catch (e) {
+        await userCredential?.user?.delete(); 
+        emit(AuthError(e.message)); 
+      } on EmailAlreadyExistsInBackendException catch (e) { 
+        await userCredential?.user?.delete();
+        emit(AuthError(e.message));
+      } on ConflictException catch (e) { 
+        // Questo potrebbe coprire altri tipi di 409 se UserAlreadyExistsException è troppo generica
+        // o se il backend restituisce un 409 non specifico per username/email.
+        await userCredential?.user?.delete();
+        emit(AuthError(e.message));
+      } on ApiException catch (e) { 
         await userCredential?.user?.delete();
         emit(AuthError(
             'Registrazione Firebase riuscita, ma errore del server: ${e.message}'));
-      } catch (e) {
-        // Errore generico
-        // Se l'utente Firebase è stato creato, considera di eliminarlo.
+      } catch (e, s) { // Aggiunto StackTrace s per un debug migliore
         await userCredential?.user?.delete();
-        emit(const AuthError('Errore sconosciuto durante la registrazione.'));
+        // Aggiungi e.toString() e lo stack trace per un debug più dettagliato
+        print('[AuthBloc] Errore generico in AuthRegisterRequested: ${e.toString()}');
+        print('[AuthBloc] StackTrace: ${s.toString()}');
+        emit(AuthError('Errore sconosciuto durante la registrazione: ${e.toString()}'));
       }
     });
 

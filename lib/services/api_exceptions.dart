@@ -14,11 +14,6 @@ class ApiException implements Exception {
   }
 }
 
-class UserAlreadyExistsException extends ApiException {
-  UserAlreadyExistsException([String message = 'L\'utente esiste già nel sistema.'])
-      : super(message, 409);
-}
-
 class BadRequestException extends ApiException {
   BadRequestException([String message = 'Richiesta non valida.'])
       : super(message, 400);
@@ -36,6 +31,26 @@ class ForbiddenException extends ApiException {
 class NotFoundException extends ApiException {
   NotFoundException([String message = 'Risorsa non trovata.'])
       : super(message, 404);
+}
+
+class ConflictException extends ApiException {
+  ConflictException([String message = 'Conflitto sulla risorsa.'])
+      : super(message, 409);
+}
+
+class UserAlreadyExistsException extends ConflictException { // Usata in _processResponse per 409 generico
+  UserAlreadyExistsException([String message = 'L\'utente esiste già.'])
+      : super(message);
+}
+
+class UsernameAlreadyExistsException extends ConflictException { // Usata specificamente in postData
+  UsernameAlreadyExistsException([String message = 'Questo username è già in uso.'])
+      : super(message);
+}
+
+class EmailAlreadyExistsInBackendException extends ConflictException { // Usata specificamente in postData
+  EmailAlreadyExistsInBackendException([String message = 'Questa email è già registrata nel sistema.'])
+      : super(message);
 }
 
 class InternalServerErrorException extends ApiException {
