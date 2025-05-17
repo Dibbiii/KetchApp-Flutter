@@ -19,7 +19,7 @@ class ApiService {
     switch (response.statusCode) {
       case 200:
       case 201:
-        return decodedJson ?? body; 
+        return Future.value(decodedJson ?? body); 
       case 400:
         throw BadRequestException(decodedJson?['message'] ?? 'Richiesta non valida');
       case 401:

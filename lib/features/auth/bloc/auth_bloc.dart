@@ -1,17 +1,22 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb; // Importa kIsWeb
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart'; // Aggiungi questo import
+import 'package:ketchapp_flutter/services/api_service.dart'; // Assicurati che il percorso sia corretto
 import 'package:meta/meta.dart';
- import '../../../services/api_service.dart';
 import '../../../services/api_exceptions.dart'; // MODIFICA: Aggiungi import per le eccezioni API
 
 part 'auth_event.dart';
 part 'auth_state.dart';
 
+const String webClientId = "1049541862968-7fa3abk4ja0794u5822ou6h9hem1j2go.apps.googleusercontent.com"; 
+
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final FirebaseAuth _firebaseAuth;
-  final ApiService _apiService; 
+  final ApiService _apiService;
+  final GoogleSignIn _googleSignIn; // Aggiungi GoogleSignIn
   StreamSubscription<User?>? _userSubscription;
 
   AuthBloc({
@@ -19,6 +24,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required ApiService apiService,
   })  : _firebaseAuth = firebaseAuth,
         _apiService = apiService,
+        _googleSignIn = GoogleSignIn(
+          // Fornisci il clientId solo per il web
+          clientId: kIsWeb ? webClientId : null,
+        ), // Inizializza GoogleSignIn
         super(AuthInitial()) {
     _userSubscription = _firebaseAuth.authStateChanges().listen((user) {
       add(_AuthUserChanged(user));
@@ -40,7 +49,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         if (event.identifier.contains('@') && event.identifier.contains('.')) { 
           emailToLogin = event.identifier;
         } else { //dall'username bisogna recuperare l'email perchè firebase utilizza l'email come identificatore primario per l'accesso con email e password
-          // È un username, recupera l'email dal backend
           try {
             final userData = await _apiService.findEmailByUsername(event.identifier);
             // Assumendo che findEmailByUsername restituisca una mappa con la chiave 'email'
@@ -63,7 +71,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           } on ApiException catch (e) { 
             emit(AuthError('Errore nel recuperare l\'email per l\'username: ${e.message}'));
             return;
-          } catch (e) {
+          } catch (e, s) { // Aggiungi s per lo stack trace
+            print('[AuthBloc] Errore non gestito in findEmailByUsername: $e');
+            print('[AuthBloc] StackTrace: $s');
             emit(const AuthError('Errore sconosciuto nel recuperare l\'email per l\'username.'));
             return;
           }
@@ -133,9 +143,67 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     });
 
+    on<AuthGoogleSignInRequested>((event, emit) async {
+      emit(AuthLoading());
+      try {
+        // Assicurati che il clientId sia stato impostato se sei sul web
+        if (kIsWeb && _googleSignIn.clientId == null) {
+             // Questo controllo è più per debug, l'assert del plugin dovrebbe già aver fallito
+            print("GoogleSignIn clientId non è impostato per il web!");
+        }
+
+        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+        if (googleUser == null) {
+          // L'utente ha annullato il login
+          emit(Unauthenticated()); 
+          return;
+        }
+
+        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final AuthCredential credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        final UserCredential userCredential = await _firebaseAuth.signInWithCredential(credential);
+        
+        // Se l'utente è nuovo e devi registrarlo nel tuo backend
+        if (userCredential.user != null && userCredential.additionalUserInfo?.isNewUser == true) {
+          try {
+            await _apiService.postData('users', {
+              'firebaseUid': userCredential.user!.uid,
+              'email': userCredential.user!.email,
+              'username': userCredential.user!.displayName ?? userCredential.user!.email?.split('@')[0], // Fallback per username
+              // Aggiungi altri campi se necessario, es. nome visualizzato
+              'displayName': userCredential.user!.displayName,
+            });
+            // Lo stream authStateChanges gestirà l'emissione di Authenticated
+          } on ApiException catch (e) {
+            // Se la registrazione al backend fallisce, fai il logout da Firebase e mostra errore
+            await _firebaseAuth.signOut();
+            await _googleSignIn.signOut(); // Assicurati di fare signOut anche da Google
+            emit(AuthError('Login Google riuscito, ma errore registrazione backend: ${e.message}'));
+            return;
+          }
+        }
+        // Se l'utente esiste già o la registrazione al backend (se nuova) è andata a buon fine,
+        // lo stream authStateChanges emetterà Authenticated.
+        // Non è necessario emettere Authenticated(userCredential.user!) qui esplicitamente
+        // se _userSubscription è attivo e gestisce _AuthUserChanged.
+
+      } on FirebaseAuthException catch (e) {
+        emit(AuthError(_mapAuthErrorCodeToMessage(e.code)));
+      } on ApiException catch (e) {
+        emit(AuthError('Errore API durante il login con Google: ${e.message}'));
+      } catch (e) {
+        emit(AuthError('Errore sconosciuto durante il login con Google: ${e.toString()}'));
+      }
+    });
+
     on<AuthLogoutRequested>((event, emit) async {
       emit(AuthLoading());
       try {
+        await _googleSignIn.signOut(); // Aggiungi signOut da Google
         await _firebaseAuth.signOut();
         // Lo stream authStateChanges emetterà Unauthenticated
       } catch (e) {

@@ -18,7 +18,16 @@ class AuthRegisterRequested extends AuthEvent {
   AuthRegisterRequested({required this.username, required this.email, required this.password});
 }
 
-class AuthLogoutRequested extends AuthEvent {}
+class AuthLogoutRequested extends AuthEvent {
+  final String? token;
+  AuthLogoutRequested({this.token});
+
+}
+
+class AuthGoogleSignInRequested extends AuthEvent {
+  final String? token;
+  AuthGoogleSignInRequested({this.token});
+} 
 
 class _AuthUserChanged extends AuthEvent {
   final User? user;

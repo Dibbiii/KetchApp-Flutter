@@ -10,7 +10,7 @@ class LoginPage extends StatefulWidget {
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
-
+            
 class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
@@ -282,6 +282,24 @@ class _LoginFormState extends State<_LoginForm> {
                     ),
                   );
                 },
+              ),
+              ElevatedButton.icon(
+                icon: Image.network( // O usa un'icona SVG/FontIcon di Google
+                  'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/24px-Google_%22G%22_logo.svg.png',
+                  height: 20.0,
+                ),
+                label: const Text('Accedi con Google'),
+                onPressed: () {
+                  context.read<AuthBloc>().add(AuthGoogleSignInRequested());
+                },
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: colors.onSurface, backgroundColor: Colors.white, // Esempio di stile
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(color: colors.outline),
+                  ),
+                ),
               ),
               const SizedBox(height: 24),
               Row(
