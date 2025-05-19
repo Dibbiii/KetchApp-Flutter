@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb; // Importa kIsWeb
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart'; // Aggiungi questo import
+import 'package:googleapis_auth/googleapis_auth.dart' as auth show AuthClient; // Per AuthClient
+import 'package:googleapis/calendar/v3.dart' as cal; // Per CalendarApi
 import 'package:ketchapp_flutter/services/api_service.dart'; // Assicurati che il percorso sia corretto
 import 'package:meta/meta.dart';
 import '../../../services/api_exceptions.dart'; // MODIFICA: Aggiungi import per le eccezioni API
@@ -13,10 +15,15 @@ part 'auth_state.dart';
 
 const String webClientId = "1049541862968-7fa3abk4ja0794u5822ou6h9hem1j2go.apps.googleusercontent.com"; 
 
+// Scope per Google Calendar
+const List<String> calendarScopes = <String>[
+  cal.CalendarApi.calendarReadonlyScope, // o CalendarApi.calendarEventsReadonlyScope per solo eventi
+];
+
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final FirebaseAuth _firebaseAuth;
   final ApiService _apiService;
-  final GoogleSignIn _googleSignIn; // Aggiungi GoogleSignIn
+  final GoogleSignIn _googleSignIn; 
   StreamSubscription<User?>? _userSubscription;
 
   AuthBloc({
@@ -25,9 +32,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   })  : _firebaseAuth = firebaseAuth,
         _apiService = apiService,
         _googleSignIn = GoogleSignIn(
-          // Fornisci il clientId solo per il web
           clientId: kIsWeb ? webClientId : null,
-        ), // Inizializza GoogleSignIn
+          scopes: calendarScopes, // Richiedi gli scope qui
+        ), 
         super(AuthInitial()) {
     _userSubscription = _firebaseAuth.authStateChanges().listen((user) {
       add(_AuthUserChanged(user));
@@ -146,21 +153,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthGoogleSignInRequested>((event, emit) async {
       emit(AuthLoading());
       try {
-        // Assicurati che il clientId sia stato impostato se sei sul web
         if (kIsWeb && _googleSignIn.clientId == null) {
              // Questo controllo è più per debug, l'assert del plugin dovrebbe già aver fallito
             print("GoogleSignIn clientId non è impostato per il web!");
         }
 
-        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn(); //l'utente sceglie con quale account accedere
         if (googleUser == null) {
           // L'utente ha annullato il login
           emit(Unauthenticated()); 
           return;
         }
 
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-        final AuthCredential credential = GoogleAuthProvider.credential(
+        final GoogleSignInAuthentication googleAuth = await googleUser.authentication; //per ottenere i token di autenticazione (accessToken e idToken)
+        final AuthCredential credential = GoogleAuthProvider.credential( //con i token di autenticazione otteniamo le credenziali per firebase
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
         );

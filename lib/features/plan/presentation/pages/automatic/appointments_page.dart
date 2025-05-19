@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:ketchapp_flutter/services/calendar_service.dart'; // Importa il servizio
+import 'package:googleapis/calendar/v3.dart' as cal; // Per il tipo Event
 
 class AppointmentsPage extends StatefulWidget {
   const AppointmentsPage({super.key});
@@ -9,6 +11,34 @@ class AppointmentsPage extends StatefulWidget {
 
 class _AppointmentsPageState extends State<AppointmentsPage> {
   final List<String> _subjects = []; // Lista delle materie
+  final CalendarService _calendarService = CalendarService(); // Istanza del servizio
+  List<cal.Event> _calendarEvents = [];
+  bool _isLoadingCalendarEvents = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCalendarEvents();
+  }
+
+  Future<void> _fetchCalendarEvents() async {
+    setState(() {
+      _isLoadingCalendarEvents = true;
+    });
+    try {
+      final events = await _calendarService.getEvents();
+      setState(() {
+        _calendarEvents = events;
+      });
+    } catch (e) {
+      // Gestisci l'errore, magari mostrando un messaggio all'utente
+      print("Errore nel caricare gli eventi da Google Calendar: $e");
+    } finally {
+      setState(() {
+        _isLoadingCalendarEvents = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,12 +48,9 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: size.width * 0.1, vertical: 40),
-      // Add padding
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        // Center content vertically
         crossAxisAlignment: CrossAxisAlignment.center,
-        // Center content horizontally
         children: [
           // Icon Placeholder (Styled like WelcomePage icons)
           Container(
@@ -141,62 +168,88 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
           const SizedBox(height: 24), // Space between button and list
           // Subject List (Improved Styling)
           Expanded(
-            // Allow list to take remaining space
-            child:
-                _subjects.isEmpty
+            child: _isLoadingCalendarEvents
+                ? const Center(child: CircularProgressIndicator())
+                : _calendarEvents.isEmpty && _subjects.isEmpty
                     ? Center(
-                      child: Text(
-                        'No appointments added yet.',
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: colors.onSurface.withValues(alpha: 0.6),
+                        child: Text(
+                          'No appointments added yet.',
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colors.onSurface.withOpacity(0.6),
+                          ),
                         ),
-                      ),
-                    )
+                      )
                     : ListView.builder(
-                      shrinkWrap: true,
-                      // Important if inside another Column without Expanded
-                      itemCount: _subjects.length,
-                      itemBuilder: (context, index) {
-                        return Card(
-                          // Use Card for better visual separation
-                          margin: const EdgeInsets.symmetric(vertical: 4.0),
-                          color: colors.surfaceContainerHighest.withValues(
-                              alpha: 0.5),
-                          // Subtle background
-                          elevation: 0,
-                          // No shadow to match flat style
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: BorderSide(
-                              color: colors.outline.withValues(alpha: 0.2),
-                              width: 1,
-                            ), // Subtle border
-                          ),
-                          child: ListTile(
-                            title: Text(
-                              _subjects[index],
-                              style: textTheme.bodyLarge?.copyWith(
-                                color: colors.onSurfaceVariant,
+                        shrinkWrap: true,
+                        itemCount: _subjects.length + _calendarEvents.length,
+                        itemBuilder: (context, index) {
+                          if (index < _subjects.length) {
+                            // Elementi esistenti da _subjects
+                            return Card(
+                              margin: const EdgeInsets.symmetric(vertical: 4.0),
+                              color: colors.surfaceContainerHighest.withOpacity(0.5),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                side: BorderSide(
+                                  color: colors.outline.withOpacity(0.2),
+                                  width: 1,
+                                ),
                               ),
-                            ),
-                            trailing: IconButton(
-                              // Add delete button
-                              icon: Icon(
-                                Icons.delete_outline,
-                                color: colors.onSurfaceVariant.withValues(
-                                    alpha: 0.7),
+                              child: ListTile(
+                                title: Text(
+                                  _subjects[index],
+                                  style: textTheme.bodyLarge?.copyWith(
+                                    color: colors.onSurfaceVariant,
+                                  ),
+                                ),
+                                trailing: IconButton(
+                                  icon: Icon(
+                                    Icons.delete_outline,
+                                    color: colors.onSurfaceVariant.withOpacity(0.7),
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _subjects.removeAt(index);
+                                    });
+                                  },
+                                  tooltip: 'Remove Appointment',
+                                ),
                               ),
-                              onPressed: () {
-                                setState(() {
-                                  _subjects.removeAt(index);
-                                });
-                              },
-                              tooltip: 'Remove Appointment',
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                            );
+                          } else {
+                            // Eventi da Google Calendar
+                            final eventIndex = index - _subjects.length;
+                            final event = _calendarEvents[eventIndex];
+                            return Card(
+                              margin: const EdgeInsets.symmetric(vertical: 4.0),
+                              color: colors.surfaceContainer.withOpacity(0.7), // Colore diverso per eventi Google
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                side: BorderSide(
+                                  color: colors.outline.withOpacity(0.2),
+                                  width: 1,
+                                ),
+                              ),
+                              child: ListTile(
+                                leading: Icon(Icons.calendar_today, color: colors.primary),
+                                title: Text(
+                                  event.summary ?? 'Nessun titolo',
+                                  style: textTheme.bodyLarge?.copyWith(
+                                    color: colors.onSurface,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  '${event.start?.dateTime?.toLocal() ?? event.start?.date?.toLocal() ?? 'Data non specificata'}',
+                                  style: textTheme.bodySmall,
+                                ),
+                                // Puoi aggiungere altre info come event.description, event.location etc.
+                              ),
+                            );
+                          }
+                        },
+                      ),
           ),
         ],
       ),

@@ -40,6 +40,11 @@ dependencies:
   uuid: ^4.5.1
   intl: ^0.18.0
 
+  # Google APIs per Google Calendar
+  googleapis: ^13.1.0
+  googleapis_auth: ^1.5.1
+  url_launcher: ^6.3.0 # Utile per aprire link, potrebbe servire per la gestione dei permessi
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

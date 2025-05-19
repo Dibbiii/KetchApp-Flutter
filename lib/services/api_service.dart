@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import './api_exceptions.dart'; // Assicurati che il percorso sia corretto
 
 class ApiService {
-  final String _baseUrl = "http://37.103.87.3:8080/api";
+  final String _baseUrl = "http://localhost:8080/api";
 
   Future<dynamic> _processResponse(http.Response response) {
     final body = response.body;
