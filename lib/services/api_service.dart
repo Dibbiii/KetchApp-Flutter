@@ -1,10 +1,9 @@
-// filepath: lib/services/api_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import './api_exceptions.dart'; // Assicurati che il percorso sia corretto
+import './api_exceptions.dart';
 
 class ApiService {
-  final String _baseUrl = "http://localhost:8080/api";
+  final String _baseUrl = "http://37.103.87.3:8080/api";
 
   Future<dynamic> _processResponse(http.Response response) {
     final body = response.body;
@@ -12,7 +11,7 @@ class ApiService {
     try {
       decodedJson = json.decode(body);
     } catch (e) {
-      // Se il corpo non è JSON valido o è vuoto per alcuni successi (es. 204 No Content)
+      // TODO: Se il corpo non è JSON valido o è vuoto per alcuni successi (es. 204 No Content)
       // gestisci di conseguenza. Per ora, se non è 2xx, lanciamo un errore.
     }
 

@@ -54,6 +54,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1049541862968',
     projectId: 'testalebrutto',
     storageBucket: 'testalebrutto.firebasestorage.app',
+    androidClientId:
+        '1049541862968-889r2k03phkb1c2gk6l75cobpid1k7m0.apps.googleusercontent.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(

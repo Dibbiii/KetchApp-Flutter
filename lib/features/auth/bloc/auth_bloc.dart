@@ -1,14 +1,13 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show kIsWeb; // Importa kIsWeb
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart'; // Aggiungi questo import
-import 'package:googleapis_auth/googleapis_auth.dart' as auth show AuthClient; // Per AuthClient
-import 'package:googleapis/calendar/v3.dart' as cal; // Per CalendarApi
-import 'package:ketchapp_flutter/services/api_service.dart'; // Assicurati che il percorso sia corretto
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:googleapis/calendar/v3.dart' as cal;
+import 'package:ketchapp_flutter/services/api_service.dart';
 import 'package:meta/meta.dart';
-import '../../../services/api_exceptions.dart'; // MODIFICA: Aggiungi import per le eccezioni API
+import '../../../services/api_exceptions.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
