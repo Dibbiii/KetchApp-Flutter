@@ -33,3 +33,8 @@ class _AuthUserChanged extends AuthEvent {
   final User? user;
   _AuthUserChanged(this.user);
 }
+
+class AuthPasswordResetRequested extends AuthEvent {
+  final String email;
+  AuthPasswordResetRequested({required this.email});
+}

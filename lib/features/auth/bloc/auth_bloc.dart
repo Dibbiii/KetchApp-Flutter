@@ -216,6 +216,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(const AuthError('Errore durante il logout.'));
       }
     });
+
+    on<AuthPasswordResetRequested>((event, emit) async {
+      emit(AuthLoading());
+      try {
+        await _firebaseAuth.sendPasswordResetEmail(email: event.email);
+        emit(AuthPasswordResetEmailSentSuccess('Email di reset inviata a ${event.email}. Controlla la tua casella di posta.'));
+      } on FirebaseAuthException catch (e) {
+        emit(AuthError(_mapAuthErrorCodeToMessage(e.code)));
+      } catch (e) {
+        emit(AuthError('Errore durante l\'invio dell\'email di reset: ${e.toString()}'));
+      }
+    });
   }
 
   String _mapAuthErrorCodeToMessage(String code) {

@@ -238,7 +238,9 @@ class _LoginFormState extends State<_LoginForm> {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () {}, // Implement forgot password logic
+                  onPressed: () {
+                    context.push('/forgot_password'); 
+                  },
                   style: TextButton.styleFrom(
                     foregroundColor: colors.primary,
                     padding: EdgeInsets.zero,

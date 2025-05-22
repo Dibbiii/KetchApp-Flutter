@@ -16,6 +16,7 @@ import 'package:ketchapp_flutter/features/statistics/bloc/statistics_bloc.dart';
 import 'package:ketchapp_flutter/features/welcome/presentation/pages/welcome_page.dart';
 import 'package:ketchapp_flutter/features/profile/presentation/pages/profile_page.dart';
 import '../features/statistics/presentation/statistics_page.dart';
+import 'package:ketchapp_flutter/features/auth/presentation/pages/forgot_password_page.dart';
 
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<dynamic> stream) {
@@ -40,7 +41,7 @@ final GoRouter router = GoRouter(
   redirect: (context, state) {
     final loggedIn = FirebaseAuth.instance.currentUser != null;
     final location = state.matchedLocation;
-    final isAuthRoute = location == '/login' || location == '/register';
+    final isAuthRoute = location == '/login' || location == '/register' || location == '/forgot_password';
     final isWelcomeRoute = location == '/';
     final isAuthOptionsRoute = location == '/auth-options';
     if (!loggedIn) {
@@ -56,6 +57,10 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/register',
       builder: (context, state) => const RegisterPage(),
+    ),
+    GoRoute(
+      path: '/forgot_password',
+      builder: (context, state) => const ForgotPasswordPage(),
     ),
     ShellRoute(
       builder:

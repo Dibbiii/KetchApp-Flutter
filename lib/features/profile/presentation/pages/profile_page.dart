@@ -1,29 +1,61 @@
+import 'dart:io'; // For File
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../../../auth/bloc/auth_bloc.dart';
+import 'package:image_picker/image_picker.dart'; // For ImageSource
+import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
+import 'package:ketchapp_flutter/features/profile/bloc/profile_bloc.dart';
+import 'package:ketchapp_flutter/features/profile/bloc/profile_event.dart';
+import 'package:ketchapp_flutter/features/profile/bloc/profile_state.dart';
 
-class Achievement {
-  final IconData icon;
-  final String title;
-  final bool isCompleted; // Changed: removed value, added isCompleted
-
-  Achievement({required this.icon, required this.title, required this.isCompleted});
-}
-
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<ProfileBloc>().add(LoadProfile());
+  }
+
+  void _dispatchPickImage(ImageSource source) {
+    final currentBlocState = context.read<ProfileBloc>().state;
+    if (currentBlocState is ProfileLoaded && currentBlocState.isUploadingImage) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(content: Text('Operazione immagine già in corso...')),
+        );
+      return;
+    }
+    context.read<ProfileBloc>().add(ProfileImagePickRequested(source));
+  }
+
+  void _dispatchDeleteProfileImage() {
+    final currentBlocState = context.read<ProfileBloc>().state;
+    if (currentBlocState is ProfileLoaded && currentBlocState.isUploadingImage) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(content: Text('Operazione immagine già in corso...')),
+        );
+      return;
+    }
+    context.read<ProfileBloc>().add(ProfileImageDeleteRequested());
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
     final ColorScheme colors = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
 
-    // Helper to create styled InputDecoration for TextFormFields
     InputDecoration styledInputDecoration({
       required String labelText,
       required IconData iconData,
+      bool readOnly = true, // Assuming fields are read-only for now
     }) {
       return InputDecoration(
         labelText: labelText,
@@ -36,7 +68,6 @@ class ProfilePage extends StatelessWidget {
           borderSide: BorderSide(color: colors.outline.withOpacity(0.5)),
         ),
         enabledBorder: OutlineInputBorder(
-          // Keep border visible for readOnly fields
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: colors.outline.withOpacity(0.5)),
         ),
@@ -45,236 +76,263 @@ class ProfilePage extends StatelessWidget {
           borderSide: BorderSide(color: colors.primary, width: 1.5),
         ),
         filled: true,
-        fillColor: colors.surfaceContainerHighest.withOpacity(0.3),
+        fillColor: readOnly 
+            ? colors.surfaceContainerHighest.withOpacity(0.1) // Different fill for readOnly
+            : colors.surfaceContainerHighest.withOpacity(0.3),
         contentPadding: const EdgeInsets.symmetric(
           vertical: 14,
           horizontal: 16,
         ),
       );
     }
-
+    
     final List<Achievement> achievements = [
       Achievement(icon: Icons.timer_outlined, title: 'Study for 5 hours', isCompleted: true),
       Achievement(icon: Icons.self_improvement_outlined, title: 'Distraction-free session', isCompleted: false),
       Achievement(icon: Icons.leaderboard_outlined, title: 'Top 10 Global Ranking', isCompleted: false),
       Achievement(icon: Icons.check_circle_outline, title: 'Complete all Tomatoes', isCompleted: true),
       Achievement(icon: Icons.whatshot_outlined, title: 'Continue the Streak', isCompleted: false),
-      Achievement(icon: Icons.radar_outlined, title: 'Achieve 90% focus rate during the study session', isCompleted: false), // Changed achievement
+      Achievement(icon: Icons.radar_outlined, title: 'Achieve 90% focus rate during the study session', isCompleted: false),
       Achievement(icon: Icons.share_outlined, title: 'Share your achievements', isCompleted: false),
       Achievement(icon: Icons.star_outline, title: 'Rate the app', isCompleted: false),
     ];
 
+
     return Scaffold(
-      appBar: AppBar( 
+      appBar: AppBar(
         title: const Text('Profile'),
       ),
-      body: SingleChildScrollView( // Changed Center to SingleChildScrollView
-        child: Padding( // Added Padding for overall content
-          padding: const EdgeInsets.all(20.0), // Consistent padding around the content
-          child: Column(
-            // mainAxisAlignment: MainAxisAlignment.center, // Removed to allow top alignment
-            crossAxisAlignment: CrossAxisAlignment.stretch, // To stretch elements like buttons
-            children: [
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  const Icon(Icons.account_circle, size: 100),
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: CircleAvatar(
-                      radius: 18,
-                      child: PopupMenuButton<String>(
-                        icon: const Icon(Icons.edit, size: 10),
-                        offset: const Offset(170, -50),
-                        // Added offset to position the menu
-                        onSelected: (String result) {
-                          if (result == 'take_photo') {
-                            // TODO: Implement take photo functionality
-                          } else if (result == 'library_photo') {
-                            // TODO: Implement photo library functionality
-                          } else if (result == 'delete_photo') {
-                            // TODO: Implement delete photo functionality
-                          }
-                        },
-                        itemBuilder:
-                            (BuildContext context) =>
-                        <PopupMenuEntry<String>>[
-                          const PopupMenuItem<String>(
-                            value: 'take_photo',
-                            child: ListTile(
-                              leading: Icon(Icons.photo_camera),
-                              title: Text('Scatta foto'),
+      body: BlocListener<ProfileBloc, ProfileState>(
+        listener: (context, state) {
+          if (state is ProfileUpdateSuccess) {
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.green,
+              ));
+          } else if (state is ProfileError) {
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(SnackBar(
+                content: Text(state.message),
+                backgroundColor: colors.error,
+              ));
+          }
+        },
+        child: BlocBuilder<ProfileBloc, ProfileState>(
+          builder: (context, state) {
+            if (state is ProfileInitial || state is ProfileLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (state is ProfileError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text('Errore: ${state.message}', textAlign: TextAlign.center),
+                ),
+              );
+            }
+
+            if (state is ProfileLoaded) {
+              Widget avatarContent;
+              if (state.localPreviewFile != null) {
+                avatarContent = CircleAvatar(
+                    radius: 50,
+                    backgroundImage: FileImage(state.localPreviewFile!));
+              } else if (state.photoUrl != null) {
+                avatarContent = CircleAvatar(
+                    radius: 50,
+                    backgroundImage: NetworkImage(state.photoUrl!));
+              } else {
+                avatarContent = Icon(Icons.account_circle,
+                    size: 100, color: colors.onSurfaceVariant.withOpacity(0.6));
+              }
+
+              if (state.isUploadingImage) {
+                avatarContent = Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    avatarContent,
+                    const CircularProgressIndicator(),
+                  ],
+                );
+              }
+
+              return SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Padding( // Add padding to ensure spinner doesn't overlap popup button too much
+                              padding: const EdgeInsets.all(4.0), 
+                              child: avatarContent,
                             ),
-                          ),
-                          const PopupMenuItem<String>(
-                            value: 'library_photo',
-                            child: ListTile(
-                              leading: Icon(Icons.photo_library),
-                              title: Text('Libreria foto'),
-                            ),
-                          ),
-                          const PopupMenuItem<String>(
-                            value: 'delete_photo',
-                            child: ListTile(
-                              leading: Icon(Icons.delete, color: Colors.red),
-                              title: Text(
-                                'Elimina foto',
-                                style: TextStyle(color: Colors.red),
+                            Positioned(
+                              right: 0,
+                              bottom: 0,
+                              child: CircleAvatar(
+                                radius: 18,
+                                backgroundColor: colors.surfaceContainerHighest,
+                                child: PopupMenuButton<String>(
+                                  icon: Icon(Icons.edit, size: 18, color: colors.primary), // Adjusted size
+                                  offset: const Offset(0, 40), // Adjust offset as needed
+                                  onSelected: (String result) {
+                                    if (result == 'take_photo') {
+                                      _dispatchPickImage(ImageSource.camera);
+                                    } else if (result == 'library_photo') {
+                                      _dispatchPickImage(ImageSource.gallery);
+                                    } else if (result == 'delete_photo') {
+                                      _dispatchDeleteProfileImage();
+                                    }
+                                  },
+                                  itemBuilder: (BuildContext context) =>
+                                      <PopupMenuEntry<String>>[
+                                    const PopupMenuItem<String>(
+                                      value: 'take_photo',
+                                      child: ListTile(
+                                        leading: Icon(Icons.photo_camera),
+                                        title: Text('Scatta foto'),
+                                      ),
+                                    ),
+                                    const PopupMenuItem<String>(
+                                      value: 'library_photo',
+                                      child: ListTile(
+                                        leading: Icon(Icons.photo_library),
+                                        title: Text('Libreria foto'),
+                                      ),
+                                    ),
+                                    if (state.photoUrl != null || state.localPreviewFile != null)
+                                      const PopupMenuItem<String>(
+                                        value: 'delete_photo',
+                                        child: ListTile(
+                                          leading: Icon(Icons.delete, color: Colors.red),
+                                          title: Text(
+                                            'Elimina foto',
+                                            style: TextStyle(color: Colors.red),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 24),
+                      TextFormField(
+                        initialValue: state.displayName ?? 'N/A',
+                        readOnly: true,
+                        decoration: styledInputDecoration(
+                          labelText: 'Display Name',
+                          iconData: Icons.person_outline,
+                        ),
+                        style: textTheme.bodyLarge?.copyWith(color: colors.onSurface),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        initialValue: state.email ?? 'N/A',
+                        readOnly: true,
+                        decoration: styledInputDecoration(
+                          labelText: 'Email',
+                          iconData: Icons.email_outlined,
+                        ),
+                         style: textTheme.bodyLarge?.copyWith(color: colors.onSurface),
+                      ),
+                      const SizedBox(height: 32),
+                      Text(
+                        'Achievements',
+                        style: textTheme.titleLarge?.copyWith(color: colors.onSurface),
+                      ),
+                      const SizedBox(height: 8),
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: achievements.length,
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 3 / 1.5, // Adjust aspect ratio
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                        ),
+                        itemBuilder: (context, index) {
+                          final achievement = achievements[index];
+                          return Card(
+                            color: achievement.isCompleted
+                                ? colors.primaryContainer.withOpacity(0.7)
+                                : colors.surfaceContainer.withOpacity(0.7),
+                            elevation: 0,
+                             shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(
+                                  color: achievement.isCompleted ? colors.primary.withOpacity(0.5) : colors.outline.withOpacity(0.2),
+                                  width: 1,
+                                ),
+                              ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    achievement.icon,
+                                    color: achievement.isCompleted ? colors.onPrimaryContainer : colors.onSurfaceVariant,
+                                    size: 28,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    achievement.title,
+                                    textAlign: TextAlign.center,
+                                    style: textTheme.bodySmall?.copyWith(
+                                      color: achievement.isCompleted ? colors.onPrimaryContainer : colors.onSurfaceVariant,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.logout),
+                        label: const Text('Logout'),
+                        onPressed: () {
+                          context.read<AuthBloc>().add(AuthLogoutRequested());
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colors.errorContainer,
+                          foregroundColor: colors.onErrorContainer,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              // Increased spacing after profile icon section
-
-              // Username Field
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24.0,
-                  vertical: 8.0,
                 ),
-                child: TextFormField(
-                  initialValue: user?.displayName ?? 'Not set',
-                  readOnly: true, // Keep readOnly, edit action is via icon
-                  style: textTheme.bodyLarge?.copyWith(color: colors.onSurface),
-                  decoration: styledInputDecoration(
-                    labelText: 'Username',
-                    iconData: Icons.person_outline,
-                  ),
-                ),
-              ),
-
-              // Email Field
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24.0,
-                  vertical: 8.0,
-                ),
-                child: TextFormField(
-                  initialValue: user?.email ?? 'Not available',
-                  readOnly: true, // Keep readOnly, edit action is via icon
-                  style: textTheme.bodyLarge?.copyWith(color: colors.onSurface),
-                  decoration: styledInputDecoration(
-                    labelText: 'Email',
-                    iconData: Icons.email_outlined,
-                  ),
-                ),
-              ),
-
-              // Password Field
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24.0,
-                  vertical: 8.0,
-                ),
-                child: TextFormField(
-                  initialValue: '••••••••', // Placeholder for password
-                  readOnly: true,
-                  obscureText: true,
-                  style: textTheme.bodyLarge?.copyWith(color: colors.onSurface),
-                  decoration: styledInputDecoration(
-                    labelText: 'Password',
-                    iconData: Icons.lock_outline,
-                  ).copyWith( // Added copyWith to add suffixIcon
-                    suffixIcon: IconButton(
-                      icon: Icon(Icons.edit, color: colors.onSurfaceVariant),
-                      onPressed: () {
-                        // TODO: Implement change password functionality
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Change Password Tapped (Not Implemented Yet)')),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16), // Spacing before Logout button
-              
-              const SizedBox(height: 32), // Adjusted spacing before Logout button
-
-              // Achievements Section
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: Text(
-                  'Achievements',
-                  style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              GridView.builder(
-                shrinkWrap: true, // Important to make GridView work inside SingleChildScrollView
-                physics: const NeverScrollableScrollPhysics(), // Disable GridView's own scrolling
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2, // Number of columns
-                  crossAxisSpacing: 12.0, // Horizontal space between cards
-                  mainAxisSpacing: 12.0, // Vertical space between cards
-                  childAspectRatio: 1.2, // Aspect ratio of the cards (width / height)
-                ),
-                itemCount: achievements.length,
-                itemBuilder: (context, index) {
-                  return _buildAchievementCard(context, achievements[index], colors, textTheme);
-                },
-              ),
-              const SizedBox(height: 24), // Spacing after achievements before logout
-
-              ElevatedButton(
-                style: ElevatedButton.styleFrom( // Added style for logout button from previous iteration
-                  backgroundColor: colors.errorContainer,
-                  foregroundColor: colors.onErrorContainer,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                onPressed: () {
-                  context.read<AuthBloc>().add(AuthLogoutRequested());
-                },
-                child: const Text('Logout'),
-              ),
-            ],
-          ),
+              );
+            }
+            // Fallback for any unhandled state
+            return const Center(child: Text('Stato sconosciuto.'));
+          },
         ),
       ),
     );
   }
+}
 
-  Widget _buildAchievementCard(BuildContext context, Achievement achievement, ColorScheme colors, TextTheme textTheme) {
-    return Card(
-      elevation: 2.0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-      color: colors.surfaceContainerLowest, // Or colors.surface for a slightly different shade
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            Row( // Added Row to display achievement icon and completion status
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(achievement.icon, size: 36.0, color: colors.primary),
-                if (achievement.isCompleted)
-                  Icon(Icons.check_circle, color: colors.tertiary, size: 24.0) // Changed to tertiary color
-                else
-                  Icon(Icons.radio_button_unchecked_outlined, color: colors.onSurfaceVariant.withOpacity(0.6), size: 24.0), // Icon for not completed
-              ],
-            ),
-            const SizedBox(height: 8.0),
-            Text(
-              achievement.title,
-              style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: colors.onSurface),
-              textAlign: TextAlign.center,
-            ),
-            // Removed SizedBox and Text for achievement.value as it's no longer part of the class
-          ],
-        ),
-      ),
-    );
-  }
+// Helper class for Achievements (if not already defined elsewhere)
+class Achievement {
+  final IconData icon;
+  final String title;
+  final bool isCompleted;
+
+  Achievement({required this.icon, required this.title, required this.isCompleted});
 }
