@@ -27,22 +27,28 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
   Future<void> _onLoadProfile(
       LoadProfile event, Emitter<ProfileState> emit) async {
-    emit(ProfileLoading());
-    try {
-      final user = _firebaseAuth.currentUser;
-      if (user != null) {
+    final user = _firebaseAuth.currentUser;
+    if (user != null) {
+      // Se già ProfileLoaded, aggiorna solo i dati, altrimenti emetti ProfileLoaded
+      if (state is ProfileLoaded) {
+        emit((state as ProfileLoaded).copyWith(
+          displayName: user.displayName,
+          email: user.email,
+          photoUrl: user.photoURL,
+          isUploadingImage: false,
+          clearLocalPreviewFile: true,
+        ));
+      } else {
         emit(ProfileLoaded(
           displayName: user.displayName,
           email: user.email,
           photoUrl: user.photoURL,
-          isUploadingImage: false, // Ensure false on initial load
-          localPreviewFile: null, // Ensure no preview on initial load
+          isUploadingImage: false,
+          localPreviewFile: null,
         ));
-      } else {
-        emit(const ProfileError('Utente non trovato.'));
       }
-    } catch (e) {
-      emit(ProfileError('Errore durante il caricamento del profilo: ${e.toString()}'));
+    } else {
+      emit(const ProfileError('Utente non trovato.'));
     }
   }
 
@@ -50,7 +56,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       ProfileImagePickRequested event, Emitter<ProfileState> emit) async {
     if (state is ProfileLoaded) {
       final currentState = state as ProfileLoaded;
-      emit(currentState.copyWith(isUploadingImage: true, clearLocalPreviewFile: true)); // Start loading, clear old preview
+      emit(currentState.copyWith(isUploadingImage: true, clearLocalPreviewFile: true));
       try {
         final XFile? pickedFile = await _imagePicker.pickImage(
           source: event.source,
@@ -58,19 +64,16 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           maxWidth: 800,
         );
         if (pickedFile != null) {
-          // Emit state with local preview file, isUploadingImage remains true
           emit(currentState.copyWith(
             localPreviewFile: File(pickedFile.path),
-            isUploadingImage: true, // Explicitly ensure it's true
+            isUploadingImage: true,
           ));
           add(ProfileImageUploadRequested(File(pickedFile.path)));
         } else {
-          // User cancelled picker
           emit(currentState.copyWith(isUploadingImage: false, clearLocalPreviewFile: true));
         }
       } catch (e) {
         emit(ProfileError('Errore durante la selezione dell\'immagine: ${e.toString()}'));
-        // Ensure isUploadingImage is reset and preview cleared on error during picking
         emit(currentState.copyWith(isUploadingImage: false, clearLocalPreviewFile: true));
       }
     } else {
@@ -88,32 +91,28 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       }
       return;
     }
-
-    // Assuming state is ProfileLoaded with isUploadingImage: true and localPreviewFile set.
-    try {
-      final filePath = 'profile_pictures/${user.uid}/profile.jpg';
-      final ref = _firebaseStorage.ref().child(filePath);
-      await ref.putFile(event.imageFile);
-      final downloadUrl = await ref.getDownloadURL();
-      await user.updatePhotoURL(downloadUrl);
-
-      emit(ProfileLoaded(
-        displayName: user.displayName,
-        email: user.email,
-        photoUrl: downloadUrl,
-        isUploadingImage: false,     // Uploading finished
-        localPreviewFile: null,      // Clear preview on successful upload
-      ));
-      emit(const ProfileUpdateSuccess('Immagine del profilo aggiornata.'));
-    } on FirebaseException catch (e) {
-      emit(ProfileError('Errore Firebase durante il caricamento: ${e.message}'));
-      if (state is ProfileLoaded) {
-        emit((state as ProfileLoaded).copyWith(isUploadingImage: false)); // Don't clear preview on upload error, user might want to retry
-      }
-    } catch (e) {
-      emit(ProfileError('Errore sconosciuto durante il caricamento: ${e.toString()}'));
-      if (state is ProfileLoaded) {
-        emit((state as ProfileLoaded).copyWith(isUploadingImage: false));
+    if (state is ProfileLoaded) {
+      final currentState = state as ProfileLoaded;
+      try {
+        final filePath = 'profile_pictures/${user.uid}/profile.jpg';
+        final ref = _firebaseStorage.ref().child(filePath);
+        await ref.putFile(event.imageFile);
+        final downloadUrl = await ref.getDownloadURL();
+        await user.updatePhotoURL(downloadUrl);
+        emit(currentState.copyWith(
+          photoUrl: downloadUrl,
+          isUploadingImage: false,
+          clearLocalPreviewFile: true,
+        ));
+        emit(const ProfileUpdateSuccess('Immagine del profilo aggiornata.'));
+        // Dopo il successo, ricarica il profilo per tornare a ProfileLoaded
+        add(LoadProfile());
+      } on FirebaseException catch (e) {
+        emit(ProfileError('Errore Firebase durante il caricamento: ${e.message}'));
+        emit(currentState.copyWith(isUploadingImage: false));
+      } catch (e) {
+        emit(ProfileError('Errore sconosciuto durante il caricamento: ${e.toString()}'));
+        emit(currentState.copyWith(isUploadingImage: false));
       }
     }
   }
@@ -125,45 +124,37 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       emit(const ProfileError('Utente non autenticato per eliminare l\'immagine.'));
       return;
     }
-
     if (state is ProfileLoaded) {
       final currentState = state as ProfileLoaded;
-      emit(currentState.copyWith(isUploadingImage: true, clearLocalPreviewFile: true)); // Start loading, clear preview
+      emit(currentState.copyWith(isUploadingImage: true, clearLocalPreviewFile: true));
+      try {
+        if (user.photoURL != null) {
+          try {
+            final String filePath = 'profile_pictures/${user.uid}/profile.jpg';
+            final ref = _firebaseStorage.ref().child(filePath);
+            await ref.delete();
+          } on FirebaseException catch (storageError) {
+            print('Avviso: Errore durante l\'eliminazione dell\'immagine da Storage: ${storageError.message}');
+          }
+        }
+        await user.updatePhotoURL(null);
+        emit(currentState.copyWith(
+          photoUrl: null,
+          isUploadingImage: false,
+          clearLocalPreviewFile: true,
+        ));
+        emit(const ProfileUpdateSuccess('Immagine del profilo eliminata.'));
+        // Dopo il successo, ricarica il profilo per tornare a ProfileLoaded
+        add(LoadProfile());
+      } on FirebaseException catch (e) {
+        emit(ProfileError('Errore Firebase durante l\'eliminazione: ${e.message}'));
+        emit(currentState.copyWith(isUploadingImage: false));
+      } catch (e) {
+        emit(ProfileError('Errore sconosciuto durante l\'eliminazione: ${e.toString()}'));
+        emit(currentState.copyWith(isUploadingImage: false));
+      }
     } else {
       emit(const ProfileError('Profilo non caricato. Impossibile eliminare l\'immagine.'));
-      return;
-    }
-
-    try {
-      if (user.photoURL != null) {
-        try {
-          final String filePath = 'profile_pictures/${user.uid}/profile.jpg';
-          final ref = _firebaseStorage.ref().child(filePath);
-          await ref.delete();
-        } on FirebaseException catch (storageError) {
-          print('Avviso: Errore durante l\'eliminazione dell\'immagine da Storage: ${storageError.message}');
-        }
-      }
-      await user.updatePhotoURL(null);
-
-      emit(ProfileLoaded(
-        displayName: user.displayName,
-        email: user.email,
-        photoUrl: null,
-        isUploadingImage: false,     // Deletion finished
-        localPreviewFile: null,      // Ensure preview is cleared
-      ));
-      emit(const ProfileUpdateSuccess('Immagine del profilo eliminata.'));
-    } on FirebaseException catch (e) {
-      emit(ProfileError('Errore Firebase durante l\'eliminazione: ${e.message}'));
-      if (state is ProfileLoaded) {
-        emit((state as ProfileLoaded).copyWith(isUploadingImage: false));
-      }
-    } catch (e) {
-      emit(ProfileError('Errore sconosciuto durante l\'eliminazione: ${e.toString()}'));
-      if (state is ProfileLoaded) {
-        emit((state as ProfileLoaded).copyWith(isUploadingImage: false));
-      }
     }
   }
 }

@@ -97,49 +97,27 @@ class _RegisterPageState extends State<RegisterPage> {
                     // Google logo style (copied from LoginPage)
                     Container(
                       margin: const EdgeInsets.only(bottom: 32),
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.15),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                        shape: BoxShape.circle,
+                      ),
                       child: CircleAvatar(
-                        radius: 32,
-                        backgroundColor:
-                            Colors.white, // Assuming a light theme context
-                        child: Image.network(
-                          'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/1200px-Google_2015_logo.svg.png',
-                          width: 48,
-                          height: 48,
-                          fit: BoxFit.contain,
-                          loadingBuilder: (
-                            BuildContext context,
-                            Widget child,
-                            ImageChunkEvent? loadingProgress,
-                          ) {
-                            if (loadingProgress == null) return child;
-                            return SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.0,
-                                value:
-                                    loadingProgress.expectedTotalBytes != null
-                                        ? loadingProgress
-                                                .cumulativeBytesLoaded /
-                                            loadingProgress.expectedTotalBytes!
-                                        : null,
-                              ),
-                            );
-                          },
-                          errorBuilder: (
-                            BuildContext context,
-                            Object error,
-                            StackTrace? stackTrace,
-                          ) {
-                            return Text(
-                              'G',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: colors.primary,
-                              ),
-                            );
-                          },
+                        radius: 36,
+                        backgroundColor: Colors.white,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Image.asset(
+                            'assets/Google_2015_logo.webp',
+                            width: 48,
+                            height: 48,
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       ),
                     ),
@@ -200,7 +178,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         },
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 16),
                     Material(
                       // TextFormField styling matched with LoginPage
                       elevation: 1,
@@ -335,7 +313,6 @@ class _RegisterPageState extends State<RegisterPage> {
                       builder: (context, state) {
                         final isLoading = state is AuthLoading;
                         return SizedBox(
-                          // Matched with LoginPage
                           width: double.infinity,
                           child: FilledButton(
                             onPressed: isLoading ? null : _submitRegister,
@@ -350,24 +327,21 @@ class _RegisterPageState extends State<RegisterPage> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            child:
-                                isLoading
-                                    ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2.5,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                    : const Text(
-                                      'Register',
-                                    ), // Changed button text
+                            child: isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text('Register'),
                           ),
                         );
                       },
                     ),
-                    const SizedBox(height: 18), // Adjusted spacing
+                    const SizedBox(height: 18),
                     BlocBuilder<AuthBloc, AuthState>(
                       // Matched with LoginPage
                       builder: (context, state) {

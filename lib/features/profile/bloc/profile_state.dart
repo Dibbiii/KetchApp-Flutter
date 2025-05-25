@@ -17,7 +17,7 @@ class ProfileLoaded extends ProfileState {
   final String? displayName;
   final String? email;
   final String? photoUrl;
-  final bool isUploadingImage; // Per gestire lo stato di caricamento/eliminazione dell'immagine
+  final bool isUploadingImage; //  Per gestire lo stato di caricamento/eliminazione dell'immagine
   final File? localPreviewFile; // Added for local preview
 
   const ProfileLoaded({

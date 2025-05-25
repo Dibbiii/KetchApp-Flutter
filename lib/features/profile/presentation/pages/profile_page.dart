@@ -171,7 +171,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           alignment: Alignment.center,
                           children: [
                             Padding( // Add padding to ensure spinner doesn't overlap popup button too much
-                              padding: const EdgeInsets.all(4.0), 
+                              padding: const EdgeInsets.all(4.0),
                               child: avatarContent,
                             ),
                             Positioned(
