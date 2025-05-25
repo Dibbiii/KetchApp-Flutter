@@ -6,6 +6,7 @@ import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
 import 'package:ketchapp_flutter/features/profile/bloc/profile_bloc.dart';
 import 'package:ketchapp_flutter/features/profile/bloc/profile_event.dart';
 import 'package:ketchapp_flutter/features/profile/bloc/profile_state.dart';
+import 'profile_shrimmer_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -15,10 +16,19 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  bool _showShimmer = true;
+
   @override
   void initState() {
     super.initState();
     context.read<ProfileBloc>().add(LoadProfile());
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _showShimmer = false;
+        });
+      }
+    });
   }
 
   void _dispatchPickImage(ImageSource source) {
@@ -65,27 +75,27 @@ class _ProfilePageState extends State<ProfilePage> {
         prefixIcon: Icon(iconData, color: colors.onSurfaceVariant),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: colors.outline.withOpacity(0.5)),
+          borderSide: BorderSide(color: colors.outline.withAlpha(128)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: colors.outline.withOpacity(0.5)),
+          borderSide: BorderSide(color: colors.outline.withAlpha(128)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: colors.primary, width: 1.5),
         ),
         filled: true,
-        fillColor: readOnly 
-            ? colors.surfaceContainerHighest.withOpacity(0.1) // Different fill for readOnly
-            : colors.surfaceContainerHighest.withOpacity(0.3),
+        fillColor: readOnly
+            ? colors.surfaceContainerHighest.withAlpha(25)
+            : colors.surfaceContainerHighest.withAlpha(76),
         contentPadding: const EdgeInsets.symmetric(
           vertical: 14,
           horizontal: 16,
         ),
       );
     }
-    
+
     final List<Achievement> achievements = [
       Achievement(icon: Icons.timer_outlined, title: 'Study for 5 hours', isCompleted: true),
       Achievement(icon: Icons.self_improvement_outlined, title: 'Distraction-free session', isCompleted: false),
@@ -122,8 +132,8 @@ class _ProfilePageState extends State<ProfilePage> {
         },
         child: BlocBuilder<ProfileBloc, ProfileState>(
           builder: (context, state) {
-            if (state is ProfileInitial || state is ProfileLoading) {
-              return const Center(child: CircularProgressIndicator());
+            if (_showShimmer || state is ProfileLoading) {
+              return const ProfileShrimmerPage();
             }
 
             if (state is ProfileError) {
@@ -147,7 +157,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     backgroundImage: NetworkImage(state.photoUrl!));
               } else {
                 avatarContent = Icon(Icons.account_circle,
-                    size: 100, color: colors.onSurfaceVariant.withOpacity(0.6));
+                    size: 100, color: colors.onSurfaceVariant.withAlpha(153));
               }
 
               if (state.isUploadingImage) {
@@ -258,43 +268,48 @@ class _ProfilePageState extends State<ProfilePage> {
                         itemCount: achievements.length,
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          childAspectRatio: 3 / 1.5, // Adjust aspect ratio
-                          crossAxisSpacing: 12,
                           mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 1.8, // Più spazio verticale
                         ),
                         itemBuilder: (context, index) {
                           final achievement = achievements[index];
                           return Card(
                             color: achievement.isCompleted
-                                ? colors.primaryContainer.withOpacity(0.7)
-                                : colors.surfaceContainer.withOpacity(0.7),
+                                ? colors.primaryContainer.withAlpha(179)
+                                : colors.surfaceContainer.withAlpha(179),
                             elevation: 0,
                              shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 side: BorderSide(
-                                  color: achievement.isCompleted ? colors.primary.withOpacity(0.5) : colors.outline.withOpacity(0.2),
+                                  color: achievement.isCompleted ? colors.primary.withAlpha(128) : colors.outline.withAlpha(51),
                                   width: 1,
                                 ),
                               ),
                             child: Padding(
-                              padding: const EdgeInsets.all(12.0),
+                              padding: const EdgeInsets.all(5.0),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(
-                                    achievement.icon,
-                                    color: achievement.isCompleted ? colors.onPrimaryContainer : colors.onSurfaceVariant,
-                                    size: 28,
+                                  Flexible(
+                                    child: Icon(
+                                      achievement.icon,
+                                      color: achievement.isCompleted ? colors.onPrimaryContainer : colors.onSurfaceVariant,
+                                      size: 28,
+                                    ),
                                   ),
                                   const SizedBox(height: 8),
-                                  Text(
-                                    achievement.title,
-                                    textAlign: TextAlign.center,
-                                    style: textTheme.bodySmall?.copyWith(
-                                      color: achievement.isCompleted ? colors.onPrimaryContainer : colors.onSurfaceVariant,
+                                  Flexible(
+                                    child: Text(
+                                      achievement.title,
+                                      textAlign: TextAlign.center,
+                                      style: textTheme.bodySmall?.copyWith(
+                                        color: achievement.isCompleted ? colors.onPrimaryContainer : colors.onSurfaceVariant,
+                                      ),
+                                      maxLines: 3,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),
@@ -334,5 +349,9 @@ class Achievement {
   final String title;
   final bool isCompleted;
 
-  Achievement({required this.icon, required this.title, required this.isCompleted});
+  Achievement({
+    required this.icon,
+    required this.title,
+    required this.isCompleted,
+  });
 }

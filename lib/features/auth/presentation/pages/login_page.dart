@@ -3,6 +3,7 @@ import 'package:flutter/services.dart'; // Import services
 import 'package:go_router/go_router.dart';
 import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'login_shrimmer_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -53,11 +54,20 @@ class _LoginFormState extends State<_LoginForm> {
   late final TextEditingController _identifierController; 
   late final TextEditingController _passwordController;
 
+  bool _showShimmer = true;
+
   @override
   void initState() {
     super.initState();
     _identifierController = TextEditingController(); 
     _passwordController = TextEditingController();
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _showShimmer = false;
+        });
+      }
+    });
   }
 
   @override
@@ -84,6 +94,10 @@ class _LoginFormState extends State<_LoginForm> {
     final ColorScheme colors = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
     final Size size = MediaQuery.of(context).size;
+    final isLoading = context.watch<AuthBloc>().state is AuthLoading;
+    if (_showShimmer || isLoading) {
+      return const LoginShimmerPage();
+    }
     return Center(
       child: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: size.width * 0.08),
@@ -255,6 +269,9 @@ class _LoginFormState extends State<_LoginForm> {
               BlocBuilder<AuthBloc, AuthState>(
                 builder: (context, state) {
                   final isLoading = state is AuthLoading;
+                  if (isLoading) {
+                    return const LoginShimmerPage();
+                  }
                   return SizedBox(
                     width: double.infinity,
                     child: FilledButton(

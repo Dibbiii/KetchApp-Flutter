@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:ketchapp_flutter/features/statistics/presentation/statistics_shrimmer_page.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_bloc/flutter_bloc.dart'; // Import BLoC
@@ -20,6 +21,7 @@ class StatisticsPage extends StatefulWidget {
 class _StatisticsPageState extends State<StatisticsPage>
     with SingleTickerProviderStateMixin {
   bool _isLocaleInitialized = false;
+  bool _showShimmer = true;
 
   // Overlay options for the chip and selector
   final List<String> _overlayOptions = [
@@ -45,6 +47,13 @@ class _StatisticsPageState extends State<StatisticsPage>
       parent: _animationController,
       curve: Curves.easeInOut,
     );
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _showShimmer = false;
+        });
+      }
+    });
   }
 
   @override
@@ -168,14 +177,15 @@ class _StatisticsPageState extends State<StatisticsPage>
 
     return BlocBuilder<StatisticsBloc, StatisticsState>(
       builder: (context, state) {
+        if (_showShimmer) {
+          return const StatisticsShrimmerPage();
+        }
         final colors = Theme.of(context).colorScheme;
         final textTheme = Theme.of(context).textTheme;
 
         if (state.status == StatisticsStatus.initial ||
             state.status == StatisticsStatus.loading) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const StatisticsShrimmerPage();
         }
 
         if (state.status == StatisticsStatus.error) {

@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ketchapp_flutter/features/rankings/bloc/ranking_bloc.dart';
 import 'package:ketchapp_flutter/features/rankings/bloc/ranking_event.dart';
 import 'package:ketchapp_flutter/features/rankings/bloc/ranking_state.dart';
+import 'package:ketchapp_flutter/features/rankings/presentation/ranking_shrimmer_page.dart';
 
 // Define a class to hold user data including rank and hours
 class UserRankData {
@@ -159,99 +160,94 @@ class _RankingPageState extends State<RankingPage>
             child: Stack(
               alignment: Alignment.topCenter,
               children: [
-                Column(
-                  children: [
-                    TabBar(
-                      controller: _tabController,
-                      tabs: const [Tab(text: 'Friends'), Tab(text: 'Global')],
-                      labelColor: Theme.of(context).colorScheme.primary,
-                      unselectedLabelColor: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.7),
-                      indicatorColor: Theme.of(context).colorScheme.primary,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 10.0,
-                        horizontal: 20.0,
+                if (state is RankingLoading)
+                  const RankingShrimmerPage(showSearchBar: true)
+                else ...[
+                  Column(
+                    children: [
+                      TabBar(
+                        controller: _tabController,
+                        tabs: const [Tab(text: 'Friends'), Tab(text: 'Global')],
+                        labelColor: Theme.of(context).colorScheme.primary,
+                        unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        indicatorColor: Theme.of(context).colorScheme.primary,
                       ),
-                      child: Material(
-                        elevation: 2,
-                        borderRadius: BorderRadius.circular(16.0),
-                        color: Theme.of(context).colorScheme.surface,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                decoration: InputDecoration(
-                                  hintText: 'Cerca utente...',
-                                  prefixIcon: Icon(
-                                    Icons.search,
-                                    color:
-                                        Theme.of(context).colorScheme.primary,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 10.0,
+                          horizontal: 20.0,
+                        ),
+                        child: Material(
+                          elevation: 2,
+                          borderRadius: BorderRadius.circular(16.0),
+                          color: Theme.of(context).colorScheme.surface,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  decoration: InputDecoration(
+                                    hintText: 'Cerca utente...',
+                                    prefixIcon: Icon(
+                                      Icons.search,
+                                      color: Theme.of(context).colorScheme.primary,
+                                    ),
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                      horizontal: 0,
+                                    ),
                                   ),
-                                  border: InputBorder.none,
-                                  isDense: true,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                    horizontal: 0,
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                  onChanged: _filterUsers,
+                                ),
+                              ),
+                              DropdownButton<RankingFilter>(
+                                value: state is RankingLoaded ? state.filter : RankingFilter.hours,
+                                underline: SizedBox.shrink(),
+                                icon: Icon(
+                                  Icons.filter_list,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: RankingFilter.advancements,
+                                    child: Text('Advancements'),
                                   ),
-                                ),
-                                style: Theme.of(context).textTheme.bodyLarge,
-                                onChanged: _filterUsers,
+                                  DropdownMenuItem(
+                                    value: RankingFilter.hours,
+                                    child: Text('Hours'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: RankingFilter.streak,
+                                    child: Text('Streak'),
+                                  ),
+                                ],
+                                onChanged: (filter) {
+                                  if (filter != null) {
+                                    context.read<RankingBloc>().add(
+                                      ChangeRankingFilter(filter),
+                                    );
+                                  }
+                                },
                               ),
-                            ),
-                            DropdownButton<RankingFilter>(
-                              value:
-                                  state is RankingLoaded
-                                      ? state.filter
-                                      : RankingFilter.hours,
-                              underline: SizedBox.shrink(),
-                              icon: Icon(
-                                Icons.filter_list,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: RankingFilter.advancements,
-                                  child: Text('Advancements'),
-                                ),
-                                DropdownMenuItem(
-                                  value: RankingFilter.hours,
-                                  child: Text('Hours'),
-                                ),
-                                DropdownMenuItem(
-                                  value: RankingFilter.streak,
-                                  child: Text('Streak'),
-                                ),
-                              ],
-                              onChanged: (filter) {
-                                if (filter != null) {
-                                  context.read<RankingBloc>().add(
-                                    ChangeRankingFilter(filter),
-                                  );
-                                }
-                              },
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child:
-                          state is RankingLoading
-                              ? const Center(child: CircularProgressIndicator())
-                              : RefreshIndicator(
-                                onRefresh: () async {
-                                  context.read<RankingBloc>().add(
-                                    RefreshRanking(),
-                                  );
-                                },
-                                child: _buildRankingListBloc(state),
-                              ),
-                    ),
-                  ],
-                ),
+                      Expanded(
+                        child: RefreshIndicator(
+                          onRefresh: () async {
+                            context.read<RankingBloc>().add(
+                              RefreshRanking(),
+                            );
+                          },
+                          child: _buildRankingListBloc(state),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 if (_filteredUsers.isNotEmpty &&
                     _filteredUsers.first.rank == 1 &&
                     _currentSearchQuery.isEmpty) ...[

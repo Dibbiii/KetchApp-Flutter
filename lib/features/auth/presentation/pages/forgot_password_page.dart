@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
+import 'forgot_password_shimmer_page.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -14,10 +15,19 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _emailController;
 
+  bool _showShimmer = true;
+
   @override
   void initState() {
     super.initState();
     _emailController = TextEditingController();
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _showShimmer = false;
+        });
+      }
+    });
   }
 
   @override
@@ -38,7 +48,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-
+    final isLoading = context.watch<AuthBloc>().state is AuthLoading;
+    if (_showShimmer || isLoading) {
+      return const ForgotPasswordShimmerPage();
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text('Reset Password'),
@@ -156,3 +169,4 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     );
   }
 }
+
