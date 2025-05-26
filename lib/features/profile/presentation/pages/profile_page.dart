@@ -6,7 +6,9 @@ import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
 import 'package:ketchapp_flutter/features/profile/bloc/profile_bloc.dart';
 import 'package:ketchapp_flutter/features/profile/bloc/profile_event.dart';
 import 'package:ketchapp_flutter/features/profile/bloc/profile_state.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'profile_shrimmer_page.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -31,7 +33,7 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-  void _dispatchPickImage(ImageSource source) {
+  void _dispatchPickImage(ImageSource source) async {
     final currentBlocState = context.read<ProfileBloc>().state;
     if (currentBlocState is ProfileLoaded && currentBlocState.isUploadingImage) {
       ScaffoldMessenger.of(context)
@@ -40,6 +42,66 @@ class _ProfilePageState extends State<ProfilePage> {
           const SnackBar(content: Text('Operazione immagine già in corso...')),
         );
       return;
+    }
+    PermissionStatus status;
+    if (source == ImageSource.camera) {
+      if (Platform.isAndroid || Platform.isIOS) {
+        status = await Permission.camera.request();
+      } else {
+        status = PermissionStatus.granted;
+      }
+      if (status.isPermanentlyDenied) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: const Text('Permesso fotocamera negato in modo permanente. Abilitalo dalle impostazioni.'),
+              action: SnackBarAction(
+                label: 'Impostazioni',
+                onPressed: () => openAppSettings(),
+              ),
+            ),
+          );
+        return;
+      }
+      if (!status.isGranted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(content: Text('Permesso fotocamera negato.')),
+          );
+        return;
+      }
+    } else if (source == ImageSource.gallery) {
+      if (Platform.isAndroid) {
+        status = await Permission.storage.request();
+      } else if (Platform.isIOS) {
+        status = await Permission.photos.request();
+      } else {
+        status = PermissionStatus.granted;
+      }
+      if (status.isPermanentlyDenied) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: const Text('Permesso libreria foto negato in modo permanente. Abilitalo dalle impostazioni.'),
+              action: SnackBarAction(
+                label: 'Impostazioni',
+                onPressed: () => openAppSettings(),
+              ),
+            ),
+          );
+        return;
+      }
+      if (!status.isGranted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(content: Text('Permesso libreria foto negato.')),
+          );
+        return;
+      }
     }
     context.read<ProfileBloc>().add(ProfileImagePickRequested(source));
   }
@@ -355,3 +417,4 @@ class Achievement {
     required this.isCompleted,
   });
 }
+

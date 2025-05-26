@@ -45,10 +45,13 @@ dependencies:
   googleapis: ^14.0.0
   googleapis_auth: ^2.0.0
   url_launcher: ^6.3.0 # Utile per aprire link, potrebbe servire per la gestione dei permessi
+
   image_picker: ^1.0.7 # Per la selezione delle immagini
   image_cropper: ^9.1.0 # Per il ritaglio delle immagini
   firebase_storage: ^12.4.6 # Per il caricamento delle immagini su Firebase Storage 
-  
+
+  permission_handler: ^11.0.1 # Per la gestione dei permessi
+  shared_preferences: ^2.5.3
 dev_dependencies:
   flutter_test:
     sdk: flutter
