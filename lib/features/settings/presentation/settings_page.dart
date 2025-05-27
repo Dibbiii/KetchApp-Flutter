@@ -34,27 +34,15 @@ class _SettingsPageState extends State<SettingsPage> {
           if (index == 0) {
             return _buildSettingsOptionTile(
               context,
-              icon: Icons.person_outline,
-              text: 'EDIT PROFILE',
-              onTap: () {
-                context.push('/profile');
-              },
-              trailing: const Icon(Icons.arrow_forward_ios, size: 18),
-            );
-          } else if (index == 1) {
-            return _buildSettingsOptionTile(
-              context,
               icon: Icons.volume_up_outlined,
               text: 'WHITE NOISES',
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('WHITE NOISES tapped')),
-                );
+                context.push('/white_noises_page');
                 // TODO: Navigate to White Noises settings or show dialog
               },
               trailing: const Icon(Icons.arrow_forward_ios, size: 18),
             );
-          } else if (index == 2) {
+          } else if (index == 1) {
             return _buildSettingsOptionTile(
               context,
               icon: Icons.check_circle_outline,
@@ -67,7 +55,7 @@ class _SettingsPageState extends State<SettingsPage> {
               },
               trailing: const Icon(Icons.arrow_forward_ios, size: 18),
             );
-          } else if (index == 3) {
+          } else if (index == 2) {
             return _buildSettingsOptionTile(
               context,
               icon: Icons.alarm_on_outlined,
@@ -80,7 +68,7 @@ class _SettingsPageState extends State<SettingsPage> {
               },
               trailing: const Icon(Icons.arrow_forward_ios, size: 18),
             );
-          } else if (index == 4) {
+          } else if (index == 3) {
             return _buildSettingsOptionTile(
               context,
               icon: Icons.timer_outlined,

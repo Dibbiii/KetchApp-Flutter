@@ -17,6 +17,7 @@ import 'package:ketchapp_flutter/features/welcome/presentation/pages/welcome_pag
 import 'package:ketchapp_flutter/features/profile/presentation/pages/profile_page.dart';
 import '../features/statistics/presentation/statistics_page.dart';
 import 'package:ketchapp_flutter/features/auth/presentation/pages/forgot_password_page.dart';
+import 'package:ketchapp_flutter/features/settings/presentation/white_noises_page.dart';
 
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<dynamic> stream) {
@@ -89,6 +90,10 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: '/profile',
           builder: (context, state) => const ProfilePage(),
+        ),
+        GoRoute(
+          path: '/white_noises_page',
+          builder: (context, state) => const WhiteNoisesPage(),
         ),
       ],
     ),

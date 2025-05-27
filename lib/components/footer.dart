@@ -24,7 +24,7 @@ class _FooterState extends State<Footer> {
     } else if (location.startsWith('/ranking')) {
       //
       newIndex = 2;
-    } else if (location.startsWith('/settings')) { // Changed from /profile to /settings
+    } else if (location.startsWith('/profile')) {
       newIndex = 3;
     }
     if (newIndex != _selectedIndex) {
@@ -40,7 +40,7 @@ class _FooterState extends State<Footer> {
         '/home',
         '/statistics',
         '/ranking',
-        '/settings' // Changed from /profile to /settings
+        '/profile'
       ];
       final String currentLocation = GoRouterState.of(context).matchedLocation;
 
@@ -132,10 +132,10 @@ class _FooterState extends State<Footer> {
           label: 'Ranking', // Label was Trophy, changed to Ranking to match route
         ),
         BottomNavigationBarItem(
-            icon: _buildIcon(Icons.settings_outlined, _selectedIndex == 3, colors),
+            icon: _buildIcon(profileOutlined, _selectedIndex == 3, colors),
             activeIcon:
-            _buildActiveIcon(Icons.settings, _selectedIndex == 3, colors),
-          label: 'Settings',
+            _buildActiveIcon(profileOutlined, _selectedIndex == 3, colors),
+          label: 'Profile',
         ),
       ],
       currentIndex: _selectedIndex,

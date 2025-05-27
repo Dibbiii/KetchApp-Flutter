@@ -1,6 +1,7 @@
 import 'dart:io'; // For File
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart'; // For ImageSource
 import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
 import 'package:ketchapp_flutter/features/profile/bloc/profile_bloc.dart';
@@ -173,6 +174,15 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Impostazioni',
+            onPressed: () {
+              context.push('/settings');
+            },
+          ),
+        ],
       ),
       body: BlocListener<ProfileBloc, ProfileState>(
         listener: (context, state) {

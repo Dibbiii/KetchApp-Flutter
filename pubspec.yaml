@@ -52,6 +52,8 @@ dependencies:
 
   permission_handler: ^11.0.1 # Per la gestione dei permessi
   shared_preferences: ^2.5.3
+  audioplayers: ^5.2.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -60,3 +62,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/audio/
