@@ -26,8 +26,8 @@ class _PlanLayoutState extends State<PlanLayout> {
     final List<Widget> automaticList = const [
       SubjectPage(),
       AppointmentsPage(),
-      HoursPage(),
       SessionPage(),
+      HoursPage(),
       SummaryPage(),
     ];
     final List<Widget> manualList = const [SubjectPage()];
