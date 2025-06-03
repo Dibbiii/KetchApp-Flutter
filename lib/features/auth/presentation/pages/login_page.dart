@@ -95,6 +95,7 @@ class _LoginFormState extends State<_LoginForm> {
     final TextTheme textTheme = Theme.of(context).textTheme;
     final Size size = MediaQuery.of(context).size;
     final isLoading = context.watch<AuthBloc>().state is AuthLoading;
+
     if (_showShimmer || isLoading) {
       return const LoginShimmerPage();
     }

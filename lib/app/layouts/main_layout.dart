@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ketchapp_flutter/components/clock_widget.dart'; // clock_widget.dart now provides MaterialClock and formatDurationFromHmm
+import 'package:ketchapp_flutter/components/clock_widget.dart';
 import 'package:ketchapp_flutter/components/footer.dart';
 
 class MainLayout extends StatefulWidget {
@@ -671,15 +671,22 @@ class _AddFriendsDialog extends StatefulWidget {
 
 class _AddFriendsDialogState extends State<_AddFriendsDialog> {
   final TextEditingController _searchController = TextEditingController();
-  List<String> _allFriends = [
-    'Alice',
-    'Bob',
-    'Charlie',
-    'David',
-    'Eve',
-    'Fiona',
-    'George',
-  ]; // Mock data
+  final FocusNode _searchFocusNode =
+      FocusNode(); // Added for manual focus if needed later
+  final List<String> _allFriends = [
+    'Alice Wonderland',
+    'Bob The Builder',
+    'Charlie Brown',
+    'David Copperfield',
+    'Eve Harrington',
+    'Fiona Gallagher',
+    'George Costanza',
+    'Harry Potter',
+    'Ivy Dickens',
+    'Jack Sparrow',
+    'Katherine Pierce',
+    'Leo Fitz',
+  ];
   List<String> _filteredFriends = [];
 
   @override
@@ -687,12 +694,19 @@ class _AddFriendsDialogState extends State<_AddFriendsDialog> {
     super.initState();
     _filteredFriends = _allFriends;
     _searchController.addListener(_filterFriends);
+    // Optionally, request focus after the frame is built if autofocus behavior is critical
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   if (mounted) {
+    //     _searchFocusNode.requestFocus();
+    //   }
+    // });
   }
 
   @override
   void dispose() {
     _searchController.removeListener(_filterFriends);
     _searchController.dispose();
+    _searchFocusNode.dispose(); // Dispose the focus node
     super.dispose();
   }
 
@@ -708,51 +722,116 @@ class _AddFriendsDialogState extends State<_AddFriendsDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     return AlertDialog(
+      backgroundColor: colors.surfaceContainerHigh,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28.0)),
+      titlePadding: const EdgeInsets.only(
+        top: 24.0,
+        left: 24.0,
+        right: 24.0,
+        bottom: 0,
+      ),
+      titleTextStyle: theme.textTheme.headlineSmall?.copyWith(
+        color: colors.onSurface,
+      ),
       title: const Text('Add Friends'),
+      contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
       content: SizedBox(
-        width: double.maxFinite,
+        height: MediaQuery.of(context).size.height * 0.45,
+        width: MediaQuery.of(context).size.width * 0.9,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             TextField(
               controller: _searchController,
-              decoration: const InputDecoration(
+              focusNode: _searchFocusNode, // Assign the focus node
+              // autofocus: true, // Removed autofocus
+              decoration: InputDecoration(
                 hintText: 'Search friends...',
-                prefixIcon: Icon(Icons.search),
+                hintStyle: TextStyle(color: colors.onSurfaceVariant),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: colors.onSurfaceVariant,
+                ),
+                filled: true,
+                fillColor: colors.surfaceContainerLowest,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(28.0),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 12.0,
+                  horizontal: 16.0,
+                ),
+                isDense: true,
+              ),
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: colors.onSurface,
               ),
             ),
             const SizedBox(height: 16.0),
             Expanded(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: _filteredFriends.length,
-                itemBuilder: (BuildContext context, int index) {
-                  final friend = _filteredFriends[index];
-                  final isSelected = widget.selectedFriends.contains(friend);
-                  return ListTile(
-                    title: Text(friend),
-                    trailing:
-                        isSelected
-                            ? Icon(
-                              Icons.check_circle,
-                              color: Theme.of(context).colorScheme.primary,
-                            )
-                            : const Icon(Icons.add_circle_outline),
-                    onTap: () {
-                      if (!isSelected) {
-                        widget.onFriendSelected(friend);
-                        Navigator.pop(context); // Close dialog on selection
-                      }
-                    },
-                  );
-                },
-              ),
+              child:
+                  _filteredFriends.isEmpty
+                      ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(
+                            'No friends found.',
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: colors.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      )
+                      : ListView.builder(
+                        itemCount: _filteredFriends.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          final friend = _filteredFriends[index];
+                          final isSelected = widget.selectedFriends.contains(
+                            friend,
+                          );
+                          return ListTile(
+                            title: Text(
+                              friend,
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: colors.onSurface,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 4.0,
+                              vertical: 6.0,
+                            ),
+                            trailing:
+                                isSelected
+                                    ? Icon(
+                                      Icons.check_circle_rounded,
+                                      color: colors.primary,
+                                    )
+                                    : Icon(
+                                      Icons.add_circle_outline_rounded,
+                                      color: colors.outline,
+                                    ),
+                            onTap: () {
+                              if (!isSelected) {
+                                widget.onFriendSelected(friend);
+                                Navigator.pop(context);
+                              }
+                            },
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                            tileColor: Colors.transparent,
+                          );
+                        },
+                      ),
             ),
           ],
         ),
       ),
-      // Removed the actions list which contained the "Done" button
     );
   }
 }
