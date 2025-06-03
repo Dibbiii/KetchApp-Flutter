@@ -7,9 +7,9 @@ abstract class AuthState {
 
 class AuthInitial extends AuthState {}
 
-class AuthLoading extends AuthState {
-   
-}
+class AuthLoading extends AuthState {}
+
+class AuthVerifying extends AuthState {}
 
 class Authenticated extends AuthState {
   final User user;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'app_colors.dart'; // Import the color definitions
+
+import 'app_colors.dart';
 
 final ThemeData lightTheme = ThemeData(
   // COLOR SCHEME
@@ -57,8 +58,6 @@ final ThemeData lightTheme = ThemeData(
     selectionColor: primaryColorLight.withValues(alpha: 0.4),
     selectionHandleColor: primaryColorLight,
   ),
-  // TabBar indicator color.
-  indicatorColor: primaryColorLight,
   // Hint text color in text fields.
   hintColor: onSurfaceColorLight.withValues(alpha: 0.6),
   // Toggleable active color is managed by component themes like checkboxTheme, radioTheme, switchTheme.
@@ -112,12 +111,14 @@ final ThemeData lightTheme = ThemeData(
     ),
   ),
   // Theme for cards.
-  cardTheme: CardTheme(
+  cardTheme: const CardThemeData(
     elevation: elevationHeight,
     color: surfaceColorLight,
     surfaceTintColor: Colors.transparent, // M3 surface tint
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12.0), // Consistent border radius
+      borderRadius: BorderRadius.all(
+        Radius.circular(12.0),
+      ), // Consistent border radius
     ),
   ),
   // Theme for checkboxes.
@@ -153,17 +154,17 @@ final ThemeData lightTheme = ThemeData(
   dataTableTheme: const DataTableThemeData(),
   // Customize as needed
   // Theme for dialogs.
-  dialogTheme: DialogTheme(
+  dialogTheme: DialogThemeData(
     backgroundColor: surfaceColorLight,
     elevation: elevationHeight + 10,
     // Dialogs often have higher elevation
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-    titleTextStyle: TextStyle(
+    titleTextStyle: const TextStyle(
       color: onSurfaceColorLight,
       fontSize: 20,
       fontWeight: FontWeight.bold,
     ),
-    contentTextStyle: TextStyle(color: onSurfaceColorLight, fontSize: 16),
+    contentTextStyle: const TextStyle(color: onSurfaceColorLight, fontSize: 16),
   ),
   // Theme for dividers.
   dividerTheme: DividerThemeData(
@@ -423,7 +424,7 @@ final ThemeData lightTheme = ThemeData(
     }),
   ),
   // Theme for tab bars.
-  tabBarTheme: TabBarTheme(
+  tabBarTheme: TabBarThemeData(
     indicator: UnderlineTabIndicator(
       borderSide: BorderSide(width: 2.0, color: primaryColorLight),
     ),
@@ -533,7 +534,6 @@ final ThemeData darkTheme = ThemeData(
     selectionColor: primaryColorDark.withValues(alpha: 0.4),
     selectionHandleColor: primaryColorDark,
   ),
-  indicatorColor: primaryColorDark,
   hintColor: onSurfaceColorDark.withValues(alpha: 0.6),
 
   // TYPOGRAPHY & ICONOGRAPHY
@@ -571,7 +571,7 @@ final ThemeData darkTheme = ThemeData(
       borderRadius: BorderRadius.vertical(top: Radius.circular(12.0)),
     ),
   ),
-  cardTheme: CardTheme(
+  cardTheme: CardThemeData(
     elevation: elevationHeight,
     color: surfaceColorDark,
     surfaceTintColor: Colors.transparent, // Or primaryColorDark for M3 tint
@@ -604,7 +604,7 @@ final ThemeData darkTheme = ThemeData(
   ),
   dataTableTheme: const DataTableThemeData(),
   // Customize for dark theme
-  dialogTheme: DialogTheme(
+  dialogTheme: DialogThemeData(
     backgroundColor: surfaceColorDark,
     elevation: elevationHeight + 10,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
@@ -845,7 +845,7 @@ final ThemeData darkTheme = ThemeData(
       return Colors.transparent;
     }),
   ),
-  tabBarTheme: TabBarTheme(
+  tabBarTheme: TabBarThemeData(
     indicator: UnderlineTabIndicator(
       borderSide: BorderSide(width: 2.0, color: primaryColorDark),
     ),
