@@ -48,7 +48,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     });
 
     on<AuthLoginRequested>((event, emit) async {
-      emit(AuthLoading());
+      emit(AuthVerifying());
       try {
         String emailToLogin;
         // Determina se l'identifier è un'email o un username
@@ -98,7 +98,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     });
 
     on<AuthRegisterRequested>((event, emit) async {
-      emit(AuthLoading());
+      emit(AuthVerifying());
       UserCredential? userCredential; // Dichiaralo qui per accedervi nel blocco catch
 
       try {
@@ -150,7 +150,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     });
 
     on<AuthGoogleSignInRequested>((event, emit) async {
-      emit(AuthLoading());
+      emit(AuthVerifying());
       try {
         if (kIsWeb && _googleSignIn.clientId == null) {
              // Questo controllo è più per debug, l'assert del plugin dovrebbe già aver fallito
@@ -206,7 +206,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     });
 
     on<AuthLogoutRequested>((event, emit) async {
-      emit(AuthLoading());
+      emit(AuthVerifying());
       try {
         await _googleSignIn.signOut(); // Aggiungi signOut da Google
         await _firebaseAuth.signOut();
@@ -217,7 +217,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     });
 
     on<AuthPasswordResetRequested>((event, emit) async {
-      emit(AuthLoading());
+      emit(AuthVerifying());
       try {
         await _firebaseAuth.sendPasswordResetEmail(email: event.email);
         emit(AuthPasswordResetEmailSentSuccess('Email di reset inviata a ${event.email}. Controlla la tua casella di posta.'));
