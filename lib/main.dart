@@ -11,10 +11,14 @@ import 'package:ketchapp_flutter/services/api_service.dart';
 import 'package:ketchapp_flutter/features/profile/bloc/profile_bloc.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
+
+  // Initialize date formatting for the Italian locale
+  await initializeDateFormatting('it_IT', null);
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 

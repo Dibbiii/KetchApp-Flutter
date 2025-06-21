@@ -25,5 +25,5 @@ class AuthError extends AuthState {
 
 class AuthPasswordResetEmailSentSuccess extends AuthState {
   final String message;
-  AuthPasswordResetEmailSentSuccess(this.message);
+  const AuthPasswordResetEmailSentSuccess(this.message);
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ruler_picker/flutter_ruler_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io' show Platform;
 
 class HoursPage extends StatefulWidget {
   const HoursPage({super.key});
@@ -62,58 +64,7 @@ class _HoursPageState extends State<HoursPage> {
                       currentVal - details.delta.dx * dragSensitivity;
                   _rulerPickerController!.value = newValue.clamp(0, maxMinutes);
                 },
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.resizeLeftRight,
-                  child: RulerPicker(
-                    controller: _rulerPickerController!,
-                    ranges: [RulerRange(begin: 0, end: maxMinutes, scale: 10)],
-                    onValueChanged: (value) {
-                      setState(() {
-                        selectedHour = value.toDouble() / 60.0;
-                      });
-                    },
-                    rulerBackgroundColor: Colors.transparent,
-                    width: MediaQuery.of(context).size.width - 32,
-                    height: 80,
-                    marker: Container(
-                      width: 4,
-                      height: 60,
-                      color: colors.primary,
-                    ),
-                    scaleLineStyleList: const [
-                      ScaleLineStyle(
-                        color: Colors.yellow,
-                        width: 2,
-                        height: 30,
-                        scale: 6,
-                      ),
-                      ScaleLineStyle(
-                        color: Colors.orange,
-                        width: 1.5,
-                        height: 25,
-                        scale: 3,
-                      ),
-                      ScaleLineStyle(
-                        color: Colors.green,
-                        width: 1.2,
-                        height: 20,
-                        scale: 1,
-                      ),
-                      ScaleLineStyle(
-                        color: Colors.grey,
-                        width: 1,
-                        height: 15,
-                        scale: 0,
-                      ),
-                    ],
-                    onBuildRulerScaleText: (int index, num rulerScaleValue) {
-                      if (rulerScaleValue % 60 == 0) {
-                        return '${(rulerScaleValue ~/ 60)}h';
-                      }
-                      return '';
-                    },
-                  ),
-                ),
+                child: _buildPlatformRulerPicker(context, colors),
               ),
             ),
             const SizedBox(height: 16),
@@ -125,6 +76,63 @@ class _HoursPageState extends State<HoursPage> {
         ),
       ),
     );
+  }
+
+  Widget _buildPlatformRulerPicker(BuildContext context, ColorScheme colors) {
+    final _rulerPickerController = (context as Element)
+        .findAncestorStateOfType<_HoursPageState>()?._rulerPickerController;
+    final int maxMinutes = 24 * 60;
+    final double selectedHour =
+        (context as Element).findAncestorStateOfType<_HoursPageState>()?.selectedHour ?? 0;
+
+    Widget picker = RulerPicker(
+      controller: _rulerPickerController!,
+      ranges: [RulerRange(begin: 0, end: maxMinutes, scale: 10)],
+      onValueChanged: (value) {
+        (context as Element).findAncestorStateOfType<_HoursPageState>()?.setState(() {
+          (context as Element).findAncestorStateOfType<_HoursPageState>()?.selectedHour = value.toDouble() / 60.0;
+        });
+      },
+      rulerBackgroundColor: Colors.transparent,
+      width: MediaQuery.of(context).size.width - 32,
+      height: 80,
+      marker: Container(
+        width: 4,
+        height: 60,
+        color: colors.primary,
+      ),
+      scaleLineStyleList: const [
+        ScaleLineStyle(
+          color: Colors.yellow,
+          width: 2,
+          height: 30,
+          scale: 6,
+        ),
+        ScaleLineStyle(
+          color: Colors.orange,
+          width: 1.5,
+          height: 25,
+          scale: 3,
+        ),
+        ScaleLineStyle(
+          color: Colors.green,
+          width: 1.2,
+          height: 20,
+          scale: 1,
+        ),
+      ], onBuildRulerScaleText: (int index, num rulerScaleValue) {
+        return rulerScaleValue.toString();
+      },
+    );
+
+    if (kIsWeb || (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+      return MouseRegion(
+        cursor: SystemMouseCursors.resizeLeftRight,
+        child: picker,
+      );
+    } else {
+      return picker;
+    }
   }
 }
 

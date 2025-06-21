@@ -61,7 +61,7 @@ class _LoginFormState extends State<_LoginForm> {
     super.initState();
     _identifierController = TextEditingController(); 
     _passwordController = TextEditingController();
-    Future.delayed(const Duration(seconds: 2), () {
+    Future.delayed(const Duration(seconds: 1), () {
       if (mounted) {
         setState(() {
           _showShimmer = false;
