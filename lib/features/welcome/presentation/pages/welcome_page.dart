@@ -7,7 +7,6 @@ import 'package:introduction_screen/introduction_screen.dart';
 import './page_one_view.dart';
 import './page_two_view.dart';
 import './page_three_view.dart';
-import './page_four_auth_view.dart';
 
 class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
@@ -45,12 +44,6 @@ class _WelcomePageState extends State<WelcomePage> {
         // Called from page_three_view.dart
         colors: colors,
         primaryAccentColor: colors.primary,
-      ),
-      buildPageFourAuthViewModel(
-        // Called from page_four_auth_view.dart
-        context: context, // context is needed for MediaQuery and GoRouter
-        colors: colors,
-        textTheme: textTheme,
       ),
     ];
 

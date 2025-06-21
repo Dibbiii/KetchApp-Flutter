@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:ketchapp_flutter/features/plan/models/plan_model.dart';
 import './api_exceptions.dart';
 
 class ApiService {
@@ -83,6 +84,8 @@ class ApiService {
     final response = await http.get(Uri.parse('$_baseUrl/users/email/$username'));
     return _processResponse(response);
   }
+
+  Future<void> createPlan(PlanModel plan) async {}
   
   
   // Implementa metodi simili per PUT, DELETE, ecc., usando _processResponse
