@@ -5,17 +5,25 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'profile_event.dart';
 import 'profile_state.dart';
+import 'package:ketchapp_flutter/services/api_service.dart';
+import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
 
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final FirebaseAuth _firebaseAuth;
   final FirebaseStorage _firebaseStorage;
   final ImagePicker _imagePicker;
+  final ApiService _apiService;
+  final AuthBloc _authBloc;
 
   ProfileBloc({
     required FirebaseAuth firebaseAuth,
     required FirebaseStorage firebaseStorage,
     required ImagePicker imagePicker,
-  })  : _firebaseAuth = firebaseAuth,
+    required ApiService apiService,
+    required AuthBloc authBloc,
+  })  : _apiService = apiService,
+        _authBloc = authBloc,
+        _firebaseAuth = firebaseAuth,
         _firebaseStorage = firebaseStorage,
         _imagePicker = imagePicker,
         super(ProfileInitial()) {
@@ -28,10 +36,26 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   Future<void> _onLoadProfile(
       LoadProfile event, Emitter<ProfileState> emit) async {
     final user = _firebaseAuth.currentUser;
+    String? username;
     if (user != null) {
-      // Se già ProfileLoaded, aggiorna solo i dati, altrimenti emetti ProfileLoaded
+      // Get userUuid from AuthBloc
+      String? userUuid;
+      final authState = _authBloc.state;
+      if (authState is Authenticated) {
+        userUuid = authState.userUuid;
+      }
+      // Fetch username from API
+      if (userUuid != null) {
+        try {
+          final userData = await _apiService.fetchData('users/$userUuid');
+          username = userData['username'] as String?;
+        } catch (e) {
+          // Optionally handle error, fallback to null
+        }
+      }
       if (state is ProfileLoaded) {
         emit((state as ProfileLoaded).copyWith(
+          username: username,
           displayName: user.displayName,
           email: user.email,
           photoUrl: user.photoURL,
@@ -40,6 +64,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         ));
       } else {
         emit(ProfileLoaded(
+          username: username,
           displayName: user.displayName,
           email: user.email,
           photoUrl: user.photoURL,

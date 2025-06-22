@@ -14,6 +14,7 @@ class ProfileInitial extends ProfileState {}
 class ProfileLoading extends ProfileState {}
 
 class ProfileLoaded extends ProfileState {
+  final String? username;
   final String? displayName;
   final String? email;
   final String? photoUrl;
@@ -21,6 +22,7 @@ class ProfileLoaded extends ProfileState {
   final File? localPreviewFile; // Added for local preview
 
   const ProfileLoaded({
+    this.username,
     this.displayName,
     this.email,
     this.photoUrl,
@@ -29,6 +31,7 @@ class ProfileLoaded extends ProfileState {
   });
 
   ProfileLoaded copyWith({
+    String? username,
     String? displayName,
     String? email,
     String? photoUrl,
@@ -38,6 +41,7 @@ class ProfileLoaded extends ProfileState {
     // User? firebaseUser, // This was in your original code, ensure it's used if needed or remove
   }) {
     return ProfileLoaded(
+      username: username ?? this.username,
       displayName: displayName ?? this.displayName,
       email: email ?? this.email,
       photoUrl: photoUrl ?? this.photoUrl,
@@ -47,7 +51,7 @@ class ProfileLoaded extends ProfileState {
   }
 
   @override
-  List<Object?> get props => [displayName, email, photoUrl, isUploadingImage, localPreviewFile];
+  List<Object?> get props => [username, displayName, email, photoUrl, isUploadingImage, localPreviewFile];
 }
 
 class ProfileUpdateSuccess extends ProfileState {

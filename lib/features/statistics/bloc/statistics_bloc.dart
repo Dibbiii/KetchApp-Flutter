@@ -39,7 +39,7 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
       }
 
       final api = ApiService();
-      final userUuid = await api.getUserByFirebaseUid(authState.user.uid);
+      final userUuid = authState.userUuid;
 
       final formattedDate =
           "${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";

@@ -65,6 +65,13 @@ final GoRouter router = GoRouter(
       path: '/forgot_password',
       builder: (context, state) => const ForgotPasswordPage(),
     ),
+    GoRoute(
+      path: '/timer/:tomatoId',
+      builder: (context, state) {
+        final tomatoId = state.pathParameters['tomatoId']!;
+        return TimerPage(tomatoId: tomatoId);
+      },
+    ),
     ShellRoute(
       builder:
           (context, state, child) => BlocProvider(
@@ -86,10 +93,6 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: '/ranking',
           builder: (context, state) => const RankingPage(),
-        ),
-        GoRoute(
-          path: '/timer',
-          builder: (context, state) => const TimerPage(),
         ),
         GoRoute(
           path: '/settings',
