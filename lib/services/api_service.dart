@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:ketchapp_flutter/features/plan/models/plan_model.dart';
+import 'package:ketchapp_flutter/models/tomato.dart';
 import './api_exceptions.dart';
 
 class ApiService {
-  final String _baseUrl = "http://192.168.1.22:8081/api";
+  final String _baseUrl = "http://localhost:8081/api";
 
   Future<dynamic> _processResponse(http.Response response) {
     final body = response.body;
@@ -85,23 +86,44 @@ class ApiService {
     return _processResponse(response);
   }
 
-  Future<String> getUserByFirebaseUid(String firebaseUid) async {
-    final response = await http.get(Uri.parse('$_baseUrl/users/firebase/$firebaseUid'));
+  Future<String> getUserUUIDByFirebaseUid(String firebaseUid) async {
+    final response = await http.get(
+        Uri.parse('$_baseUrl/users/firebase/$firebaseUid'));
     final responseData = await _processResponse(response);
     return responseData.toString();
   }
 
-  Future<List<dynamic>> getUsersForRanking() async {
-    final response = await fetchData('users');
-    return response as List<dynamic>;
-  }
-
   Future<void> createPlan(PlanModel plan) async {
     final planData = plan.toJson();
-    final response = await postData('plans', planData);
     // ignore: avoid_print
     print('Creating plan with data: ${json.encode(planData)}');
-    print('Response from createPlan: $response');
+    try {
+      final response = await postData('plans', planData);
+      print('Response from createPlan: $response');
+    } catch (e) {
+      // ignore: avoid_print
+      print('Error in createPlan: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> getUserByFirebaseUid(String firebaseUid) async {
+    // ignore: avoid_print
+    print('Fetching user by Firebase UID: $firebaseUid');
+    try {
+      final response = await fetchData('users/firebase/$firebaseUid');
+      // Assumendo che la risposta sia un JSON object con i dati dell'utente
+      return response as Map<String, dynamic>;
+    } catch (e) {
+      // ignore: avoid_print
+      print('Error in getUserByFirebaseUid: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<dynamic>> getUsersForRanking() async {
+    final response =  await fetchData("users");
+    return response as List<dynamic>;
   }
 
   Future<Future> getGlobalRanking() async {
@@ -109,7 +131,15 @@ class ApiService {
     return _processResponse(response);
   }
 
+  Future<List<Tomato>> getTodaysTomatoes(String userUuid) async {
+    // ignore: avoid_print
+    print('Fetching tomatoes for user: $userUuid');
+    final uuid = userUuid.split(' ').last.replaceAll(RegExp(r'[^\w-]'), '');
+    final response = await fetchData('users/$uuid/tomatoes/today');
+    final List<dynamic> tomatoesJson = response as List<dynamic>;
+    return tomatoesJson.map((json) => Tomato.fromJson(json)).toList();
+  }
+
 
   // Implementa metodi simili per PUT, DELETE, ecc., usando _processResponse
 }
-

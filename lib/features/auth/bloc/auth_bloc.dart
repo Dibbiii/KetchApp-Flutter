@@ -39,9 +39,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       add(_AuthUserChanged(user));
     });
 
-    on<_AuthUserChanged>((event, emit) {
+    on<_AuthUserChanged>((event, emit) async {
       if (event.user != null) {
-        emit(Authenticated(event.user!));
+        try {
+          final userUuid = await _apiService.getUserUUIDByFirebaseUid(event.user!.uid);
+          emit(Authenticated(event.user!, userUuid));
+        } catch (e) {
+          await _firebaseAuth.signOut();
+          emit(AuthError("Failed to sync with backend: ${e.toString()}"));
+        }
       } else {
         emit(Unauthenticated());
       }

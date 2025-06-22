@@ -1,4 +1,3 @@
-// filepath: lib/features/statistics/bloc/statistics_event.dart
 part of 'statistics_bloc.dart';
 
 @immutable

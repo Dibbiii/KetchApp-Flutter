@@ -1,4 +1,3 @@
-// filepath: lib/features/statistics/presentation/widgets/weekly_histogram_widget.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // For DateUtils
 

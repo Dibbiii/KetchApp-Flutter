@@ -1,4 +1,3 @@
-// filepath: lib/services/calendar_service.dart
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/calendar/v3.dart' as cal;
 import 'package:googleapis_auth/googleapis_auth.dart' as gapi_auth;
