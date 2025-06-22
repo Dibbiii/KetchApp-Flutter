@@ -1,18 +1,37 @@
 class PlanModel {
   final String userId;
+  final String? username;
   final Config config;
   final List<CalendarEntry> calendar;
   final List<TomatoEntry> tomatoes;
 
   PlanModel({
     required this.userId,
+    this.username,
     required this.config,
     required this.calendar,
     required this.tomatoes,
   });
 
+  PlanModel copyWith({
+    String? userId,
+    String? username,
+    Config? config,
+    List<CalendarEntry>? calendar,
+    List<TomatoEntry>? tomatoes,
+  }) {
+    return PlanModel(
+      userId: userId ?? this.userId,
+      username: username ?? this.username,
+      config: config ?? this.config,
+      calendar: calendar ?? this.calendar,
+      tomatoes: tomatoes ?? this.tomatoes,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
         'user_uuid': userId,
+        'username': username,
         'config': config.toJson(),
         'calendar': calendar.map((e) => e.toJson()).toList(),
         'tomatoes': tomatoes.map((e) => e.toJson()).toList(),
@@ -104,21 +123,21 @@ class CalendarEntry {
 }
 
 class TomatoEntry {
-  final String title;
   final String subject;
+  final String? duration;
 
   TomatoEntry({
-    required this.title,
     required this.subject,
+    this.duration,
   });
 
   Map<String, dynamic> toJson() => {
-        'title': title,
         'subject': subject,
+        'duration': duration,
       };
 
   factory TomatoEntry.fromJson(Map<String, dynamic> json) => TomatoEntry(
-        title: json['title'] as String? ?? '',
         subject: json['subject'] as String? ?? '',
+        duration: json['duration'] as String?,
       );
 }
