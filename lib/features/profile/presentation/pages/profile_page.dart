@@ -7,9 +7,10 @@ import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
 import 'package:ketchapp_flutter/features/profile/bloc/profile_bloc.dart';
 import 'package:ketchapp_flutter/features/profile/bloc/profile_event.dart';
 import 'package:ketchapp_flutter/features/profile/bloc/profile_state.dart';
+import 'package:ketchapp_flutter/services/api_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'profile_shrimmer_page.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:provider/provider.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -20,11 +21,12 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   bool _showShimmer = true;
+  String? _username;
 
   @override
   void initState() {
     super.initState();
-    context.read<ProfileBloc>().add(LoadProfile());
+    _fetchUsernameAndLoadProfile();
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         setState(() {
@@ -32,6 +34,28 @@ class _ProfilePageState extends State<ProfilePage> {
         });
       }
     });
+  }
+
+  Future<void> _fetchUsernameAndLoadProfile() async {
+    final authState = context.read<AuthBloc>().state;
+    String? userUuid;
+    if (authState is Authenticated) {
+      userUuid = authState.userUuid;
+    }
+    if (userUuid != null) {
+      try {
+        final apiService = context.read<ApiService>();
+        final userData = await apiService.fetchData('users/$userUuid');
+        setState(() {
+          _username = userData['username'] as String?;
+        });
+      } catch (e) {
+        setState(() {
+          _username = null;
+        });
+      }
+    }
+    context.read<ProfileBloc>().add(LoadProfile());
   }
 
   void _dispatchPickImage(ImageSource source) async {
@@ -310,7 +334,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       const SizedBox(height: 24),
                       TextFormField(
-                        initialValue: state.username ?? 'N/A',
+                        initialValue: _username ?? 'N/A',
                         readOnly: true,
                         decoration: styledInputDecoration(
                           labelText: 'Username',
