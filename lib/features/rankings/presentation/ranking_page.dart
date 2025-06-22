@@ -3,6 +3,7 @@ import 'dart:async'; // Import for Timer
 import 'package:confetti/confetti.dart'; // Import for confetti
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ketchapp_flutter/services/api_service.dart';
 
 import 'package:ketchapp_flutter/features/rankings/bloc/ranking_bloc.dart';
 import 'package:ketchapp_flutter/features/rankings/bloc/ranking_event.dart';
@@ -17,14 +18,12 @@ class UserRankData {
 
   UserRankData({required this.name, required this.rank, required this.hours});
 
-  static List<UserRankData> mockList() {
-    // Puoi personalizzare questa lista per test
-    return List.generate(50, (index) {
-      final name = 'User ${index + 1}';
-      final rank = index + 1;
-      final hours = 120 - index * 2;
-      return UserRankData(name: name, rank: rank, hours: hours);
-    });
+  factory UserRankData.fromJson(Map<String, dynamic> json, int rank) {
+    return UserRankData(
+      name: json['username'] as String,
+      hours: (json['totalHours'] as num).toInt(),
+      rank: rank,
+    );
   }
 }
 
@@ -35,63 +34,38 @@ class RankingPage extends StatefulWidget {
   State<RankingPage> createState() => _RankingPageState();
 }
 
-class _RankingPageState extends State<RankingPage>
-    with SingleTickerProviderStateMixin {
+class _RankingPageState extends State<RankingPage> {
   // Define separate lists for friends and global users using UserRankData
-  final List<UserRankData> _allFriendsUsers = List.generate(10, (index) {
-    final name = 'Friend ${9 - index}';
-    final rank = index + 1;
-    final hours = (10 - index) * 2; // Example hours logic
-    return UserRankData(name: name, rank: rank, hours: hours);
-  });
 
-  final List<UserRankData> _allGlobalUsers = List.generate(50, (index) {
-    final name = 'Global User ${49 - index}';
-    final rank = index + 1;
-    final hours = (50 - index) * 2; // Example hours logic
-    return UserRankData(name: name, rank: rank, hours: hours);
-  });
+  List<UserRankData> _allGlobalUsers = [];
 
   List<UserRankData> _activeList =
       []; // This will point to either _allFriendsUsers or _allGlobalUsers
   List<UserRankData> _filteredUsers = [];
-  late TabController _tabController;
   String _currentSearchQuery = ''; // To store the current search query
   Timer? _debounce; // Timer for debouncing search input
-  VoidCallback? _tabListener; // To store the tab listener for proper removal
   late ConfettiController
-  _confettiController; // Controller for confetti animation
+      _confettiController; // Controller for confetti animation
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    context.read<RankingBloc>().add(LoadRanking());
     _confettiController = ConfettiController(
       duration: const Duration(seconds: 2),
     ); // Initialize confetti controller
-
-    _tabListener = () {
-      // Ensure listener is called only when tab index has finished changing
-      if (!_tabController.indexIsChanging) {
-        if (mounted) {
-          // Check if widget is still in the tree
-          _setActiveListAndFilter();
-        }
-      }
-    };
-    _tabController.addListener(_tabListener!);
 
     // Set initial list based on tab 0 and perform initial filtering
     _setActiveListAndFilter();
   }
 
   void _setActiveListAndFilter() {
-    if (_tabController.index == 0) {
-      _activeList = _allFriendsUsers;
-    } else {
-      _activeList = _allGlobalUsers;
+    if (mounted) {
+      setState(() {
+        _activeList = _allGlobalUsers;
+        _performFiltering();
+      });
     }
-    _performFiltering();
     // Play confetti if there's a top-ranked user
     if (_filteredUsers.isNotEmpty &&
         _filteredUsers.first.rank == 1 &&
@@ -106,11 +80,7 @@ class _RankingPageState extends State<RankingPage>
 
   @override
   void dispose() {
-    if (_tabListener != null) {
-      _tabController.removeListener(_tabListener!);
-    }
     _debounce?.cancel(); // Cancel the timer if it's active
-    _tabController.dispose();
     _confettiController.dispose(); // Dispose confetti controller
     super.dispose();
   }
@@ -152,180 +122,159 @@ class _RankingPageState extends State<RankingPage>
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => RankingBloc()..add(LoadRanking()),
-      child: BlocBuilder<RankingBloc, RankingState>(
-        builder: (context, state) {
-          return SafeArea(
-            child: Stack(
-              alignment: Alignment.topCenter,
-              children: [
-                if (state is RankingLoading)
-                  const RankingShrimmerPage(showSearchBar: true)
-                else ...[
-                  Column(
-                    children: [
-                      TabBar(
-                        controller: _tabController,
-                        tabs: const [Tab(text: 'Friends'), Tab(text: 'Global')],
-                        labelColor: Theme.of(context).colorScheme.primary,
-                        unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                        indicatorColor: Theme.of(context).colorScheme.primary,
+    return BlocBuilder<RankingBloc, RankingState>(
+      builder: (context, state) {
+        if (state is RankingLoaded) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {
+                _allGlobalUsers = state.users;
+                _activeList = _allGlobalUsers;
+                _performFiltering();
+              });
+            }
+          });
+        }
+        return SafeArea(
+          child: Stack(
+            alignment: Alignment.topCenter,
+            children: [
+              if (state is RankingLoading)
+                const RankingShrimmerPage(showSearchBar: true)
+              else ...[
+                Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20.0, bottom: 4.0),
+                      child: Text(
+                        'Global Ranking',
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 10.0,
-                          horizontal: 20.0,
-                        ),
-                        child: Material(
-                          elevation: 2,
-                          borderRadius: BorderRadius.circular(16.0),
-                          color: Theme.of(context).colorScheme.surface,
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  decoration: InputDecoration(
-                                    hintText: 'Cerca utente...',
-                                    prefixIcon: Icon(
-                                      Icons.search,
-                                      color: Theme.of(context).colorScheme.primary,
-                                    ),
-                                    border: InputBorder.none,
-                                    isDense: true,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      vertical: 14,
-                                      horizontal: 0,
-                                    ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 10.0,
+                        horizontal: 20.0,
+                      ),
+                      child: Material(
+                        elevation: 2,
+                        borderRadius: BorderRadius.circular(16.0),
+                        color: Theme.of(context).colorScheme.surface,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  hintText: 'Cerca utente...',
+                                  prefixIcon: Icon(
+                                    Icons.search,
+                                    color: Theme.of(context).colorScheme.primary,
                                   ),
-                                  style: Theme.of(context).textTheme.bodyLarge,
-                                  onChanged: _filterUsers,
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                    horizontal: 0,
+                                  ),
                                 ),
+                                style: Theme.of(context).textTheme.bodyLarge,
+                                onChanged: _filterUsers,
                               ),
-                              DropdownButton<RankingFilter>(
-                                value: state is RankingLoaded ? state.filter : RankingFilter.hours,
-                                underline: SizedBox.shrink(),
-                                icon: Icon(
-                                  Icons.filter_list,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: RankingFilter.advancements,
-                                    child: Text('Advancements'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: RankingFilter.hours,
-                                    child: Text('Hours'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: RankingFilter.streak,
-                                    child: Text('Streak'),
-                                  ),
-                                ],
-                                onChanged: (filter) {
-                                  if (filter != null) {
-                                    context.read<RankingBloc>().add(
-                                      ChangeRankingFilter(filter),
-                                    );
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
-                      Expanded(
-                        child: RefreshIndicator(
-                          onRefresh: () async {
-                            context.read<RankingBloc>().add(
-                              RefreshRanking(),
-                            );
-                          },
-                          child: _buildRankingListBloc(state),
-                        ),
+                    ),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: () async {
+                          context.read<RankingBloc>().add(
+                            RefreshRanking(),
+                          );
+                        },
+                        child: _buildRankingListBloc(state),
                       ),
+                    ),
+                  ],
+                ),
+              ],
+              if (_filteredUsers.isNotEmpty &&
+                  _filteredUsers.first.rank == 1 &&
+                  _currentSearchQuery.isEmpty) ...[
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: ConfettiWidget(
+                    confettiController: _confettiController,
+                    blastDirection: 3.14 / 2,
+                    maxBlastForce: 10,
+                    // increased
+                    minBlastForce: 5,
+                    // increased
+                    emissionFrequency: 0.12,
+                    // more frequent
+                    numberOfParticles: 30,
+                    // more particles
+                    gravity: 0.08,
+                    // slightly slower fall
+                    shouldLoop: false,
+                    colors: const [
+                      Colors.green,
+                      Colors.blue,
+                      Colors.pink,
+                      Colors.orange,
+                      Colors.purple,
+                      Colors.amber,
+                      Colors.red,
                     ],
                   ),
-                ],
-                if (_filteredUsers.isNotEmpty &&
-                    _filteredUsers.first.rank == 1 &&
-                    _currentSearchQuery.isEmpty) ...[
-                  Align(
-                    alignment: Alignment.topCenter,
-                    child: ConfettiWidget(
-                      confettiController: _confettiController,
-                      blastDirection: 3.14 / 2,
-                      maxBlastForce: 10,
-                      // increased
-                      minBlastForce: 5,
-                      // increased
-                      emissionFrequency: 0.12,
-                      // more frequent
-                      numberOfParticles: 30,
-                      // more particles
-                      gravity: 0.08,
-                      // slightly slower fall
-                      shouldLoop: false,
-                      colors: const [
-                        Colors.green,
-                        Colors.blue,
-                        Colors.pink,
-                        Colors.orange,
-                        Colors.purple,
-                        Colors.amber,
-                        Colors.red,
-                      ],
-                    ),
+                ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: ConfettiWidget(
+                    confettiController: _confettiController,
+                    blastDirection: 0,
+                    // right
+                    maxBlastForce: 8,
+                    minBlastForce: 4,
+                    emissionFrequency: 0.08,
+                    numberOfParticles: 15,
+                    gravity: 0.09,
+                    shouldLoop: false,
+                    colors: const [
+                      Colors.green,
+                      Colors.blue,
+                      Colors.pink,
+                      Colors.orange,
+                      Colors.purple,
+                    ],
                   ),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: ConfettiWidget(
-                      confettiController: _confettiController,
-                      blastDirection: 0,
-                      // right
-                      maxBlastForce: 8,
-                      minBlastForce: 4,
-                      emissionFrequency: 0.08,
-                      numberOfParticles: 15,
-                      gravity: 0.09,
-                      shouldLoop: false,
-                      colors: const [
-                        Colors.green,
-                        Colors.blue,
-                        Colors.pink,
-                        Colors.orange,
-                        Colors.purple,
-                      ],
-                    ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ConfettiWidget(
+                    confettiController: _confettiController,
+                    blastDirection: 3.14,
+                    // left
+                    maxBlastForce: 8,
+                    minBlastForce: 4,
+                    emissionFrequency: 0.08,
+                    numberOfParticles: 15,
+                    gravity: 0.09,
+                    shouldLoop: false,
+                    colors: const [
+                      Colors.green,
+                      Colors.blue,
+                      Colors.pink,
+                      Colors.orange,
+                      Colors.purple,
+                    ],
                   ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: ConfettiWidget(
-                      confettiController: _confettiController,
-                      blastDirection: 3.14,
-                      // left
-                      maxBlastForce: 8,
-                      minBlastForce: 4,
-                      emissionFrequency: 0.08,
-                      numberOfParticles: 15,
-                      gravity: 0.09,
-                      shouldLoop: false,
-                      colors: const [
-                        Colors.green,
-                        Colors.blue,
-                        Colors.pink,
-                        Colors.orange,
-                        Colors.purple,
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ],
-            ),
-          );
-        },
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -343,10 +292,10 @@ class _RankingPageState extends State<RankingPage>
       // Qui puoi aggiungere la logica per advancements se hai il dato
     }
     // Soglie di ore per ogni rank
-    const int crystalThreshold = 100;
-    const int goldThreshold = 70;
-    const int ironThreshold = 40;
-    const int bronzeThreshold = 15;
+    const int crystalThreshold = 6;
+    const int goldThreshold = 5;
+    const int ironThreshold = 4;
+    const int bronzeThreshold = 3;
     List<UserRankData> crystal = [];
     List<UserRankData> gold = [];
     List<UserRankData> iron = [];
@@ -412,21 +361,15 @@ class _RankingPageState extends State<RankingPage>
                     borderRadius: BorderRadius.circular(14.0),
                   ),
                   child: ListTile(
-                    leading: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: ringColor, width: ringWidth),
-                      ),
-                      child: CircleAvatar(
-                        backgroundColor: Theme.of(
-                          context,
-                        ).colorScheme.primary.withOpacity(0.08),
+                    leading: SizedBox(
+                      width: 50,
+                      child: Center(
                         child: Text(
-                          userData.name.isNotEmpty ? userData.name[0] : '',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w500),
+                          '#${userData.rank}',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
                       ),
                     ),
@@ -442,35 +385,9 @@ class _RankingPageState extends State<RankingPage>
                         ).colorScheme.onSurface.withOpacity(0.5),
                       ),
                     ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (visuals['icon'] != null)
-                          Icon(visuals['icon'], color: visuals['iconColor']),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primary.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '#${userData.rank}',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.labelMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    trailing: (visuals['icon'] != null)
+                        ? Icon(visuals['icon'], color: visuals['iconColor'])
+                        : null,
                     contentPadding: const EdgeInsets.symmetric(
                       vertical: 4,
                       horizontal: 12,

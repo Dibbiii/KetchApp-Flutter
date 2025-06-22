@@ -14,6 +14,8 @@ class StatisticsState extends Equatable {
   final String? errorMessage;
   // Add this property to manage the selected overlay option
   final ActivityDetailType selectedActivityDetailType;
+  final List<dynamic> subjectStats;
+  final List<dynamic> weeklyDatesData;
 
   const StatisticsState({
     this.status = StatisticsStatus.initial,
@@ -24,6 +26,8 @@ class StatisticsState extends Equatable {
     this.errorMessage,
     // Initialize with a default value, e.g., screenTime
     this.selectedActivityDetailType = ActivityDetailType.screenTime,
+    this.subjectStats = const [],
+    this.weeklyDatesData = const [],
   });
 
   factory StatisticsState.initial() {
@@ -46,6 +50,8 @@ class StatisticsState extends Equatable {
     bool clearErrorMessage = false,
     // Add the new property to copyWith
     ActivityDetailType? selectedActivityDetailType,
+    List<dynamic>? subjectStats,
+    List<dynamic>? weeklyDatesData,
   }) {
     return StatisticsState(
       status: status ?? this.status,
@@ -59,6 +65,8 @@ class StatisticsState extends Equatable {
       // Update the new property
       selectedActivityDetailType:
           selectedActivityDetailType ?? this.selectedActivityDetailType,
+      subjectStats: subjectStats ?? this.subjectStats,
+      weeklyDatesData: weeklyDatesData ?? this.weeklyDatesData,
     );
   }
 
@@ -72,5 +80,7 @@ class StatisticsState extends Equatable {
     errorMessage,
     // Add the new property to props for Equatable comparison
     selectedActivityDetailType,
+    subjectStats,
+    weeklyDatesData,
   ];
 }

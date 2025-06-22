@@ -35,6 +35,10 @@ class _StatisticsPageState extends State<StatisticsPage>
   late final AnimationController _animationController;
   late final Animation<double> _fadeAnimation;
 
+  List<dynamic> statistics = [];
+
+
+
   @override
   void initState() {
     super.initState();
@@ -77,6 +81,20 @@ class _StatisticsPageState extends State<StatisticsPage>
         _isLocaleInitialized = true;
       });
     }
+  }
+
+  String _formatDurationFromSeconds(int totalSeconds) {
+    if (totalSeconds < 0) totalSeconds = 0;
+    final duration = Duration(seconds: totalSeconds);
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+    String result = '';
+    if (hours > 0) result += '$hours or${hours > 1 ? 'e' : 'a'}';
+    if (minutes > 0) {
+      if (hours > 0) result += ', ';
+      result += '$minutes min';
+    }
+    return result.isEmpty ? '0 min' : result;
   }
 
   String _formatTotalHours(double totalHours) {
@@ -272,16 +290,10 @@ class _StatisticsPageState extends State<StatisticsPage>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         IconButton(
-                          icon: Icon(
-                            Icons.arrow_back_ios_new_rounded,
-                            color: colors.onSurfaceVariant,
-                            size: 20,
-                          ),
-                          onPressed:
-                              () => statisticsBloc.add(
-                                StatisticsPreviousDayRequested(),
-                              ),
-                          tooltip: 'Giorno precedente',
+                          icon: const Icon(Icons.chevron_left),
+                          onPressed: () =>
+                              statisticsBloc.add(StatisticsPreviousWeekRequested()),
+                          tooltip: 'Settimana precedente',
                         ),
                         TextButton(
                           onPressed:
@@ -309,16 +321,10 @@ class _StatisticsPageState extends State<StatisticsPage>
                           ),
                         ),
                         IconButton(
-                          icon: Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            color: colors.onSurfaceVariant,
-                            size: 20,
-                          ),
-                          onPressed:
-                              () => statisticsBloc.add(
-                                StatisticsNextDayRequested(),
-                              ),
-                          tooltip: 'Giorno successivo',
+                          icon: const Icon(Icons.chevron_right),
+                          onPressed: () =>
+                              statisticsBloc.add(StatisticsNextWeekRequested()),
+                          tooltip: 'Settimana successiva',
                         ),
                       ],
                     ),
@@ -340,46 +346,40 @@ class _StatisticsPageState extends State<StatisticsPage>
                       ),
                     ),
                     const SizedBox(height: 8),
-                    SubjectStatItemWidget(
-                      subjectIcon: Icons.calculate_rounded,
-                      iconColor: Colors.orange.shade700,
-                      subjectName: 'Matematica',
-                      studyTime: '1 ora, 25 min',
-                      trailingIcon: Icons.hourglass_empty_rounded,
-                      onTap: () => print('Matematica tapped'),
-                    ),
-                    SubjectStatItemWidget(
-                      subjectIcon: Icons.science_rounded,
-                      iconColor: Colors.green.shade700,
-                      subjectName: 'Fisica',
-                      studyTime: '55 min',
-                      trailingIcon: Icons.hourglass_empty_rounded,
-                      onTap: () => print('Fisica tapped'),
-                    ),
-                    SubjectStatItemWidget(
-                      subjectIcon: Icons.history_edu_rounded,
-                      iconColor: Colors.brown.shade700,
-                      subjectName: 'Storia',
-                      studyTime: '40 min',
-                      trailingIcon: Icons.info_outline_rounded,
-                      onTap: () => print('Storia tapped'),
-                    ),
-                    SubjectStatItemWidget(
-                      subjectIcon: Icons.translate_rounded,
-                      iconColor: Colors.blue.shade700,
-                      subjectName: 'Inglese',
-                      studyTime: '1 ora, 5 min',
-                      onTap: () => print('Inglese tapped'),
-                    ),
-                    SubjectStatItemWidget(
-                      subjectIcon: Icons.gavel_rounded,
-                      iconColor: Colors.red.shade700,
-                      subjectName: 'Diritto',
-                      studyTime: '30 min',
-                      trailingIcon: Icons.hourglass_empty_rounded,
-                      onTap: () => print('Diritto tapped'),
-                    ),
-                    const SizedBox(height: 20),
+                    if (state.subjectStats.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Center(
+                          child: Text(
+                            'Nessun dato di studio per questo giorno.',
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colors.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: state.subjectStats.length,
+                        itemBuilder: (context, index) {
+                          final stat = state.subjectStats[index];
+                          final subjectName =
+                              stat['name'] ?? 'Materia Sconosciuta';
+                          final studyTimeInHours = (stat['hours'] ?? 0.0) as num;
+                          final studyTimeInSeconds = (studyTimeInHours * 3600).toInt();
+
+                          // TODO: You might want to have a mapping for icons and colors based on subjectName
+                          return SubjectStatItemWidget(
+                            subjectIcon: Icons.book_rounded,
+                            iconColor: Colors.blueGrey,
+                            subjectName: subjectName,
+                            studyTime:
+                                _formatDurationFromSeconds(studyTimeInSeconds),
+                          );
+                        },
+                      ),
                   ],
                 ),
               ),

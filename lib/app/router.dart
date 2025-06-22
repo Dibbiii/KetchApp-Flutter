@@ -15,6 +15,7 @@ import 'package:ketchapp_flutter/features/settings/presentation/settings_page.da
 import 'package:ketchapp_flutter/features/statistics/bloc/statistics_bloc.dart';
 import 'package:ketchapp_flutter/features/welcome/presentation/pages/welcome_page.dart';
 import 'package:ketchapp_flutter/features/profile/presentation/pages/profile_page.dart';
+import '../features/auth/bloc/auth_bloc.dart';
 import '../features/statistics/presentation/statistics_page.dart';
 import 'package:ketchapp_flutter/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:ketchapp_flutter/features/settings/presentation/white_noises_page.dart';
@@ -73,11 +74,13 @@ final GoRouter router = GoRouter(
         GoRoute(path: '/home', builder: (context, state) => const HomePage()),
         GoRoute(
           path: '/statistics',
-          builder:
-              (context, state) => BlocProvider(
-                create: (context) => StatisticsBloc(),
-                child: StatisticsPage(),
-              ),
+          builder: (context, state) {
+            return BlocProvider(
+              create: (context) =>
+                  StatisticsBloc(authBloc: context.read<AuthBloc>()),
+              child: StatisticsPage(),
+            );
+          },
         ),
         GoRoute(
           path: '/ranking',
