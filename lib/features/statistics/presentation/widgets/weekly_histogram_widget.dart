@@ -161,7 +161,7 @@ class WeeklyHistogramWidget extends StatelessWidget {
                             color:
                                 isDisplayedNavigationDate
                                     ? colors.primary.withOpacity(0.5)
-                                    : colors.surfaceVariant.withOpacity(0.4),
+                                    : colors.primary.withOpacity(0.2),
                           ),
                         ),
                         SizedBox(

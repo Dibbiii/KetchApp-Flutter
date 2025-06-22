@@ -18,9 +18,9 @@ class StatisticsLoadRequested extends StatisticsEvent {
   List<Object?> get props => [currentTotalStudyHours];
 }
 
-class StatisticsPreviousDayRequested extends StatisticsEvent {}
+class StatisticsPreviousWeekRequested extends StatisticsEvent {}
 
-class StatisticsNextDayRequested extends StatisticsEvent {}
+class StatisticsNextWeekRequested extends StatisticsEvent {}
 
 class StatisticsTodayRequested extends StatisticsEvent {}
 
@@ -42,3 +42,4 @@ class StatisticsTotalStudyHoursUpdated extends StatisticsEvent {
   @override
   List<Object?> get props => [newTotalStudyHours];
 }
+

@@ -4,7 +4,7 @@ import 'package:ketchapp_flutter/features/plan/models/plan_model.dart';
 import './api_exceptions.dart';
 
 class ApiService {
-  final String _baseUrl = "http://localhost:8081/api";
+  final String _baseUrl = "http://192.168.1.22:8081/api";
 
   Future<dynamic> _processResponse(http.Response response) {
     final body = response.body;
@@ -85,6 +85,17 @@ class ApiService {
     return _processResponse(response);
   }
 
+  Future<String> getUserByFirebaseUid(String firebaseUid) async {
+    final response = await http.get(Uri.parse('$_baseUrl/users/firebase/$firebaseUid'));
+    final responseData = await _processResponse(response);
+    return responseData.toString();
+  }
+
+  Future<List<dynamic>> getUsersForRanking() async {
+    final response = await fetchData('users');
+    return response as List<dynamic>;
+  }
+
   Future<void> createPlan(PlanModel plan) async {
     final planData = plan.toJson();
     final response = await postData('plans', planData);
@@ -93,6 +104,12 @@ class ApiService {
     print('Response from createPlan: $response');
   }
 
-  
+  Future<Future> getGlobalRanking() async {
+    final response = await http.get(Uri.parse('$_baseUrl/users/ranking/global'));
+    return _processResponse(response);
+  }
+
+
   // Implementa metodi simili per PUT, DELETE, ecc., usando _processResponse
 }
+

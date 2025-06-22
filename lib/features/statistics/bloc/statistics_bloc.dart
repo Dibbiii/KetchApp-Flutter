@@ -1,104 +1,192 @@
 // filepath: lib/features/statistics/bloc/statistics_bloc.dart
 import 'dart:async';
-import 'dart:math';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/foundation.dart'; // For @immutable
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
+
+import '../../../services/api_service.dart'; // For @immutable
 
 part 'statistics_event.dart';
 part 'statistics_state.dart';
 
 class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
-  final Random _random = Random();
+  final AuthBloc _authBloc;
 
-  StatisticsBloc() : super(StatisticsState.initial()) {
+  StatisticsBloc({required AuthBloc authBloc})
+      : _authBloc = authBloc,
+        super(StatisticsState.initial()) {
     on<StatisticsLoadRequested>(_onLoadRequested);
-    on<StatisticsPreviousDayRequested>(_onPreviousDayRequested);
-    on<StatisticsNextDayRequested>(_onNextDayRequested);
+    on<StatisticsPreviousWeekRequested>(_onPreviousWeekRequested);
+    on<StatisticsNextWeekRequested>(_onNextWeekRequested);
     on<StatisticsTodayRequested>(_onTodayRequested);
     on<StatisticsDateSelectedFromHistogram>(_onDateSelectedFromHistogram);
     on<StatisticsTotalStudyHoursUpdated>(_onTotalStudyHoursUpdated);
   }
 
-  List<double> _fetchWeeklyStudyData(DateTime dateForWeek) {
-    // Placeholder: In a real app, fetch data for the week containing dateForWeek
-    return List.generate(7, (_) => _random.nextDouble() * 8.5 + 0.5);
+  Future<void> _fetchAndEmitStatisticsForWeekContainingDate(
+    DateTime date,
+    Emitter<StatisticsState> emit,
+  ) async {
+    emit(state.copyWith(status: StatisticsStatus.loading));
+    try {
+      final authState = _authBloc.state;
+      if (authState is! Authenticated) {
+        emit(state.copyWith(
+            status: StatisticsStatus.error,
+            errorMessage: 'User not authenticated'));
+        return;
+      }
+
+      final api = ApiService();
+      final userUuid = await api.getUserByFirebaseUid(authState.user.uid);
+
+      final formattedDate =
+          "${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+
+      // Calculate week range for the API call
+      final startOfWeek = date.subtract(Duration(days: date.weekday - 1));
+      final endOfWeek = startOfWeek.add(const Duration(days: 6));
+      final formattedStart =
+          "${startOfWeek.year.toString().padLeft(4, '0')}-${startOfWeek.month.toString().padLeft(2, '0')}-${startOfWeek.day.toString().padLeft(2, '0')}";
+      final formattedEnd =
+          "${endOfWeek.year.toString().padLeft(4, '0')}-${endOfWeek.month.toString().padLeft(2, '0')}-${endOfWeek.day.toString().padLeft(2, '0')}";
+
+      final url = "users/$userUuid/statistics?startDate=$formattedStart&endDate=$formattedEnd";
+      print("Fetching data from URL: $url");
+      final response = await api.fetchData(url);
+      print("Response: $response");
+
+      if (response is Map<String, dynamic> && response.containsKey('dates')) {
+        final dates = response['dates'] as List<dynamic>?;
+        if (dates != null) {
+          // Data for the selected day
+          final dayData = dates.firstWhere(
+            (d) => d is Map<String, dynamic> && d['date'] == formattedDate,
+            orElse: () => null,
+          );
+
+          List<dynamic> subjectStatsForDay = [];
+          if (dayData != null && dayData['subjects'] is List) {
+            subjectStatsForDay = dayData['subjects'] as List<dynamic>;
+          }
+
+          // Data for the whole week
+          final startOfWeek = date.subtract(Duration(days: date.weekday - 1));
+          final weeklyData = List.filled(7, 0.0);
+          for (int i = 0; i < 7; i++) {
+            final dateInWeek = startOfWeek.add(Duration(days: i));
+            final formattedDateInWeek =
+                "${dateInWeek.year.toString().padLeft(4, '0')}-${dateInWeek.month.toString().padLeft(2, '0')}-${dateInWeek.day.toString().padLeft(2, '0')}";
+
+            final dayDataInWeek = dates.firstWhere(
+              (d) =>
+                  d is Map<String, dynamic> &&
+                  d['date'] == formattedDateInWeek,
+              orElse: () => null,
+            );
+
+            if (dayDataInWeek != null && dayDataInWeek['hours'] is num) {
+              weeklyData[i] = (dayDataInWeek['hours'] as num).toDouble();
+            }
+          }
+
+          emit(state.copyWith(
+            status: StatisticsStatus.loaded,
+            displayedCalendarDate: date,
+            subjectStats: subjectStatsForDay,
+            weeklyStudyData: weeklyData,
+            weeklyDatesData: dates, // Store the weekly data
+          ));
+        } else {
+          emit(state.copyWith(
+            status: StatisticsStatus.error,
+            errorMessage:
+                "Formato di risposta API imprevisto ('dates' non è una lista).",
+          ));
+        }
+      } else {
+        // No data for today, emit empty list
+        emit(state.copyWith(
+          status: StatisticsStatus.loaded,
+          displayedCalendarDate: date,
+          subjectStats: [],
+          weeklyStudyData: List.filled(7, 0.0),
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+          status: StatisticsStatus.error, errorMessage: e.toString()));
+    }
   }
 
   Future<void> _onLoadRequested(
     StatisticsLoadRequested event,
     Emitter<StatisticsState> emit,
   ) async {
-    emit(state.copyWith(status: StatisticsStatus.loading));
-    try {
-      final weeklyData = _fetchWeeklyStudyData(state.displayedCalendarDate);
-      double currentRecordHours = state.recordStudyHours;
-      DateTime currentBestDay = state.bestStudyDay;
-
-      if (event.currentTotalStudyHours > currentRecordHours) {
-        currentRecordHours = event.currentTotalStudyHours;
-        currentBestDay = DateTime.now(); // Assuming record is set now
-      }
-
-      emit(state.copyWith(
-        status: StatisticsStatus.loaded,
-        weeklyStudyData: weeklyData,
-        recordStudyHours: currentRecordHours,
-        bestStudyDay: currentBestDay,
-      ));
-    } catch (e) {
-      emit(state.copyWith(status: StatisticsStatus.error, errorMessage: e.toString()));
-    }
+    await _fetchAndEmitStatisticsForWeekContainingDate(DateTime.now(), emit);
   }
 
-  Future<void> _onPreviousDayRequested(
-    StatisticsPreviousDayRequested event,
+  Future<void> _onPreviousWeekRequested(
+    StatisticsPreviousWeekRequested event,
     Emitter<StatisticsState> emit,
   ) async {
-    final newDate = state.displayedCalendarDate.subtract(const Duration(days: 1));
-    final weeklyData = _fetchWeeklyStudyData(newDate);
-    emit(state.copyWith(
-      displayedCalendarDate: newDate,
-      weeklyStudyData: weeklyData,
-      status: StatisticsStatus.loaded,
-    ));
+    final newDate = state.displayedCalendarDate.subtract(const Duration(days: 7));
+    await _fetchAndEmitStatisticsForWeekContainingDate(newDate, emit);
   }
 
-  Future<void> _onNextDayRequested(
-    StatisticsNextDayRequested event,
+  Future<void> _onNextWeekRequested(
+    StatisticsNextWeekRequested event,
     Emitter<StatisticsState> emit,
   ) async {
-    final newDate = state.displayedCalendarDate.add(const Duration(days: 1));
-    final weeklyData = _fetchWeeklyStudyData(newDate);
-    emit(state.copyWith(
-      displayedCalendarDate: newDate,
-      weeklyStudyData: weeklyData,
-      status: StatisticsStatus.loaded,
-    ));
+    final newDate = state.displayedCalendarDate.add(const Duration(days: 7));
+    await _fetchAndEmitStatisticsForWeekContainingDate(newDate, emit);
   }
 
   Future<void> _onTodayRequested(
     StatisticsTodayRequested event,
     Emitter<StatisticsState> emit,
   ) async {
-    final newDate = DateTime.now();
-    final weeklyData = _fetchWeeklyStudyData(newDate);
-    emit(state.copyWith(
-      displayedCalendarDate: newDate,
-      weeklyStudyData: weeklyData,
-      status: StatisticsStatus.loaded,
-    ));
+    await _fetchAndEmitStatisticsForWeekContainingDate(DateTime.now(), emit);
   }
 
   Future<void> _onDateSelectedFromHistogram(
     StatisticsDateSelectedFromHistogram event,
     Emitter<StatisticsState> emit,
   ) async {
-    emit(state.copyWith(
-      displayedCalendarDate: event.selectedDate,
-      status: StatisticsStatus.loaded,
-      // weeklyStudyData: _fetchWeeklyStudyData(event.selectedDate), // Potentially refetch if week changes
-    ));
+    final selectedDate = event.selectedDate;
+    final currentDisplayedDate = state.displayedCalendarDate;
+
+    // Check if the selected date is in the same week as the currently displayed date
+    final startOfWeek = currentDisplayedDate.subtract(Duration(days: currentDisplayedDate.weekday - 1));
+    final endOfWeek = startOfWeek.add(const Duration(days: 6));
+
+    if (selectedDate.isAfter(startOfWeek.subtract(const Duration(days: 1))) &&
+        selectedDate.isBefore(endOfWeek.add(const Duration(days: 1))) &&
+        state.weeklyDatesData.isNotEmpty) {
+      // Data for the week is already loaded, just update the selected day
+      final formattedDate =
+          "${selectedDate.year.toString().padLeft(4, '0')}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}";
+
+      final dayData = state.weeklyDatesData.firstWhere(
+        (d) => d is Map<String, dynamic> && d['date'] == formattedDate,
+        orElse: () => null,
+      );
+
+      List<dynamic> subjectStatsForDay = [];
+      if (dayData != null && dayData['subjects'] is List) {
+        subjectStatsForDay = dayData['subjects'] as List<dynamic>;
+      }
+
+      emit(state.copyWith(
+        displayedCalendarDate: selectedDate,
+        subjectStats: subjectStatsForDay,
+      ));
+    } else {
+      // Data for the week is not loaded, fetch it
+      await _fetchAndEmitStatisticsForWeekContainingDate(selectedDate, emit);
+    }
   }
 
   Future<void> _onTotalStudyHoursUpdated(
@@ -117,3 +205,4 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
     }
   }
 }
+
