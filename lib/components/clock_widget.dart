@@ -2,8 +2,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 
-// Helper function to format selected duration (H.MM format) to a display string like "1:30 h" or "30 m"
-String formatDurationFromHmm(double hmmHours, {String defaultText = "Nessuna pausa"}) {
+// Helper function to format selected duration (H.MM format) to a display string like "1h 30m" or "30m"
+String formatDurationFromHmm(double hmmHours, {String defaultText = "No time set"}) {
   if (hmmHours < 0) hmmHours = 0; // Ensure non-negative
   int hours = hmmHours.floor();
   int minutes = ((hmmHours - hours) * 100).round();
@@ -19,7 +19,7 @@ String formatDurationFromHmm(double hmmHours, {String defaultText = "Nessuna pau
   } else if (hours == 0) {
     return '$minutes m';
   } else {
-    return '$hours:${minutes.toString().padLeft(2, '0')} h';
+    return '${hours}h ${minutes.toString().padLeft(2, '0')}m';
   }
 }
 
@@ -159,6 +159,8 @@ class _MaterialClockState extends State<MaterialClock> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return SizedBox(
       width: widget.clockSize,
       height: widget.clockSize,
@@ -176,7 +178,7 @@ class _MaterialClockState extends State<MaterialClock> {
         child: CustomPaint(
           painter: _ClockPainter(
             hourAngle: _hourAngle,
-            // Potentially pass theme colors to painter
+            colors: colors,
           ),
         ),
       ),
@@ -186,92 +188,83 @@ class _MaterialClockState extends State<MaterialClock> {
 
 class _ClockPainter extends CustomPainter {
   final double hourAngle;
-  final Color faceColor;
-  final Color handColor;
-  final Color numberColor;
-  final Color centerDotColor;
+  final ColorScheme colors;
 
   _ClockPainter({
     required this.hourAngle,
-    this.faceColor = Colors.white,
-    this.handColor = Colors.blue,
-    this.numberColor = Colors.black,
-    this.centerDotColor = Colors.black,
+    required this.colors,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = faceColor;
     final center = size.center(Offset.zero);
     final radius = size.width / 2;
 
-    // Draw clock face
-    canvas.drawCircle(center, radius, paint);
+    // 1. Draw clock face
+    final facePaint = Paint()..color = colors.surface;
+    canvas.drawCircle(center, radius, facePaint);
 
-    // Draw outline
+    // 2. Draw clock outline
     final outlinePaint = Paint()
-      ..color = numberColor.withAlpha(50)
+      ..color = colors.outline.withOpacity(0.5)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
     canvas.drawCircle(center, radius, outlinePaint);
 
+    // 3. Draw tick marks instead of numbers
+    final tickPaint = Paint()..strokeCap = StrokeCap.round;
+    const double tickPadding = 12.0;
+    final double innerRadius = radius - tickPadding;
 
-    // Draw clock numbers
-    final textPainter = TextPainter(
-      textAlign: TextAlign.center,
-      textDirection: TextDirection.ltr,
-    );
-    final double numberRadius = radius - (radius * 0.15); // Adjust number distance from edge
-    final double fontSize = radius * 0.1; // Adjust font size based on radius
+    for (int i = 0; i < 60; i++) {
+      final angle = (i * 6) * (pi / 180); // 6 degrees per minute
+      final isHourMark = i % 5 == 0;
 
+      tickPaint.color = colors.onSurface.withOpacity(isHourMark ? 1.0 : 0.6);
+      tickPaint.strokeWidth = isHourMark ? 2.5 : 1.5;
 
-    for (int i = 1; i <= 12; i++) {
-      final angle = (i * 30) * (pi / 180); // Angle for 12-hour clock numbers
-      // Numbers are positioned as on a standard clock (12 at top, 3 at right)
-      // sin for x, -cos for y to start 12 at top and go clockwise
-      final x = center.dx + numberRadius * sin(angle);
-      final y = center.dy - numberRadius * cos(angle);
+      final double tickStart = isHourMark ? innerRadius - 8.0 : innerRadius - 4.0;
 
-      textPainter.text = TextSpan(
-        text: i.toString(),
-        style: TextStyle(color: numberColor, fontSize: fontSize),
+      final startPoint = Offset(
+        center.dx + tickStart * sin(angle),
+        center.dy - tickStart * cos(angle),
       );
-      textPainter.layout();
-      textPainter.paint(
-        canvas,
-        Offset(x - textPainter.width / 2, y - textPainter.height / 2),
+      final endPoint = Offset(
+        center.dx + innerRadius * sin(angle),
+        center.dy - innerRadius * cos(angle),
       );
+
+      canvas.drawLine(startPoint, endPoint, tickPaint);
     }
 
-    // Draw hour hand
+    // 4. Draw hour hand with a thumb
+    final handLength = radius * 0.85;
+    final handEnd = Offset(
+      center.dx + handLength * sin(hourAngle),
+      center.dy - handLength * cos(hourAngle),
+    );
+
     final handPaint = Paint()
-      ..color = handColor
-      ..strokeWidth = max(2.0, radius * 0.03) // Make stroke width responsive
+      ..color = colors.primary
+      ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round;
 
-    final handLength = radius * 0.6; // Adjust hand length
-    // The hourAngle is 0 at 12 o'clock, positive clockwise.
-    // cos(angle - pi/2) for x, sin(angle - pi/2) for y if angle is from positive x-axis.
-    // If hourAngle is 0 at 12 (positive y-axis), then:
-    // x = handLength * sin(hourAngle)
-    // y = -handLength * cos(hourAngle)
-    final handX = center.dx + handLength * sin(hourAngle);
-    final handY = center.dy - handLength * cos(hourAngle);
+    canvas.drawLine(center, handEnd, handPaint);
 
-    canvas.drawLine(center, Offset(handX, handY), handPaint);
+    // 5. Draw the thumb at the end of the hand
+    final thumbPaint = Paint()..color = colors.primary;
+    canvas.drawCircle(handEnd, 10, thumbPaint);
+    final thumbInnerPaint = Paint()..color = colors.surface;
+    canvas.drawCircle(handEnd, 4, thumbInnerPaint);
 
-    // Draw center dot
-    final centerDotPaint = Paint()..color = centerDotColor;
-    canvas.drawCircle(center, max(2.0, radius * 0.04), centerDotPaint); // Make dot responsive
+    // 6. Draw center pivot
+    final centerDotPaint = Paint()..color = colors.primary;
+    canvas.drawCircle(center, 5, centerDotPaint);
   }
 
   @override
   bool shouldRepaint(covariant _ClockPainter oldDelegate) =>
-      oldDelegate.hourAngle != hourAngle ||
-      oldDelegate.faceColor != faceColor ||
-      oldDelegate.handColor != handColor ||
-      oldDelegate.numberColor != numberColor ||
-      oldDelegate.centerDotColor != centerDotColor;
+      oldDelegate.hourAngle != hourAngle || oldDelegate.colors != colors;
 }
 
 // The old ClockWidget (displaying current time) has been removed from this file.

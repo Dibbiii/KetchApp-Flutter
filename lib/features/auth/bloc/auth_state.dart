@@ -13,7 +13,9 @@ class AuthVerifying extends AuthState {}
 
 class Authenticated extends AuthState {
   final User user;
-  const Authenticated(this.user);
+  final bool isGoogleSignIn;
+
+  const Authenticated(this.user, {this.isGoogleSignIn = false});
 }
 
 class Unauthenticated extends AuthState {}

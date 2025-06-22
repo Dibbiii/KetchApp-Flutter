@@ -12,6 +12,8 @@ dependencies:
 
   # UI components
   cupertino_icons: ^1.0.8
+  flutter_localizations:
+    sdk: flutter
   carousel_slider: ^5.0.0
   flutter_ruler_picker: ^1.0.6
   introduction_screen: ^3.1.17
