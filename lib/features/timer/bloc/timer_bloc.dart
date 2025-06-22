@@ -2,14 +2,26 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:ketchapp_flutter/models/activity_action.dart';
+import 'package:ketchapp_flutter/services/api_service.dart';
 
 part 'timer_event.dart';
 part 'timer_state.dart';
 
 class TimerBloc extends Bloc<TimerEvent, TimerState> {
+  final ApiService _apiService;
+  final String _userUUID;
+  final int _tomatoId;
   Timer? _timer;
 
-  TimerBloc() : super(const TimerInitial(0)) {
+  TimerBloc(
+      {required ApiService apiService,
+      required String userUUID,
+      required int tomatoId})
+      : _apiService = apiService,
+        _userUUID = userUUID,
+        _tomatoId = tomatoId,
+        super(const TimerInitial(0)) {
     on<TimerStarted>(_onStarted);
     on<TimerPaused>(_onPaused);
     on<TimerResumed>(_onResumed);
@@ -39,17 +51,27 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     _startTimer();
   }
 
-  void _onPaused(TimerPaused event, Emitter<TimerState> emit) {
+  void _onPaused(TimerPaused event, Emitter<TimerState> emit) async {
     if (state is TimerRunInProgress) {
       _timer?.cancel();
-      emit(TimerRunPause(state.duration));
+      try {
+        await _apiService.createActivity(_userUUID, _tomatoId, ActivityAction.PAUSE);
+        emit(TimerRunPause(state.duration));
+      } catch (e) {
+        _startTimer();
+      }
     }
   }
 
-  void _onResumed(TimerResumed event, Emitter<TimerState> emit) {
+  void _onResumed(TimerResumed event, Emitter<TimerState> emit) async {
     if (state is TimerRunPause) {
-      emit(TimerRunInProgress(state.duration));
-      _startTimer();
+      try {
+        await _apiService.createActivity(_userUUID, _tomatoId, ActivityAction.RESUME);
+        emit(TimerRunInProgress(state.duration));
+        _startTimer();
+      } catch (e) {
+        //
+      }
     }
   }
 

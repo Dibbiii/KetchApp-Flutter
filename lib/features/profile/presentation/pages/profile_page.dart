@@ -310,10 +310,10 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       const SizedBox(height: 24),
                       TextFormField(
-                        initialValue: state.displayName ?? 'N/A',
+                        initialValue: state.username ?? 'N/A',
                         readOnly: true,
                         decoration: styledInputDecoration(
-                          labelText: 'Display Name',
+                          labelText: 'Username',
                           iconData: Icons.person_outline,
                         ),
                         style: textTheme.bodyLarge?.copyWith(color: colors.onSurface),
@@ -427,4 +427,3 @@ class Achievement {
     required this.isCompleted,
   });
 }
-

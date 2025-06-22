@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:ketchapp_flutter/features/plan/models/plan_model.dart';
 import 'package:ketchapp_flutter/models/tomato.dart';
+import 'package:ketchapp_flutter/models/activity_action.dart';
+import 'package:ketchapp_flutter/models/achievement.dart';
 import './api_exceptions.dart';
 
 class ApiService {
-  final String _baseUrl = "http://localhost:8081/api";
+  final String _baseUrl = "http://192.168.1.22:8081/api";
 
   Future<dynamic> _processResponse(http.Response response) {
     final body = response.body;
@@ -134,10 +136,38 @@ class ApiService {
   Future<List<Tomato>> getTodaysTomatoes(String userUuid) async {
     // ignore: avoid_print
     print('Fetching tomatoes for user: $userUuid');
-    final uuid = userUuid.split(' ').last.replaceAll(RegExp(r'[^\w-]'), '');
-    final response = await fetchData('users/$uuid/tomatoes/today');
+    final response = await fetchData('users/$userUuid/tomatoes/today');
     final List<dynamic> tomatoesJson = response as List<dynamic>;
     return tomatoesJson.map((json) => Tomato.fromJson(json)).toList();
+  }
+
+  Future<List<Achievement>> getAchievements(String userUuid) async {
+    final response = await fetchData('users/$userUuid/achievements');
+    final List<dynamic> achievementsJson = response as List<dynamic>;
+    return achievementsJson.map((json) => Achievement.fromJson(json)).toList();
+  }
+
+  Future<Tomato> getTomatoById(int tomatoId) async {
+    // ignore: avoid_print
+    print('Fetching tomato with id: $tomatoId');
+    final response = await fetchData('tomatoes/$tomatoId');
+    return Tomato.fromJson(response);
+  }
+
+  Future<void> createActivity(
+      String userUUID, int tomatoId, ActivityAction action) async {
+    try {
+      await postData('activities', {
+        'userUUID': userUUID,
+        'tomatoId': tomatoId,
+        'type': 'TIMER',
+        'action': action.name,
+      });
+    } catch (e) {
+      // ignore: avoid_print
+      print('Error creating activity: $e');
+      rethrow;
+    }
   }
 
 
