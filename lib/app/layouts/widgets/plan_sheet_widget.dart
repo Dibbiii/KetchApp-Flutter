@@ -19,6 +19,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
   int selectedType = 0; // 0: Event, 1: Task, 2: Birthday
   final List<TextEditingController> _subjectControllers = [];
   final List<FocusNode> _subjectFocusNodes = [];
+  final Map<int, double> _subjectDurations = {};
 
   // Add fixed calendar events for Lunch, Dinner, and Sleep to the UI as editable events
   final List<TextEditingController> _calendarControllers = [
@@ -118,6 +119,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
       _subjectFocusNodes[idx].dispose();
       _subjectControllers.removeAt(idx);
       _subjectFocusNodes.removeAt(idx);
+      _subjectDurations.remove(idx);
     });
   }
 
@@ -139,7 +141,69 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
       _calendarFocusNodes[idx].dispose();
       _calendarControllers.removeAt(idx);
       _calendarFocusNodes.removeAt(idx);
+      _calendarTimes.remove(idx);
     });
+  }
+
+  void _showSubjectDurationDialog(int subjectIndex) {
+    double initialHmmHours = _subjectDurations[subjectIndex] ?? 0.0;
+    double tempSelectedHmmHours = initialHmmHours;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Set Study Duration'),
+          contentPadding: const EdgeInsets.all(16.0),
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter dialogSetState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(
+                    formatDurationFromHmm(
+                      tempSelectedHmmHours,
+                      defaultText: "No duration set",
+                    ),
+                    style: TextStyle(
+                      fontSize: 20,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  MaterialClock(
+                    initialSelectedHours: tempSelectedHmmHours,
+                    onTimeChanged: (selectedHmm) {
+                      dialogSetState(() {
+                        tempSelectedHmmHours = selectedHmm;
+                      });
+                    },
+                    clockSize: 200.0,
+                  ),
+                ],
+              );
+            },
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.pop(dialogContext);
+              },
+            ),
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                setState(() {
+                  _subjectDurations[subjectIndex] = tempSelectedHmmHours;
+                });
+                Navigator.pop(dialogContext);
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showSessionClockDialog() {
@@ -373,12 +437,21 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
       });
 
       final tomatoes = _subjectControllers
-          .where((c) => c.text.trim().isNotEmpty)
-          .map((controller) => TomatoEntry(
-                title: controller.text,
-                subject: controller.text,
-              ))
-          .toList();
+          .asMap()
+          .entries
+          .where((entry) => entry.value.text.trim().isNotEmpty)
+          .map((entry) {
+        final idx = entry.key;
+        final controller = entry.value;
+        final durationHmm = _subjectDurations[idx] ?? 0.0;
+        final durationString =
+            formatDurationFromHmm(durationHmm, defaultText: '0m');
+
+        return TomatoEntry(
+          subject: controller.text,
+          duration: durationHmm > 0 ? durationString : null,
+        );
+      }).toList();
 
       final notificationsConfig =
           _config['notifications'] as Map<String, dynamic>? ?? {};
@@ -544,8 +617,17 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                           .where((t) => t.isNotEmpty)
                           .toList();
 
-                      final subjectError =
-                          subjects.isEmpty ? 'Please add at least one subject.' : null;
+                      String? subjectError;
+                      if (subjects.isEmpty) {
+                        subjectError = 'Please add at least one subject.';
+                      } else {
+                        final hasDuration = _subjectDurations.values.any((d) => d > 0);
+                        if (!hasDuration) {
+                          subjectError =
+                              'At least one subject must have a duration greater than 0.';
+                        }
+                      }
+
                       final sessionError = _dialogSessionSelectedHours == 0.0
                           ? 'Session time must be greater than 0.'
                           : null;
@@ -948,47 +1030,54 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                       mainAxisSize: MainAxisSize.min,
                       children:
                           _subjectControllers.asMap().entries.map((entry) {
-                            int idx = entry.key;
-                            TextEditingController controller = entry.value;
-                            FocusNode focusNode = _subjectFocusNodes[idx];
-                            return Container(
-                              margin: const EdgeInsets.only(
-                                bottom: 4.0,
-                                right: 12.0,
-                              ),
-                              decoration: BoxDecoration(
-                                color: colors.surfaceContainerHighest.withAlpha(
-                                  128,
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: controller,
-                                      focusNode: focusNode,
-                                      decoration: const InputDecoration(
-                                        hintText: 'Enter subject',
-                                        border: InputBorder.none,
-                                        isDense: true,
-                                        contentPadding: EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 12,
-                                        ),
-                                      ),
-                                      style: const TextStyle(fontSize: 16),
+                        int idx = entry.key;
+                        TextEditingController controller = entry.value;
+                        FocusNode focusNode = _subjectFocusNodes[idx];
+                        final durationHmm = _subjectDurations[idx] ?? 0.0;
+                        final durationText =
+                            formatDurationFromHmm(durationHmm, defaultText: '');
+                        return Container(
+                          margin: const EdgeInsets.only(
+                            bottom: 4.0,
+                            right: 12.0,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colors.surfaceContainerHighest.withAlpha(
+                              128,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: controller,
+                                  focusNode: focusNode,
+                                  decoration: const InputDecoration(
+                                    hintText: 'Enter subject',
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 12,
                                     ),
                                   ),
-                                  IconButton(
-                                    icon: const Icon(Icons.close, size: 20),
-                                    splashRadius: 18,
-                                    onPressed: () => _removeSubjectAt(idx),
-                                  ),
-                                ],
+                                  style: const TextStyle(fontSize: 16),
+                                ),
                               ),
-                            );
-                          }).toList(),
+                              TextButton(
+                                onPressed: () => _showSubjectDurationDialog(idx),
+                                child: Text(durationHmm > 0 ? durationText : 'Set Duration'),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close, size: 20),
+                                splashRadius: 18,
+                                onPressed: () => _removeSubjectAt(idx),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
                     ),
                   ),
               ],

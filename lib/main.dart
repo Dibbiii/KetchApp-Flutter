@@ -12,6 +12,8 @@ import 'package:ketchapp_flutter/features/profile/bloc/profile_bloc.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ketchapp_flutter/features/profile/bloc/achievement_bloc.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,23 +30,26 @@ Future<void> main() async {
         Provider<ApiService>(
           create: (_) => ApiService(),
         ),
-        Provider<AuthBloc>(
-          create:
-              (context) => AuthBloc(
-                firebaseAuth: FirebaseAuth.instance,
-                apiService: Provider.of<ApiService>(
-                  context,
-                  listen: false,
-                ),
-              ),
+        BlocProvider<AuthBloc>(
+          create: (context) => AuthBloc(
+            firebaseAuth: FirebaseAuth.instance,
+            apiService: Provider.of<ApiService>(context, listen: false),
+          ),
         ),
-        Provider<ProfileBloc>(
-          create:
-              (_) => ProfileBloc(
-                firebaseAuth: FirebaseAuth.instance,
-                firebaseStorage: FirebaseStorage.instance,
-                imagePicker: ImagePicker(),
-              ),
+        BlocProvider<ProfileBloc>(
+          create: (context) => ProfileBloc(
+            firebaseAuth: FirebaseAuth.instance,
+            firebaseStorage: FirebaseStorage.instance,
+            imagePicker: ImagePicker(),
+            apiService: context.read<ApiService>(),
+            authBloc: BlocProvider.of<AuthBloc>(context),
+          ),
+        ),
+        BlocProvider<AchievementBloc>(
+          create: (context) => AchievementBloc(
+            apiService: context.read<ApiService>(),
+            authBloc: BlocProvider.of<AuthBloc>(context),
+          ),
         ),
         ChangeNotifierProvider(create: (_) => SummaryState()),
       ],

@@ -43,7 +43,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       if (event.user != null) {
         try {
           final userUuid = await _apiService.getUserUUIDByFirebaseUid(event.user!.uid);
-          emit(Authenticated(event.user!, userUuid));
+          final uuid = userUuid.split(' ').last.replaceAll(RegExp(r'[^\w-]'), '');
+          emit(Authenticated(event.user!, uuid));
         } catch (e) {
           await _firebaseAuth.signOut();
           emit(AuthError("Failed to sync with backend: ${e.toString()}"));
