@@ -36,9 +36,8 @@ class ApiService {
       case 500:
         throw InternalServerErrorException(decodedJson?['message'] ?? 'Errore interno del server');
       default:
-        throw ApiException(
-            'Errore durante la comunicazione con il server: ${response.statusCode}',
-            response.statusCode);
+        throw FetchDataException(
+            'Error occurred while communicating with server with status code: ${response.statusCode}');
     }
   }
 
@@ -142,9 +141,9 @@ class ApiService {
   }
 
   Future<List<Achievement>> getAchievements(String userUuid) async {
-    final response = await fetchData('users/$userUuid/achievements');
-    final List<dynamic> achievementsJson = response as List<dynamic>;
-    return achievementsJson.map((json) => Achievement.fromJson(json)).toList();
+    final response = await http.get(Uri.parse('$_baseUrl/users/$userUuid/achievements'));
+    final decodedJson = await _processResponse(response);
+    return (decodedJson as List).map((e) => Achievement.fromJson(e)).toList();
   }
 
   Future<Tomato> getTomatoById(int tomatoId) async {

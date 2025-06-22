@@ -112,8 +112,12 @@ class _TimerViewState extends State<TimerView> {
                 body: Center(child: Text('Error: ${snapshot.error}')));
           } else if (snapshot.hasData) {
             final tomato = snapshot.data!;
-            final sessionDurationInSeconds =
+            var sessionDurationInSeconds =
                 tomato.endAt.difference(tomato.startAt).inSeconds;
+
+            if (sessionDurationInSeconds <= 0) {
+              sessionDurationInSeconds = 1500; // 25 minutes
+            }
 
             if (context.watch<TimerBloc>().state is TimerInitial) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -129,56 +133,99 @@ class _TimerViewState extends State<TimerView> {
               });
             }
 
-            return SafeArea(
-              child: Scaffold(
-                appBar: AppBar(
-                  title: Text(tomato.subject),
-                  elevation: 0,
-                  backgroundColor: Colors.transparent,
-                ),
-                body: BlocConsumer<TimerBloc, TimerState>(
-                  listener: (context, state) {
-                    if (state is TimerRunComplete) {
-                      _rebuildTimer?.cancel();
-                      setState(() {
-                        _endTime = DateTime.now();
-                      });
-                    } else if (state is! TimerRunPause) {
-                      _rebuildTimer?.cancel();
-                    } else {
-                      _rebuildTimer =
-                          Timer.periodic(const Duration(seconds: 1), (timer) {
-                        if (mounted) {
-                          setState(() {});
-                        }
-                      });
+            return BlocConsumer<TimerBloc, TimerState>(
+              listener: (context, state) {
+                if (state is TimerRunComplete) {
+                  _rebuildTimer?.cancel();
+                  setState(() {
+                    _endTime = DateTime.now();
+                  });
+                } else if (state is! TimerRunPause) {
+                  _rebuildTimer?.cancel();
+                } else {
+                  _rebuildTimer =
+                      Timer.periodic(const Duration(seconds: 1), (timer) {
+                    if (mounted) {
+                      setState(() {});
                     }
-                  },
-                  builder: (context, state) {
-                    final isPaused = state is TimerRunPause;
-                    final predictedEndTime =
-                        DateTime.now().add(Duration(seconds: state.duration));
-                    final double progress = (sessionDurationInSeconds == 0)
-                        ? 1.0
-                        : 1 - (state.duration / sessionDurationInSeconds);
+                  });
+                }
+              },
+              builder: (context, state) {
+                final isPaused = state is TimerRunPause;
+                final predictedEndTime =
+                    DateTime.now().add(Duration(seconds: state.duration));
+                final double progress = (sessionDurationInSeconds == 0)
+                    ? 1.0
+                    : 1 - (state.duration / sessionDurationInSeconds);
 
-                    TimerAction? lastPauseAction;
-                    try {
-                      lastPauseAction =
-                          _actions.firstWhere((a) => a.type == 'pause');
-                    } catch (e) {
-                      lastPauseAction = null;
-                    }
+                TimerAction? lastPauseAction;
+                try {
+                  lastPauseAction =
+                      _actions.firstWhere((a) => a.type == 'pause');
+                } catch (e) {
+                  lastPauseAction = null;
+                }
 
-                    TimerAction? lastResumeAction;
-                    try {
-                      lastResumeAction =
-                          _actions.firstWhere((a) => a.type == 'resume');
-                    } catch (e) {
-                      lastResumeAction = null;
-                    }
-
-                    return Padding(
+                TimerAction? lastResumeAction;
+                try {
+                  lastResumeAction =
+                      _actions.firstWhere((a) => a.type == 'resume');
+                } catch (e) {
+                  lastResumeAction = null;
+                }
+                return SafeArea(
+                  child: Scaffold(
+                    appBar: AppBar(
+                      title: Text(tomato.subject),
+                      elevation: 0,
+                      backgroundColor: Colors.transparent,
+                    ),
+                    floatingActionButtonLocation:
+                        FloatingActionButtonLocation.centerFloat,
+                    floatingActionButton: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (state is! TimerRunComplete)
+                          SizedBox(
+                            width: 80,
+                            height: 80,
+                            child: FloatingActionButton(
+                              heroTag: "pause_resume",
+                              onPressed: () {
+                                if (isPaused) {
+                                  _handleTimerAction('resume');
+                                } else {
+                                  _handleTimerAction('pause');
+                                }
+                              },
+                              child: Icon(
+                                  isPaused ? Icons.play_arrow : Icons.pause,
+                                  size: 40),
+                            ),
+                          ),
+                        const SizedBox(width: 24),
+                        if (state is! TimerRunComplete)
+                          SizedBox(
+                            width: 80,
+                            height: 80,
+                            child: FloatingActionButton(
+                              heroTag: "end",
+                              onPressed: () => _handleTimerAction('end'),
+                              backgroundColor: Colors.red,
+                              child: const Icon(Icons.stop, size: 40),
+                            ),
+                          ),
+                        if (state is TimerRunComplete)
+                          FloatingActionButton.extended(
+                            heroTag: "done",
+                            onPressed: () => context.go('/home'),
+                            label: const Text('Done', style: TextStyle(fontSize: 20)),
+                            icon: const Icon(Icons.check, size: 30),
+                          ),
+                      ],
+                    ),
+                    body: Padding(
                       padding: const EdgeInsets.all(32.0),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -192,7 +239,8 @@ class _TimerViewState extends State<TimerView> {
                                 CircularProgressIndicator(
                                   value: progress,
                                   strokeWidth: 12,
-                                  backgroundColor: colors.surfaceVariant,
+                                  backgroundColor:
+                                      colors.surfaceContainerHighest,
                                   valueColor: AlwaysStoppedAnimation<Color>(
                                       colors.primary),
                                 ),
@@ -214,7 +262,8 @@ class _TimerViewState extends State<TimerView> {
                             padding: const EdgeInsets.symmetric(
                                 vertical: 12.0, horizontal: 24.0),
                             decoration: BoxDecoration(
-                              color: colors.surfaceVariant.withOpacity(0.5),
+                              color: colors.surfaceContainerHighest
+                                  .withAlpha(128),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
@@ -227,7 +276,8 @@ class _TimerViewState extends State<TimerView> {
                                           style: textTheme.titleSmall),
                                       const SizedBox(height: 4),
                                       Text(
-                                        DateFormat('HH:mm').format(_startTime!),
+                                        DateFormat('HH:mm')
+                                            .format(_startTime!),
                                         style: textTheme.titleLarge?.copyWith(
                                             fontWeight: FontWeight.bold,
                                             color: colors.primary),
@@ -259,7 +309,8 @@ class _TimerViewState extends State<TimerView> {
                                           style: textTheme.titleSmall),
                                       const SizedBox(height: 4),
                                       Text(
-                                        DateFormat('HH:mm').format(_endTime!),
+                                        DateFormat('HH:mm')
+                                            .format(_endTime!),
                                         style: textTheme.titleLarge?.copyWith(
                                             fontWeight: FontWeight.bold,
                                             color: colors.primary),
@@ -274,8 +325,8 @@ class _TimerViewState extends State<TimerView> {
                                           style: textTheme.titleSmall),
                                       const SizedBox(height: 4),
                                       Text(
-                                        DateFormat('HH:mm')
-                                            .format(lastPauseAction.timestamp),
+                                        DateFormat('HH:mm').format(
+                                            lastPauseAction.timestamp),
                                         style: textTheme.titleLarge?.copyWith(
                                             fontWeight: FontWeight.bold,
                                             color: colors.primary),
@@ -293,8 +344,8 @@ class _TimerViewState extends State<TimerView> {
                                           style: textTheme.titleSmall),
                                       const SizedBox(height: 4),
                                       Text(
-                                        DateFormat('HH:mm')
-                                            .format(lastResumeAction.timestamp),
+                                        DateFormat('HH:mm').format(
+                                            lastResumeAction.timestamp),
                                         style: textTheme.titleLarge?.copyWith(
                                             fontWeight: FontWeight.bold,
                                             color: colors.primary),
@@ -305,71 +356,73 @@ class _TimerViewState extends State<TimerView> {
                               ],
                             ),
                           ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          const Spacer(),
+                          Column(
                             children: [
-                              if (state is! TimerRunComplete)
-                                FloatingActionButton(
-                                  heroTag: "pause_resume",
-                                  onPressed: () {
-                                    if (isPaused) {
-                                      _handleTimerAction('resume');
-                                    } else {
-                                      _handleTimerAction('pause');
-                                    }
-                                  },
-                                  child: Icon(isPaused
-                                      ? Icons.play_arrow
-                                      : Icons.pause),
-                                ),
-                              const SizedBox(width: 16),
-                              if (state is! TimerRunComplete)
-                                FloatingActionButton(
-                                  heroTag: "end",
-                                  onPressed: () => _handleTimerAction('end'),
-                                  backgroundColor: Colors.red,
-                                  child: const Icon(Icons.stop),
-                                ),
-                              if (state is TimerRunComplete)
-                                FloatingActionButton.extended(
-                                  heroTag: "done",
-                                  onPressed: () => context.go('/home'),
-                                  label: const Text('Done'),
-                                  icon: const Icon(Icons.check),
-                                ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                children: List.generate(
+                                    tomato.pomodoros > 0
+                                        ? tomato.pomodoros
+                                        : 4, (index) {
+                                  final int currentPomodoro = 1; // Placeholder
+                                  final breakStartTime = predictedEndTime.add(
+                                      Duration(
+                                          minutes: (tomato.shortBreak +
+                                                  tomato.endAt
+                                                      .difference(
+                                                          tomato.startAt)
+                                                      .inMinutes) *
+                                              index));
+                                  final nextTomatoStartTime =
+                                      breakStartTime.add(Duration(
+                                          minutes: tomato.shortBreak));
+
+                                  return Column(
+                                    children: [
+                                      Icon(
+                                        index < currentPomodoro
+                                            ? Icons.circle
+                                            : Icons.circle_outlined,
+                                        color: Colors.red.shade400,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        "Break Start",
+                                        style: textTheme.bodySmall,
+                                      ),
+                                      Text(
+                                        DateFormat('HH:mm')
+                                            .format(breakStartTime),
+                                        style: textTheme.bodyMedium?.copyWith(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        "Tomato Start",
+                                        style: textTheme.bodySmall,
+                                      ),
+                                      Text(
+                                        DateFormat('HH:mm')
+                                            .format(nextTomatoStartTime),
+                                        style: textTheme.bodyMedium?.copyWith(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  );
+                                }),
+                              ),
                             ],
                           ),
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 24.0),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: colors.surfaceVariant.withOpacity(0.5),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: ListView.builder(
-                                  itemCount: _actions.length,
-                                  itemBuilder: (context, index) {
-                                    final action = _actions[index];
-                                    return ListTile(
-                                      leading: Icon(action.icon,
-                                          color: colors.primary),
-                                      title: Text(
-                                          '${action.type[0].toUpperCase()}${action.type.substring(1)}'),
-                                      trailing:
-                                          Text(action.formattedTimestamp),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
+                          const Spacer(),
                         ],
                       ),
-                    );
-                  },
-                ),
-              ),
+                    ),
+                  ),
+                );
+              },
             );
           } else {
             return const Scaffold(
