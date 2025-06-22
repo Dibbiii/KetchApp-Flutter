@@ -13,6 +13,7 @@ import 'package:ketchapp_flutter/features/plan/layouts/plan_layout.dart';
 import 'package:ketchapp_flutter/features/rankings/presentation/ranking_page.dart';
 import 'package:ketchapp_flutter/features/settings/presentation/settings_page.dart';
 import 'package:ketchapp_flutter/features/statistics/bloc/statistics_bloc.dart';
+import 'package:ketchapp_flutter/features/timer/presentation/timer_page.dart';
 import 'package:ketchapp_flutter/features/welcome/presentation/pages/welcome_page.dart';
 import 'package:ketchapp_flutter/features/profile/presentation/pages/profile_page.dart';
 import '../features/auth/bloc/auth_bloc.dart';
@@ -85,6 +86,10 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: '/ranking',
           builder: (context, state) => const RankingPage(),
+        ),
+        GoRoute(
+          path: '/timer',
+          builder: (context, state) => const TimerPage(),
         ),
         GoRoute(
           path: '/settings',

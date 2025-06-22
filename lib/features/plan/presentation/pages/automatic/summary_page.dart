@@ -1,6 +1,6 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:ketchapp_flutter/features/plan/presentation/pages/automatic/summary_state.dart';
 import 'package:provider/provider.dart';
 
@@ -12,32 +12,30 @@ class SummaryPage extends StatefulWidget {
 }
 
 class _SummaryPageState extends State<SummaryPage> {
+  // State variables
   bool rumoriBianchiAttivi = false;
   int remainingSeconds = 0;
   Timer? _timer;
   bool isPaused = false;
 
-  void _pauseOrResumeTimer() {
-    setState(() {
-      if (isPaused) {
-        _startTimer();
-      } else {
-        _timer?.cancel();
-      }
-      isPaused = !isPaused;
-    });
-  }
+  // Configuration constants
+  final int sessionDuration = 50;
+  final int breakDuration = 10;
+  final int hourStart = 9;
+  final int totalHours = 4;
+  final int pomodoriCompletati = 2;
+
+  late final int numeroPomodori;
 
   @override
   void initState() {
     super.initState();
     remainingSeconds = sessionDuration * 60;
+    numeroPomodori = (totalHours * 60 / sessionDuration).ceil();
     _startTimer();
 
-    // Aggiorna il valore nel SummaryState dopo il primo frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final summaryState = Provider.of<SummaryState>(context, listen: false);
-      int pomodoriCompletati = 2;
       summaryState.updateTotalCompletedHours(
         (pomodoriCompletati * sessionDuration) / 60,
       );
@@ -46,24 +44,33 @@ class _SummaryPageState extends State<SummaryPage> {
 
   @override
   void dispose() {
-    _timer?.cancel(); // Cancel the timer to avoid setState after dispose
+    _timer?.cancel();
     super.dispose();
   }
 
-  final int sessionDuration = 50;
-  final int breakDuration = 10;
-  final int hourStart = 9;
-  final int totalHours = 4;
-
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) return; // Prevent setState if widget is disposed
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
       if (remainingSeconds > 0) {
         setState(() {
           remainingSeconds--;
         });
       } else {
         timer.cancel();
+      }
+    });
+  }
+
+  void _pauseOrResumeTimer() {
+    setState(() {
+      isPaused = !isPaused;
+      if (isPaused) {
+        _timer?.cancel();
+      } else {
+        _startTimer();
       }
     });
   }
@@ -78,131 +85,149 @@ class _SummaryPageState extends State<SummaryPage> {
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
 
-    // Calcolo numero di pomodori necessari per coprire totalHours
-    final totalMinutes = totalHours * 60;
-    int numeroPomodori = (totalMinutes / sessionDuration).ceil();
-    int pomodoriCompletati = 2;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                formatTimer(remainingSeconds),
+                style: TextStyle(
+                  fontSize: 50,
+                  color: colors.primary,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+              const SizedBox(width: 12),
+              IconButton(
+                onPressed: _pauseOrResumeTimer,
+                icon: Icon(
+                  isPaused ? Icons.play_arrow : Icons.pause,
+                  color: colors.primary,
+                  size: 36,
+                ),
+                tooltip: isPaused ? 'Riprendi timer' : 'Pausa timer',
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Icon(Icons.apple, color: Colors.red, size: 48),
+          const SizedBox(height: 24),
+          _PomodoroTimeline(
+            numeroPomodori: numeroPomodori,
+            pomodoriCompletati: pomodoriCompletati,
+            hourStart: hourStart,
+            sessionDuration: sessionDuration,
+            breakDuration: breakDuration,
+          ),
+          const SizedBox(height: 32),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'ATTIVA I RUMORI BIANCHI',
+                style: TextStyle(fontSize: 16, color: colors.onSurface),
+              ),
+              const SizedBox(width: 16),
+              Switch(
+                value: rumoriBianchiAttivi,
+                onChanged: (value) {
+                  setState(() {
+                    rumoriBianchiAttivi = value;
+                  });
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Consumer<SummaryState>(
+            builder:
+                (context, summaryState, child) => Text(
+                  'Ore completate oggi: ${summaryState.totalCompletedHours.toStringAsFixed(2)}',
+                  style: TextStyle(fontSize: 18, color: colors.primary),
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-    return Scaffold(
-      backgroundColor: colors.background,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+class _PomodoroTimeline extends StatelessWidget {
+  const _PomodoroTimeline({
+    required this.numeroPomodori,
+    required this.pomodoriCompletati,
+    required this.hourStart,
+    required this.sessionDuration,
+    required this.breakDuration,
+  });
+
+  final int numeroPomodori;
+  final int pomodoriCompletati;
+  final int hourStart;
+  final int sessionDuration;
+  final int breakDuration;
+
+  String _formatTime(DateTime t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(numeroPomodori, (index) {
+        final bool isCompletato = index < pomodoriCompletati;
+        final start = DateTime(
+          2020,
+          1,
+          1,
+          hourStart,
+          0,
+        ).add(Duration(minutes: index * (sessionDuration + breakDuration)));
+        final end = start.add(Duration(minutes: sessionDuration));
+
+        return Column(
           children: [
-            // Timer sopra allo step con pulsante pausa a fianco
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  formatTimer(remainingSeconds),
-                  style: TextStyle(
-                    fontSize: 50,
-                    color: colors.primary,
-                    fontFeatures: [FontFeature.tabularFigures()],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Icon(
+                    Icons.circle_outlined,
+                    color: colors.onSurface,
+                    size: 32,
                   ),
-                ),
-                const SizedBox(width: 12),
-                IconButton(
-                  onPressed: _pauseOrResumeTimer,
-                  icon: Icon(
-                    isPaused ? Icons.play_arrow : Icons.pause,
-                    color: colors.primary,
-                    size: 36,
+                  if (isCompletato)
+                    const Icon(Icons.circle, color: Colors.red, size: 28),
+                ],
+              ),
+            ),
+            const SizedBox(height: 4),
+            SizedBox(
+              width: 60,
+              child: Column(
+                children: [
+                  Text(
+                    _formatTime(start),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, color: colors.onSurface),
                   ),
-                  tooltip: isPaused ? 'Riprendi timer' : 'Pausa timer',
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Icon(Icons.apple, color: Colors.red, size: 48),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(numeroPomodori, (index) {
-                final bool isCompletato = index < pomodoriCompletati;
-                final start = DateTime(2020, 1, 1, hourStart, 0).add(
-                  Duration(minutes: index * (sessionDuration + breakDuration)),
-                );
-                final end = start.add(Duration(minutes: sessionDuration));
-                String formatTime(DateTime t) =>
-                    '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
-
-                return Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Icon(
-                            Icons.circle_outlined,
-                            color: colors.onSurface,
-                            size: 32,
-                          ),
-                          if (isCompletato)
-                            Icon(Icons.circle, color: Colors.red, size: 28),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    SizedBox(
-                      width: 60,
-                      child: Column(
-                        children: [
-                          Text(
-                            formatTime(start),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: colors.onSurface,
-                            ),
-                          ),
-                          Text(
-                            formatTime(end),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: colors.onSurface,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              }),
-            ),
-            const SizedBox(height: 32),
-            // Switch rumori bianchi
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'ATTIVA I RUMORI BIANCHI',
-                  style: TextStyle(fontSize: 16, color: colors.onSurface),
-                ),
-                const SizedBox(width: 16),
-                Switch(
-                  value: rumoriBianchiAttivi,
-                  onChanged: (value) {
-                    setState(() {
-                      rumoriBianchiAttivi = value;
-                    });
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Consumer<SummaryState>(
-              builder:
-                  (context, summaryState, child) => Text(
-                    'Ore completate oggi: ${summaryState.totalCompletedHours.toStringAsFixed(2)}',
-                    style: TextStyle(fontSize: 18, color: colors.primary),
+                  Text(
+                    _formatTime(end),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, color: colors.onSurface),
                   ),
+                ],
+              ),
             ),
           ],
-        ),
-      ),
+        );
+      }),
     );
   }
 }

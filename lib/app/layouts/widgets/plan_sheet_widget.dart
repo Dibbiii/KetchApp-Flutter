@@ -346,61 +346,68 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
   }
 
   Future<void> _createPlan() async {
-    // Build calendar, tomatoes, rules from controllers
-
-    final calendar = <CalendarEntry>[];
-
-    _calendarControllers.asMap().forEach((idx, controller) {
-      final title = controller.text.trim();
-      if (title.isNotEmpty) {
-        final times = _calendarTimes[idx] ?? {'start_at': '', 'end_at': ''};
-        final startAt = times['start_at']!;
-        final endAt = times['end_at']!;
-        calendar.add(
-            CalendarEntry(startAt: startAt, endAt: endAt, title: title));
-      }
-    });
-
-    final tomatoes = _subjectControllers
-        .where((c) => c.text.trim().isNotEmpty)
-        .map((controller) => TomatoEntry(
-              title: controller.text,
-              subject: controller.text, // or another field
-            ))
-        .toList();
-
-    final notificationsConfig =
-        _config['notifications'] as Map<String, dynamic>? ?? {};
-    final config = Config(
-      notifications: Notifications(
-        enabled: notificationsConfig['enabled'] as bool? ?? true,
-        sound: notificationsConfig['sound'] as String? ?? 'default',
-        vibration: notificationsConfig['vibration'] as bool? ?? true,
-      ),
-      session:
-          formatDurationFromHmm(_dialogSessionSelectedHours, defaultText: '0m'),
-      pause:
-          formatDurationFromHmm(_dialogPauseSelectedHours, defaultText: '0m'),
-    );
-
     final authState = context.read<AuthBloc>().state;
-    if (authState is Authenticated) {
-      final userId = authState.user.uid;
+    if (authState is! Authenticated) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('You must be logged in to create a plan.')),
+        );
+      }
+      return;
+    }
+
+    try {
+      final firebaseUid = authState.user.uid;
+      final userUuid = await ApiService().getUserUUIDByFirebaseUid(firebaseUid);
+      final calendar = <CalendarEntry>[];
+      _calendarControllers.asMap().forEach((idx, controller) {
+        final title = controller.text.trim();
+        if (title.isNotEmpty) {
+          final times = _calendarTimes[idx] ?? {'start_at': '', 'end_at': ''};
+          final startAt = times['start_at']!;
+          final endAt = times['end_at']!;
+          calendar.add(
+              CalendarEntry(startAt: startAt, endAt: endAt, title: title));
+        }
+      });
+
+      final tomatoes = _subjectControllers
+          .where((c) => c.text.trim().isNotEmpty)
+          .map((controller) => TomatoEntry(
+                title: controller.text,
+                subject: controller.text,
+              ))
+          .toList();
+
+      final notificationsConfig =
+          _config['notifications'] as Map<String, dynamic>? ?? {};
+      final config = Config(
+        notifications: Notifications(
+          enabled: notificationsConfig['enabled'] as bool? ?? true,
+          sound: notificationsConfig['sound'] as String? ?? 'default',
+          vibration: notificationsConfig['vibration'] as bool? ?? true,
+        ),
+        session:
+            formatDurationFromHmm(_dialogSessionSelectedHours, defaultText: '0m'),
+        pause:
+            formatDurationFromHmm(_dialogPauseSelectedHours, defaultText: '0m'),
+      );
+
       final plan = PlanModel(
-        userId: userId,
+        userId: userUuid,
         config: config,
         calendar: calendar,
         tomatoes: tomatoes,
       );
-      // Print the structure to the console
-      // ignore: avoid_print
+
       await ApiService().createPlan(plan);
-    } else {
-      // Handle the case where the user is not authenticated
-      // You might want to show a message to the user
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You must be logged in to create a plan.')),
-      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create plan: $e')),
+        );
+      }
     }
   }
 
@@ -537,21 +544,24 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                           .where((t) => t.isNotEmpty)
                           .toList();
 
+                      final subjectError =
+                          subjects.isEmpty ? 'Please add at least one subject.' : null;
+                      final sessionError = _dialogSessionSelectedHours == 0.0
+                          ? 'Session time must be greater than 0.'
+                          : null;
+                      final pauseError = _dialogPauseSelectedHours == 0.0
+                          ? 'Pause time must be greater than 0.'
+                          : null;
+
                       setState(() {
-                        _subjectErrorText =
-                            subjects.isEmpty ? 'Please add at least one subject.' : null;
-                        _sessionTimeErrorText =
-                            _dialogSessionSelectedHours == 0.0
-                                ? 'Session time must be greater than 0.'
-                                : null;
-                        _pauseTimeErrorText = _dialogPauseSelectedHours == 0.0
-                            ? 'Pause time must be greater than 0.'
-                            : null;
+                        _subjectErrorText = subjectError;
+                        _sessionTimeErrorText = sessionError;
+                        _pauseTimeErrorText = pauseError;
                       });
 
-                      if (_subjectErrorText != null ||
-                          _sessionTimeErrorText != null ||
-                          _pauseTimeErrorText != null) {
+                      if (subjectError != null ||
+                          sessionError != null ||
+                          pauseError != null) {
                         return;
                       }
                       // Call your API here before closing the sheet

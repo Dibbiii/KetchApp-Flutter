@@ -1,4 +1,3 @@
-// filepath: lib/features/statistics/presentation/widgets/stat_item_widget.dart
 import 'package:flutter/material.dart';
 
 class StatItemWidget extends StatelessWidget {
