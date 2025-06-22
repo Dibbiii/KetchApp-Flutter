@@ -1194,7 +1194,6 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
               ],
             ),
             const Divider(), // ! Config Section
-            const Divider(), // ! Rules Section
           ],
         ),
       ),
