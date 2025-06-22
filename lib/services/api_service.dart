@@ -5,7 +5,7 @@ import 'package:ketchapp_flutter/models/tomato.dart';
 import './api_exceptions.dart';
 
 class ApiService {
-  final String _baseUrl = "http://localhost:8081/api";
+  final String _baseUrl = "http://192.168.1.22:8081/api";
 
   Future<dynamic> _processResponse(http.Response response) {
     final body = response.body;

@@ -23,15 +23,6 @@ class _StatisticsPageState extends State<StatisticsPage>
   bool _isLocaleInitialized = false;
   bool _showShimmer = true;
 
-  // Overlay options for the chip and selector
-  final List<String> _overlayOptions = [
-    'Oggi',
-    'Questa settimana',
-    'Questo mese',
-    'Tutto il tempo',
-  ];
-  String _selectedOverlayOption = 'Oggi';
-
   late final AnimationController _animationController;
   late final Animation<double> _fadeAnimation;
 
@@ -111,64 +102,7 @@ class _StatisticsPageState extends State<StatisticsPage>
   }
 
   void _showTagSelector(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder:
-          (bContext) => Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Seleziona Periodo',
-                  style: textTheme.titleLarge?.copyWith(
-                    color: colors.onSurface,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                ..._overlayOptions.map(
-                  (tag) => ListTile(
-                    title: Text(
-                      tag,
-                      style: textTheme.bodyLarge?.copyWith(
-                        color:
-                            _selectedOverlayOption == tag
-                                ? colors.primary
-                                : colors.onSurfaceVariant,
-                        fontWeight:
-                            _selectedOverlayOption == tag
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                      ),
-                    ),
-                    onTap: () {
-                      setState(() {
-                        _selectedOverlayOption = tag;
-                      });
-                      Navigator.pop(bContext);
-                    },
-                    trailing:
-                        _selectedOverlayOption == tag
-                            ? Icon(
-                              Icons.check_circle_rounded,
-                              color: colors.primary,
-                            )
-                            : null,
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
-          ),
-    );
+    // Rimosso: non più necessario
   }
 
   @override
@@ -228,31 +162,8 @@ class _StatisticsPageState extends State<StatisticsPage>
                     Center(
                       child: Column(
                         children: [
-                          ActionChip(
-                            label: Text(
-                              _selectedOverlayOption,
-                              style: TextStyle(
-                                color: colors.onSecondaryContainer,
-                              ),
-                            ),
-                            avatar: Icon(
-                              Icons.arrow_drop_down,
-                              color: colors.onSecondaryContainer,
-                              size: 18,
-                            ),
-                            onPressed: () => _showTagSelector(context),
-                            backgroundColor: colors.secondaryContainer
-                                .withOpacity(0.7),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16.0),
-                              side: BorderSide.none,
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12.0,
-                              vertical: 8.0,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
+                          // ActionChip rimosso
+                          // const SizedBox(height: 12),
                           Text(
                             _formatTotalHours(
                               state.weeklyStudyData.isNotEmpty
