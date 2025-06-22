@@ -4,7 +4,7 @@ import 'package:ketchapp_flutter/features/plan/models/plan_model.dart';
 import './api_exceptions.dart';
 
 class ApiService {
-  final String _baseUrl = "http://37.103.87.3:8080/api";
+  final String _baseUrl = "http://localhost:8081/api";
 
   Future<dynamic> _processResponse(http.Response response) {
     final body = response.body;
@@ -85,8 +85,14 @@ class ApiService {
     return _processResponse(response);
   }
 
-  Future<void> createPlan(PlanModel plan) async {}
-  
+  Future<void> createPlan(PlanModel plan) async {
+    final planData = plan.toJson();
+    final response = await postData('plans', planData);
+    // ignore: avoid_print
+    print('Creating plan with data: ${json.encode(planData)}');
+    print('Response from createPlan: $response');
+  }
+
   
   // Implementa metodi simili per PUT, DELETE, ecc., usando _processResponse
 }

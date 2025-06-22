@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart'; // Import for date formatting
 
 import '../../../components/clock_widget.dart';
+import '../../../features/auth/bloc/auth_bloc.dart';
 import '../../../features/plan/models/plan_model.dart';
 import '../../../services/api_service.dart';
 import '../../../services/calendar_service.dart'; // Import CalendarService
-import 'package:intl/intl.dart'; // Import for date formatting
 
 class ShowBottomSheet extends StatefulWidget {
-  const ShowBottomSheet(); // Removed super.key as it's not used
+  const ShowBottomSheet({super.key}); // Removed super.key as it's not used
 
   @override
   State<ShowBottomSheet> createState() => _ShowBottomSheetState();
@@ -17,6 +19,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
   int selectedType = 0; // 0: Event, 1: Task, 2: Birthday
   final List<TextEditingController> _subjectControllers = [];
   final List<FocusNode> _subjectFocusNodes = [];
+
   // Add fixed calendar events for Lunch, Dinner, and Sleep to the UI as editable events
   final List<TextEditingController> _calendarControllers = [
     TextEditingController(text: 'Lunch'),
@@ -33,30 +36,38 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
   final List<String> _selectedFriends = [];
 
   double _dialogPauseSelectedHours = 0.0;
+  double _dialogSessionSelectedHours = 0.0;
 
   // Add controllers for all main inputs
   final TextEditingController _titleController = TextEditingController();
+
   // You already have _subjectControllers, _calendarControllers, etc.
   // Add variables for config, calendar, tomatoes, rules
   final Map<String, dynamic> _config = {
-    'notifications': {
-      'enabled': true,
-      'sound': 'default',
-      'vibration': true,
-    }
+    'notifications': {'enabled': true, 'sound': 'default', 'vibration': true},
   };
 
   // Define fixed calendar events for Lunch, Dinner, and Sleep
-  final List<Map<String, String>> _fixedCalendarEvents = [];
+  final List<Map<String, String>> _fixedCalendarEvents = [
+  ];
 
   // Store calendar times by index
-  final Map<int, Map<String, String>> _calendarTimes = {};
+  final Map<int, Map<String, String>> _calendarTimes = {
+    0: {'start_at': '12:30', 'end_at': '13:30'}, // Lunch
+    1: {'start_at': '19:30', 'end_at': '20:30'}, // Dinner
+    2: {'start_at': '23:30', 'end_at': '07:30'}, // Sleep
+  };
   bool _syncWithGoogleCalendar = false;
+
   // Keep track of which calendars are from Google Calendar
   final Set<int> _googleCalendarEvents = {};
 
   // Calendar service for fetching Google Calendar events
   final CalendarService _calendarService = CalendarService();
+
+  String? _subjectErrorText;
+  String? _sessionTimeErrorText;
+  String? _pauseTimeErrorText;
 
   @override
   void initState() {
@@ -66,6 +77,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
 
     _addSubject();
     _addcalendar();
+    // Non aggiungere più eventi fissi qui
   }
 
   @override
@@ -130,26 +142,90 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
     });
   }
 
-  Future<void> _showSessionTimePickerDialog() async {
-    final TimeOfDay? pickedTime = await showTimePicker(
+  void _showSessionClockDialog() {
+    double initialFractionalHours = 0.0;
+    if (_sessionTimeController.text.contains('h') ||
+        _sessionTimeController.text.contains('m')) {
+      try {
+        if (_sessionTimeController.text.contains('h')) {
+          List<String> parts = _sessionTimeController.text
+              .replaceAll(' h', '')
+              .split(':');
+          int hours = int.parse(parts[0]);
+          int minutes = parts.length > 1 ? int.parse(parts[1]) : 0;
+          initialFractionalHours = hours + (minutes / 60.0);
+        } else if (_sessionTimeController.text.contains('m')) {
+          int minutes = int.parse(
+            _sessionTimeController.text.replaceAll(' m', ''),
+          );
+          initialFractionalHours = minutes / 60.0;
+        }
+      } catch (e) {
+        initialFractionalHours = 0.0;
+      }
+    }
+    double initialHmmHours = fractionalHoursToHmm(initialFractionalHours);
+    double tempSelectedHmmSessionHours = initialHmmHours;
+
+    showDialog(
       context: context,
-      initialTime: TimeOfDay.now(),
-      helpText: 'Select Session time:',
-      builder: (BuildContext context, Widget? child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-          child: child!,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Set Session Duration'),
+          contentPadding: const EdgeInsets.all(16.0),
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter dialogSetState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(
+                    formatDurationFromHmm(
+                      tempSelectedHmmSessionHours,
+                      defaultText: "No session",
+                    ),
+                    style: TextStyle(
+                      fontSize: 20,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  MaterialClock(
+                    initialSelectedHours: tempSelectedHmmSessionHours,
+                    onTimeChanged: (selectedHmm) {
+                      dialogSetState(() {
+                        tempSelectedHmmSessionHours = selectedHmm;
+                      });
+                    },
+                    clockSize: 200.0,
+                  ),
+                ],
+              );
+            },
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.pop(dialogContext);
+              },
+            ),
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                setState(() {
+                  _dialogSessionSelectedHours = tempSelectedHmmSessionHours;
+                  _sessionTimeController.text = formatDurationFromHmm(
+                    _dialogSessionSelectedHours,
+                    defaultText: "Add session time",
+                  );
+                });
+                Navigator.pop(dialogContext);
+              },
+            ),
+          ],
         );
       },
     );
-
-    if (pickedTime != null) {
-      setState(() {
-        final String hours = pickedTime.hour.toString().padLeft(2, '0');
-        final String minutes = pickedTime.minute.toString().padLeft(2, '0');
-        _sessionTimeController.text = '${hours}ore e ${minutes}minuti';
-      });
-    }
   }
 
   void _showPauseClockDialog() {
@@ -181,7 +257,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('Imposta Durata Pausa'),
+          title: const Text('Set Break Duration'),
           contentPadding: const EdgeInsets.all(16.0),
           content: StatefulBuilder(
             builder: (BuildContext context, StateSetter dialogSetState) {
@@ -191,7 +267,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                   Text(
                     formatDurationFromHmm(
                       tempSelectedHmmPauseHours,
-                      defaultText: "Nessuna pausa",
+                      defaultText: "No break",
                     ),
                     style: TextStyle(
                       fontSize: 20,
@@ -214,7 +290,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Annulla'),
+              child: const Text('Cancel'),
               onPressed: () {
                 Navigator.pop(dialogContext);
               },
@@ -226,7 +302,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                   _dialogPauseSelectedHours = tempSelectedHmmPauseHours;
                   _pauseTimeController.text = formatDurationFromHmm(
                     _dialogPauseSelectedHours,
-                    defaultText: "Aggiungi pausa",
+                    defaultText: "Add break",
                   );
                 });
                 Navigator.pop(dialogContext);
@@ -262,83 +338,122 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
     });
   }
 
+  String formatTime(TimeOfDay time) {
+    final now = DateTime.now();
+    final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
+    final format = DateFormat.Hm(); // 'HH:mm'
+    return format.format(dt);
+  }
+
   Future<void> _createPlan() async {
     // Build calendar, tomatoes, rules from controllers
-    final calendar = [
-      // Add user calendars
-      ..._calendarControllers.map((controller) {
-        return CalendarEntry(
-          startAt: '', // TODO: get from UI
-          endAt: '',   // TODO: get from UI
-          title: controller.text,
-        );
-      }).toList(),
-    ];
-    final tomatoes = _subjectControllers.map((controller) {
-      return TomatoEntry(
-        title: controller.text,
-        session: _sessionTimeController.text,
-        pause: _pauseTimeController.text,
-        subject: controller.text, // or another field
-      );
-    }).toList();
-    final plan = PlanModel(
-      config: _config,
-      calendar: calendar,
-      tomatoes: tomatoes,
-      rules: [], // No rules
+
+    final calendar = <CalendarEntry>[];
+
+    _calendarControllers.asMap().forEach((idx, controller) {
+      final title = controller.text.trim();
+      if (title.isNotEmpty) {
+        final times = _calendarTimes[idx] ?? {'start_at': '', 'end_at': ''};
+        final startAt = times['start_at']!;
+        final endAt = times['end_at']!;
+        calendar.add(
+            CalendarEntry(startAt: startAt, endAt: endAt, title: title));
+      }
+    });
+
+    final tomatoes = _subjectControllers
+        .where((c) => c.text.trim().isNotEmpty)
+        .map((controller) => TomatoEntry(
+              title: controller.text,
+              subject: controller.text, // or another field
+            ))
+        .toList();
+
+    final notificationsConfig =
+        _config['notifications'] as Map<String, dynamic>? ?? {};
+    final config = Config(
+      notifications: Notifications(
+        enabled: notificationsConfig['enabled'] as bool? ?? true,
+        sound: notificationsConfig['sound'] as String? ?? 'default',
+        vibration: notificationsConfig['vibration'] as bool? ?? true,
+      ),
+      session:
+          formatDurationFromHmm(_dialogSessionSelectedHours, defaultText: '0m'),
+      pause:
+          formatDurationFromHmm(_dialogPauseSelectedHours, defaultText: '0m'),
     );
-    // Print the structure to the console
-    // ignore: avoid_print
-    print(plan.toJson());
-    await ApiService().createPlan(plan);
+
+    final authState = context.read<AuthBloc>().state;
+    if (authState is Authenticated) {
+      final userId = authState.user.uid;
+      final plan = PlanModel(
+        userId: userId,
+        config: config,
+        calendar: calendar,
+        tomatoes: tomatoes,
+      );
+      // Print the structure to the console
+      // ignore: avoid_print
+      await ApiService().createPlan(plan);
+    } else {
+      // Handle the case where the user is not authenticated
+      // You might want to show a message to the user
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You must be logged in to create a plan.')),
+      );
+    }
   }
 
   void _fetchGoogleCalendarEvents() {
     setState(() {
       // _isLoadingCalendarEvents = true;
     });
-    _calendarService.getEvents().then((events) {
-      setState(() {
-        // _isLoadingCalendarEvents = false;
-        // Clear existing events
-        for (var idx in _googleCalendarEvents) {
-          if (idx < _calendarControllers.length) {
-            _calendarControllers[idx].dispose();
-            _calendarFocusNodes[idx].dispose();
-          }
-        }
-        _calendarControllers.clear();
-        _calendarFocusNodes.clear();
-        _googleCalendarEvents.clear();
+    _calendarService
+        .getEvents()
+        .then((events) {
+          setState(() {
+            // _isLoadingCalendarEvents = false;
+            // Clear existing events
+            for (var idx in _googleCalendarEvents) {
+              if (idx < _calendarControllers.length) {
+                _calendarControllers[idx].dispose();
+                _calendarFocusNodes[idx].dispose();
+              }
+            }
+            _calendarControllers.clear();
+            _calendarFocusNodes.clear();
+            _googleCalendarEvents.clear();
 
-        // Add new events
-        for (var event in events) {
-          final startTime = event.start?.dateTime?.toLocal();
-          final endTime = event.end?.dateTime?.toLocal();
+            // Add new events
+            for (var event in events) {
+              final startTime = event.start?.dateTime?.toLocal();
+              final endTime = event.end?.dateTime?.toLocal();
 
-          if (startTime != null && endTime != null) {
-            final controller = TextEditingController(text: event.summary ?? 'Nessun titolo');
-            _calendarControllers.add(controller);
-            _calendarFocusNodes.add(FocusNode());
-            _calendarTimes[_calendarControllers.length - 1] = {
-              'start_at': DateFormat('HH:mm').format(startTime),
-              'end_at': DateFormat('HH:mm').format(endTime),
-              'date': DateFormat('E, d MMM', 'it_IT').format(startTime),
-            };
-            _googleCalendarEvents.add(_calendarControllers.length - 1);
-          }
-        }
-      });
-    }).catchError((error) {
-      setState(() {
-        // _isLoadingCalendarEvents = false;
-      });
-      // Handle error (e.g., show a snackbar)
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to fetch events: $error')),
-      );
-    });
+              if (startTime != null && endTime != null) {
+                final controller = TextEditingController(
+                  text: event.summary ?? 'No title',
+                );
+                _calendarControllers.add(controller);
+                _calendarFocusNodes.add(FocusNode());
+                _calendarTimes[_calendarControllers.length - 1] = {
+                  'start_at': DateFormat('HH:mm').format(startTime),
+                  'end_at': DateFormat('HH:mm').format(endTime),
+                  'date': DateFormat('E, d MMM', 'it_IT').format(startTime),
+                };
+                _googleCalendarEvents.add(_calendarControllers.length - 1);
+              }
+            }
+          });
+        })
+        .catchError((error) {
+          setState(() {
+            // _isLoadingCalendarEvents = false;
+          });
+          // Handle error (e.g., show a snackbar)
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to fetch events: $error')),
+          );
+        });
   }
 
   void _clearGoogleCalendarEvents() {
@@ -417,6 +532,28 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     onPressed: () async {
+                      final subjects = _subjectControllers
+                          .map((c) => c.text.trim())
+                          .where((t) => t.isNotEmpty)
+                          .toList();
+
+                      setState(() {
+                        _subjectErrorText =
+                            subjects.isEmpty ? 'Please add at least one subject.' : null;
+                        _sessionTimeErrorText =
+                            _dialogSessionSelectedHours == 0.0
+                                ? 'Session time must be greater than 0.'
+                                : null;
+                        _pauseTimeErrorText = _dialogPauseSelectedHours == 0.0
+                            ? 'Pause time must be greater than 0.'
+                            : null;
+                      });
+
+                      if (_subjectErrorText != null ||
+                          _sessionTimeErrorText != null ||
+                          _pauseTimeErrorText != null) {
+                        return;
+                      }
                       // Call your API here before closing the sheet
                       await _createPlan();
                       Navigator.pop(context);
@@ -424,18 +561,6 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                     child: const Text('Save', style: TextStyle(fontSize: 14)),
                   ),
                 ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 42),
-              child: TextField(
-                controller: _titleController,
-                style: const TextStyle(fontSize: 22),
-                decoration: const InputDecoration(
-                  hintText: 'Add Title',
-                  border: InputBorder.none,
-                  filled: true,
-                ),
               ),
             ),
             const Divider(), // ! Friends Section
@@ -456,49 +581,49 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                 Expanded(
                   child: InkWell(
                     onTap:
-                    _selectedFriends.isEmpty ? _showAddFriendsDialog : null,
+                        _selectedFriends.isEmpty ? _showAddFriendsDialog : null,
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12.0),
                       margin: EdgeInsets.only(
                         right: _selectedFriends.isEmpty ? 12.0 : 0.0,
                       ),
                       child:
-                      _selectedFriends.isEmpty
-                          ? Text(
-                        'Add friends',
-                        style: TextStyle(
-                          fontSize: 16.0,
-                          color: colors.onSurfaceVariant,
-                        ),
-                      )
-                          : Wrap(
-                        spacing: 8.0,
-                        runSpacing: 4.0,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          Chip(
-                            label: const Text('You'),
-                            materialTapTargetSize:
-                            MaterialTapTargetSize.shrinkWrap,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 4.0,
-                              vertical: 0.0,
-                            ),
-                          ),
-                          ..._selectedFriends.map(
-                                (friend) => Chip(
-                              label: Text(friend),
-                              onDeleted: () => _removeFriend(friend),
-                              materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4.0,
-                                vertical: 0.0,
+                          _selectedFriends.isEmpty
+                              ? Text(
+                                'Add friends',
+                                style: TextStyle(
+                                  fontSize: 16.0,
+                                  color: colors.onSurfaceVariant,
+                                ),
+                              )
+                              : Wrap(
+                                spacing: 8.0,
+                                runSpacing: 4.0,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Chip(
+                                    label: const Text('You'),
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4.0,
+                                      vertical: 0.0,
+                                    ),
+                                  ),
+                                  ..._selectedFriends.map(
+                                    (friend) => Chip(
+                                      label: Text(friend),
+                                      onDeleted: () => _removeFriend(friend),
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4.0,
+                                        vertical: 0.0,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
                   ),
                 ),
@@ -518,32 +643,45 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
               ],
             ),
             const Divider(), // ! Sync with Google Calendar Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-              child: Row(
-                children: [
-                  Icon(Icons.sync, color: colors.onSurfaceVariant, size: 22),
-                  const SizedBox(width: 16),
-                  Text(
-                    'Sync with Google Calendar',
-                    style: TextStyle(fontSize: 16.0, color: colors.onSurfaceVariant),
-                  ),
-                  const Spacer(),
-                  Switch(
-                    value: _syncWithGoogleCalendar,
-                    onChanged: (bool value) {
-                      setState(() {
-                        _syncWithGoogleCalendar = value;
-                        if (_syncWithGoogleCalendar) {
-                          _fetchGoogleCalendarEvents();
-                        } else {
-                          _clearGoogleCalendarEvents();
-                        }
-                      });
-                    },
-                  ),
-                ],
-              ),
+            BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, state) {
+                if (state is Authenticated && state.isGoogleSignIn) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12.0,
+                      vertical: 8.0,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.sync, color: colors.onSurfaceVariant, size: 22),
+                        const SizedBox(width: 16),
+                        Text(
+                          'Sync with Google Calendar',
+                          style: TextStyle(
+                            fontSize: 16.0,
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                        const Spacer(),
+                        Switch(
+                          value: _syncWithGoogleCalendar,
+                          onChanged: (bool value) {
+                            setState(() {
+                              _syncWithGoogleCalendar = value;
+                              if (_syncWithGoogleCalendar) {
+                                _fetchGoogleCalendarEvents();
+                              } else {
+                                _clearGoogleCalendarEvents();
+                              }
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
             ),
             const Divider(), // ! Events Section
             Row(
@@ -565,58 +703,80 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // Show fixed calendars first
-                      ..._fixedCalendarEvents.map((fixed) => Container(
-                        margin: const EdgeInsets.only(
-                          bottom: 4.0,
-                          right: 12.0,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colors.surfaceContainerHighest.withAlpha(128),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: TextEditingController(text: fixed['title']),
-                                readOnly: true,
-                                decoration: InputDecoration(
-                                  hintText: 'Enter calendar event',
-                                  border: InputBorder.none,
-                                  isDense: true,
-                                  prefixIcon: Icon(Icons.lock_clock, size: 16, color: colors.primary.withAlpha((0.7 * 255).toInt())),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 12,
+                      ..._fixedCalendarEvents.map(
+                        (fixed) => Container(
+                          margin: const EdgeInsets.only(
+                            bottom: 4.0,
+                            right: 12.0,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colors.surfaceContainerHighest.withAlpha(
+                              128,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: TextEditingController(
+                                    text: fixed['title'],
+                                  ),
+                                  readOnly: true,
+                                  decoration: InputDecoration(
+                                    hintText: 'Enter calendar event',
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                    prefixIcon: Icon(
+                                      Icons.lock_clock,
+                                      size: 16,
+                                      color: colors.primary.withAlpha(
+                                        (0.7 * 255).toInt(),
+                                      ),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 12,
+                                    ),
+                                  ),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: colors.onSurface.withAlpha(
+                                      (0.8 * 255).toInt(),
+                                    ),
                                   ),
                                 ),
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: colors.onSurface.withAlpha((0.8 * 255).toInt()),
+                              ),
+                              Container(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 8.0,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12.0,
+                                  vertical: 8.0,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: colors.primaryContainer,
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  border: Border.all(
+                                    color: colors.primary,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  '${fixed['start_at']} - ${fixed['end_at']}',
+                                  style: TextStyle(
+                                    color: colors.onPrimaryContainer,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
                                 ),
                               ),
-                            ),
-                            Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 8.0),
-                              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-                              decoration: BoxDecoration(
-                                color: colors.primaryContainer,
-                                borderRadius: BorderRadius.circular(8.0),
-                                border: Border.all(color: colors.primary, width: 1),
-                              ),
-                              child: Text(
-                                '${fixed['start_at']} - ${fixed['end_at']}',
-                                style: TextStyle(
-                                  color: colors.onPrimaryContainer,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                            // No delete button for fixed calendars
-                          ],
+                              // No delete button for fixed calendars
+                            ],
+                          ),
                         ),
-                      )),
+                      ),
                       // ...existing code for user calendars...
                       ..._calendarControllers.asMap().entries.map((entry) {
                         int idx = entry.key;
@@ -641,16 +801,22 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                                 child: TextField(
                                   controller: controller,
                                   focusNode: focusNode,
-                                  readOnly: _googleCalendarEvents.contains(idx), // Make Google Calendar events read-only
+                                  readOnly: _googleCalendarEvents.contains(idx),
+                                  // Make Google Calendar events read-only
                                   decoration: InputDecoration(
                                     hintText: 'Enter calendar',
                                     border: InputBorder.none,
                                     isDense: true,
-                                    prefixIcon: _googleCalendarEvents.contains(idx)
-                                        ? Icon(Icons.calendar_today_rounded,
-                                            size: 16,
-                                            color: colors.primary.withAlpha((0.7 * 255).toInt()))
-                                        : null,
+                                    prefixIcon:
+                                        _googleCalendarEvents.contains(idx)
+                                            ? Icon(
+                                              Icons.calendar_today_rounded,
+                                              size: 16,
+                                              color: colors.primary.withAlpha(
+                                                (0.7 * 255).toInt(),
+                                              ),
+                                            )
+                                            : null,
                                     contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 12,
                                       vertical: 12,
@@ -658,22 +824,31 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                                   ),
                                   style: TextStyle(
                                     fontSize: 16,
-                                    color: _googleCalendarEvents.contains(idx)
-                                        ? colors.onSurface.withAlpha((0.8 * 255).toInt())
-                                        : colors.onSurface,
+                                    color:
+                                        _googleCalendarEvents.contains(idx)
+                                            ? colors.onSurface.withAlpha(
+                                              (0.8 * 255).toInt(),
+                                            )
+                                            : colors.onSurface,
                                   ),
                                 ),
                               ),
                               GestureDetector(
                                 onTap: () async {
-                                  final result = await showDialog<Map<String, String>>(
-                                    context: context,
-                                    builder: (context) => _calendarTimeDialog(
-                                      initialStart: startAt,
-                                      initialEnd: endAt,
-                                      isGoogleCalendarEvent: _googleCalendarEvents.contains(idx), // Pass directly
-                                    ),
-                                  );
+                                  final result =
+                                      await showDialog<Map<String, String>>(
+                                        context: context,
+                                        builder:
+                                            (context) => _calendarTimeDialog(
+                                              initialStart: startAt,
+                                              initialEnd: endAt,
+                                              isGoogleCalendarEvent:
+                                                  _googleCalendarEvents
+                                                      .contains(
+                                                        idx,
+                                                      ), // Pass directly
+                                            ),
+                                      );
                                   if (result != null) {
                                     setState(() {
                                       _calendarTimes[idx] = result;
@@ -681,12 +856,20 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                                   }
                                 },
                                 child: Container(
-                                  margin: const EdgeInsets.symmetric(horizontal: 8.0),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 8.0,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12.0,
+                                    vertical: 8.0,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: colors.primaryContainer,
                                     borderRadius: BorderRadius.circular(8.0),
-                                    border: Border.all(color: colors.primary, width: 1),
+                                    border: Border.all(
+                                      color: colors.primary,
+                                      width: 1,
+                                    ),
                                   ),
                                   child: Text(
                                     (startAt.isNotEmpty && endAt.isNotEmpty)
@@ -754,48 +937,48 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children:
-                      _subjectControllers.asMap().entries.map((entry) {
-                        int idx = entry.key;
-                        TextEditingController controller = entry.value;
-                        FocusNode focusNode = _subjectFocusNodes[idx];
-                        return Container(
-                          margin: const EdgeInsets.only(
-                            bottom: 4.0,
-                            right: 12.0,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colors.surfaceContainerHighest.withAlpha(
-                              128,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: controller,
-                                  focusNode: focusNode,
-                                  decoration: const InputDecoration(
-                                    hintText: 'Enter subject',
-                                    border: InputBorder.none,
-                                    isDense: true,
-                                    contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 12,
+                          _subjectControllers.asMap().entries.map((entry) {
+                            int idx = entry.key;
+                            TextEditingController controller = entry.value;
+                            FocusNode focusNode = _subjectFocusNodes[idx];
+                            return Container(
+                              margin: const EdgeInsets.only(
+                                bottom: 4.0,
+                                right: 12.0,
+                              ),
+                              decoration: BoxDecoration(
+                                color: colors.surfaceContainerHighest.withAlpha(
+                                  128,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: controller,
+                                      focusNode: focusNode,
+                                      decoration: const InputDecoration(
+                                        hintText: 'Enter subject',
+                                        border: InputBorder.none,
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 12,
+                                        ),
+                                      ),
+                                      style: const TextStyle(fontSize: 16),
                                     ),
                                   ),
-                                  style: const TextStyle(fontSize: 16),
-                                ),
+                                  IconButton(
+                                    icon: const Icon(Icons.close, size: 20),
+                                    splashRadius: 18,
+                                    onPressed: () => _removeSubjectAt(idx),
+                                  ),
+                                ],
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.close, size: 20),
-                                splashRadius: 18,
-                                onPressed: () => _removeSubjectAt(idx),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
+                            );
+                          }).toList(),
                     ),
                   ),
               ],
@@ -820,9 +1003,18 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                 ),
               ),
             ),
+            if (_subjectErrorText != null)
+              Padding(
+                padding: const EdgeInsets.only(left: 58.0, right: 12.0, bottom: 8.0),
+                child: Text(
+                  _subjectErrorText!,
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.error, fontSize: 12),
+                ),
+              ),
             const Divider(), // ! Session Section
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(
@@ -836,25 +1028,26 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                   ),
                 ),
                 Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 12.0, bottom: 4.0),
-                    decoration: BoxDecoration(
-                      color: colors.surfaceContainerHighest.withAlpha(128),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: TextField(
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 12.0),
+                    child: TextFormField(
                       controller: _sessionTimeController,
                       readOnly: true,
-                      onTap: _showSessionTimePickerDialog,
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.symmetric(
+                      onTap: _showSessionClockDialog,
+                      style: const TextStyle(fontSize: 16),
+                      decoration: InputDecoration(
+                        errorText: _sessionTimeErrorText,
+                        filled: true,
+                        fillColor: colors.surfaceContainerHighest.withAlpha(128),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 12,
                         ),
                       ),
-                      style: const TextStyle(fontSize: 16),
                     ),
                   ),
                 ),
@@ -876,25 +1069,25 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                   ),
                 ),
                 Expanded(
-                  child: InkWell(
-                    onTap: _showPauseClockDialog,
-                    child: Container(
-                      margin: const EdgeInsets.only(
-                        right: 12.0,
-                        top: 8.0,
-                        bottom: 8.0,
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colors.surfaceContainerHighest.withAlpha(128),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        _pauseTimeController.text,
-                        style: const TextStyle(fontSize: 16),
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 12.0),
+                    child: TextFormField(
+                      controller: _pauseTimeController,
+                      readOnly: true,
+                      onTap: _showPauseClockDialog,
+                      style: const TextStyle(fontSize: 16),
+                      decoration: InputDecoration(
+                        errorText: _pauseTimeErrorText,
+                        filled: true,
+                        fillColor: colors.surfaceContainerHighest.withAlpha(128),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
                       ),
                     ),
                   ),
@@ -1028,7 +1221,7 @@ class _AddFriendsDialogState extends State<_AddFriendsDialog> {
             ),
             const SizedBox(height: 16.0),
             Expanded(
-              child:
+                  child:
                   _filteredFriends.isEmpty
                       ? Center(
                         child: Padding(
@@ -1111,20 +1304,27 @@ class _calendarTimeDialogState extends State<_calendarTimeDialog> {
   TimeOfDay? _endTime;
   late TextEditingController _startTimeTextController;
   late TextEditingController _endTimeTextController;
-  bool _didChangeDependencies = false; // Flag to control didChangeDependencies logic
+  bool _didChangeDependencies =
+      false; // Flag to control didChangeDependencies logic
   String? _selectedDate;
-  late bool _isGoogleCalendarEvent; // Changed from: bool _isGoogleCalendarEvent = false;
+  late bool
+  _isGoogleCalendarEvent; // Changed from: bool _isGoogleCalendarEvent = false;
 
   @override
   void initState() {
     super.initState();
-    _isGoogleCalendarEvent = widget.isGoogleCalendarEvent; // Initialize from widget
+    _isGoogleCalendarEvent =
+        widget.isGoogleCalendarEvent; // Initialize from widget
 
     _startTime = _parseTime(widget.initialStart);
     _endTime = _parseTime(widget.initialEnd);
     // Initialize controllers with empty text or a non-context-dependent placeholder
-    _startTimeTextController = TextEditingController(text: widget.initialStart.isNotEmpty ? widget.initialStart : "HH:MM");
-    _endTimeTextController = TextEditingController(text: widget.initialEnd.isNotEmpty ? widget.initialEnd : "HH:MM");
+    _startTimeTextController = TextEditingController(
+      text: widget.initialStart.isNotEmpty ? widget.initialStart : "HH:MM",
+    );
+    _endTimeTextController = TextEditingController(
+      text: widget.initialEnd.isNotEmpty ? widget.initialEnd : "HH:MM",
+    );
     // REMOVED: WidgetsBinding.instance.addPostFrameCallback block that previously fetched 'isGoogleCalendarEvent'
   }
 
@@ -1134,7 +1334,10 @@ class _calendarTimeDialogState extends State<_calendarTimeDialog> {
     // Format and set text only once after dependencies are available
     if (!_didChangeDependencies) {
       // Now it's safe to use context for formatting
-      _startTimeTextController.text = _formatTimeForDisplay(context, _startTime);
+      _startTimeTextController.text = _formatTimeForDisplay(
+        context,
+        _startTime,
+      );
       _endTimeTextController.text = _formatTimeForDisplay(context, _endTime);
       _didChangeDependencies = true;
     }
@@ -1171,7 +1374,9 @@ class _calendarTimeDialogState extends State<_calendarTimeDialog> {
     final scaffold = ScaffoldMessenger.of(context);
     scaffold.showSnackBar(
       SnackBar(
-        content: const Text('Non è possibile modificare l\'orario di un appuntamento di Google Calendar'),
+        content: const Text(
+          'You cannot change the time of a Google Calendar event',
+        ),
         duration: const Duration(seconds: 3),
         action: SnackBarAction(
           label: 'OK',
@@ -1189,17 +1394,26 @@ class _calendarTimeDialogState extends State<_calendarTimeDialog> {
 
     final TimeOfDay? pickedTime = await showTimePicker(
       context: context,
-      initialTime: isStartTime ? (_startTime ?? TimeOfDay.now()) : (_endTime ?? TimeOfDay.now()),
+      initialTime:
+          isStartTime
+              ? (_startTime ?? TimeOfDay.now())
+              : (_endTime ?? TimeOfDay.now()),
     );
 
     if (pickedTime != null) {
       setState(() {
         if (isStartTime) {
           _startTime = pickedTime;
-          _startTimeTextController.text = _formatTimeForDisplay(context, pickedTime);
+          _startTimeTextController.text = _formatTimeForDisplay(
+            context,
+            pickedTime,
+          );
         } else {
           _endTime = pickedTime;
-          _endTimeTextController.text = _formatTimeForDisplay(context, pickedTime);
+          _endTimeTextController.text = _formatTimeForDisplay(
+            context,
+            pickedTime,
+          );
         }
       });
     }
@@ -1211,14 +1425,20 @@ class _calendarTimeDialogState extends State<_calendarTimeDialog> {
     final textTheme = Theme.of(context).textTheme;
 
     return AlertDialog(
-      title: const Text('Dettagli Appuntamento'),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+      title: const Text('Appointment Details'),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 24.0,
+        vertical: 20.0,
+      ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28.0)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text('Orario Inizio', style: textTheme.labelLarge?.copyWith(color: colors.primary)),
+          Text(
+            'Start Time',
+            style: textTheme.labelLarge?.copyWith(color: colors.primary),
+          ),
           const SizedBox(height: 8),
           TextField(
             controller: _startTimeTextController,
@@ -1228,19 +1448,29 @@ class _calendarTimeDialogState extends State<_calendarTimeDialog> {
               border: const OutlineInputBorder(),
               suffixIcon: Icon(
                 _isGoogleCalendarEvent ? Icons.lock_clock : Icons.access_time,
-                color: colors.onSurfaceVariant
+                color: colors.onSurfaceVariant,
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
               filled: true,
-              fillColor: colors.surfaceContainerHighest.withAlpha((0.3 * 255).toInt()),
+              fillColor: colors.surfaceContainerHighest.withAlpha(
+                (0.3 * 255).toInt(),
+              ),
             ),
-            onTap: () => _isGoogleCalendarEvent
-                ? _showTimeSelectionInfo()
-                : _selectTime(context, true),
+            onTap:
+                () =>
+                    _isGoogleCalendarEvent
+                        ? _showTimeSelectionInfo()
+                        : _selectTime(context, true),
             style: textTheme.bodyLarge,
           ),
           const SizedBox(height: 16),
-          Text('Orario Fine', style: textTheme.labelLarge?.copyWith(color: colors.primary)),
+          Text(
+            'End Time',
+            style: textTheme.labelLarge?.copyWith(color: colors.primary),
+          ),
           const SizedBox(height: 8),
           TextField(
             controller: _endTimeTextController,
@@ -1250,22 +1480,29 @@ class _calendarTimeDialogState extends State<_calendarTimeDialog> {
               border: const OutlineInputBorder(),
               suffixIcon: Icon(
                 _isGoogleCalendarEvent ? Icons.lock_clock : Icons.access_time,
-                color: colors.onSurfaceVariant
+                color: colors.onSurfaceVariant,
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
               filled: true,
-              fillColor: colors.surfaceContainerHighest.withAlpha((0.3 * 255).toInt()),
+              fillColor: colors.surfaceContainerHighest.withAlpha(
+                (0.3 * 255).toInt(),
+              ),
             ),
-            onTap: () => _isGoogleCalendarEvent
-                ? _showTimeSelectionInfo()
-                : _selectTime(context, false),
+            onTap:
+                () =>
+                    _isGoogleCalendarEvent
+                        ? _showTimeSelectionInfo()
+                        : _selectTime(context, false),
             style: textTheme.bodyLarge,
           ),
         ],
       ),
       actions: <Widget>[
         TextButton(
-          child: const Text('Annulla'),
+          child: const Text('Cancel'),
           onPressed: () {
             Navigator.of(context).pop();
           },
@@ -1274,14 +1511,18 @@ class _calendarTimeDialogState extends State<_calendarTimeDialog> {
           style: FilledButton.styleFrom(
             backgroundColor: colors.primary,
             foregroundColor: colors.onPrimary,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.0),
+            ),
           ),
-          child: const Text('Conferma'),
+          child: const Text('Confirm'),
           onPressed: () {
             Navigator.of(context).pop({
               'start_at': _formatTimeForReturn(context, _startTime),
               'end_at': _formatTimeForReturn(context, _endTime),
-              'date': _selectedDate ?? DateFormat('E, d MMM', 'it_IT').format(DateTime.now()),
+              'date':
+                  _selectedDate ??
+                  DateFormat('E, d MMM', 'it_IT').format(DateTime.now()),
             });
           },
         ),
