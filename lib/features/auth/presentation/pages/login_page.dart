@@ -303,6 +303,7 @@ class _LoginFormState extends State<_LoginForm> {
                   );
                 },
               ),
+              const SizedBox(height: 16), // <--- Padding aggiunto tra Next e Accedi con Google
               ElevatedButton.icon(
                 icon: Image.network( // O usa un'icona SVG/FontIcon di Google
                   'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/24px-Google_%22G%22_logo.svg.png',
