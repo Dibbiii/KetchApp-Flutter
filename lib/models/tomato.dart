@@ -23,6 +23,21 @@ class Tomato {
     required this.shortBreak,
   });
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'subject': subject,
+      'created_at': createdAt.toIso8601String(),
+      'userUUID': userUUID,
+      'start_at': startAt.toIso8601String(),
+      'end_at': endAt.toIso8601String(),
+      'pause_end': pauseEnd?.toIso8601String(),
+      'next_tomato_id': nextTomatoId,
+      'pomodoros': pomodoros,
+      'short_break': shortBreak,
+    };
+  }
+
   factory Tomato.fromJson(Map<String, dynamic> json) {
     return Tomato(
       id: json['id'],
