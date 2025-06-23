@@ -19,7 +19,12 @@ class ProfileLoaded extends ProfileState {
   final String? email;
   final String? photoUrl;
   final bool isUploadingImage; //  Per gestire lo stato di caricamento/eliminazione dell'immagine
-  final File? localPreviewFile; // Added for local preview
+  final File? localPreviewFile;
+  // Achievements
+  final List<dynamic> allAchievements;
+  final Set<String> completedAchievementTitles;
+  final bool achievementsLoading;
+  final String? achievementsError;
 
   const ProfileLoaded({
     this.username,
@@ -28,6 +33,10 @@ class ProfileLoaded extends ProfileState {
     this.photoUrl,
     this.isUploadingImage = false,
     this.localPreviewFile, // Added
+    this.allAchievements = const [],
+    this.completedAchievementTitles = const {},
+    this.achievementsLoading = false,
+    this.achievementsError,
   });
 
   ProfileLoaded copyWith({
@@ -37,8 +46,11 @@ class ProfileLoaded extends ProfileState {
     String? photoUrl,
     bool? isUploadingImage,
     File? localPreviewFile,
-    bool clearLocalPreviewFile = false, // Helper to explicitly nullify
-    // User? firebaseUser, // This was in your original code, ensure it's used if needed or remove
+    bool clearLocalPreviewFile = false,
+    List<dynamic>? allAchievements,
+    Set<String>? completedAchievementTitles,
+    bool? achievementsLoading,
+    String? achievementsError,
   }) {
     return ProfileLoaded(
       username: username ?? this.username,
@@ -47,11 +59,15 @@ class ProfileLoaded extends ProfileState {
       photoUrl: photoUrl ?? this.photoUrl,
       isUploadingImage: isUploadingImage ?? this.isUploadingImage,
       localPreviewFile: clearLocalPreviewFile ? null : localPreviewFile ?? this.localPreviewFile,
+      allAchievements: allAchievements ?? this.allAchievements,
+      completedAchievementTitles: completedAchievementTitles ?? this.completedAchievementTitles,
+      achievementsLoading: achievementsLoading ?? this.achievementsLoading,
+      achievementsError: achievementsError,
     );
   }
 
   @override
-  List<Object?> get props => [username, displayName, email, photoUrl, isUploadingImage, localPreviewFile];
+  List<Object?> get props => [username, displayName, email, photoUrl, isUploadingImage, localPreviewFile, allAchievements, completedAchievementTitles, achievementsLoading, achievementsError];
 }
 
 class ProfileUpdateSuccess extends ProfileState {

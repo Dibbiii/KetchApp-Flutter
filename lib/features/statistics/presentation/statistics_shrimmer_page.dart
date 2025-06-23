@@ -108,7 +108,6 @@ class StatisticsShrimmerPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              // Subject shimmer list
               Expanded(
                 child: ListView.separated(
                   itemCount: 4,

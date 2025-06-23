@@ -15,8 +15,7 @@ class ApiService {
     try {
       decodedJson = json.decode(body);
     } catch (e) {
-      // TODO: Se il corpo non è JSON valido o è vuoto per alcuni successi (es. 204 No Content)
-      // gestisci di conseguenza. Per ora, se non è 2xx, lanciamo un errore.
+      print('Error decoding JSON: $e');
     }
 
     switch (response.statusCode) {
@@ -59,8 +58,6 @@ class ApiService {
       return json.decode(response.body);
     } else if (response.statusCode == 409) { // HTTP 409 Conflict - Gestione personalizzata per postData
       final responseBody = json.decode(response.body);
-      // Supponiamo che il backend restituisca un campo 'error_code' o 'message'
-      // per distinguere il tipo di conflitto.
       final String? errorCode = responseBody['error_code'] as String?;
       final String message = responseBody['message'] as String? ?? 'Risorsa già esistente.';
 
@@ -69,10 +66,8 @@ class ApiService {
       } else if (errorCode == 'EMAIL_TAKEN_BACKEND' || message.toLowerCase().contains('email')) {
         throw EmailAlreadyExistsInBackendException(message);
       }
-      // Se è un 409 ma non specificamente username/email duplicato, lancia una ConflictException generica
       throw ConflictException(message);
     } else {
-      // Per tutti gli altri stati di errore, usa il metodo generico _processResponse
       return _processResponse(response);
     }
   }
@@ -102,21 +97,18 @@ class ApiService {
       final response = await postData('plans', planData);
       print('Response from createPlan: $response');
     } catch (e) {
-      // ignore: avoid_print
       print('Error in createPlan: $e');
       rethrow;
     }
   }
 
   Future<Map<String, dynamic>> getUserByFirebaseUid(String firebaseUid) async {
-    // ignore: avoid_print
     print('Fetching user by Firebase UID: $firebaseUid');
     try {
       final response = await fetchData('users/firebase/$firebaseUid');
       // Assumendo che la risposta sia un JSON object con i dati dell'utente
       return response as Map<String, dynamic>;
     } catch (e) {
-      // ignore: avoid_print
       print('Error in getUserByFirebaseUid: $e');
       rethrow;
     }
@@ -133,7 +125,6 @@ class ApiService {
   }
 
   Future<List<Tomato>> getTodaysTomatoes(String userUuid) async {
-    // ignore: avoid_print
     print('Fetching tomatoes for user: $userUuid');
     final response = await fetchData('users/$userUuid/tomatoes/today');
     final List<dynamic> tomatoesJson = response as List<dynamic>;
@@ -146,8 +137,19 @@ class ApiService {
     return (decodedJson as List).map((e) => Achievement.fromJson(e)).toList();
   }
 
+  Future<List<Achievement>> getAllAchievements() async {
+    final response = await http.get(Uri.parse('$_baseUrl/achievements'));
+    final decodedJson = await _processResponse(response);
+    return (decodedJson as List).map((e) => Achievement.fromJson(e)).toList();
+  }
+
+  Future<List<Achievement>> getUserAchievements(String userUuid) async {
+    final response = await http.get(Uri.parse('$_baseUrl/users/$userUuid/achievements'));
+    final decodedJson = await _processResponse(response);
+    return (decodedJson as List).map((e) => Achievement.fromJson(e)).toList();
+  }
+
   Future<Tomato> getTomatoById(int tomatoId) async {
-    // ignore: avoid_print
     print('Fetching tomato with id: $tomatoId');
     final response = await fetchData('tomatoes/$tomatoId');
     return Tomato.fromJson(response);
@@ -163,12 +165,8 @@ class ApiService {
         'action': action.name,
       });
     } catch (e) {
-      // ignore: avoid_print
       print('Error creating activity: $e');
       rethrow;
     }
   }
-
-
-  // Implementa metodi simili per PUT, DELETE, ecc., usando _processResponse
 }

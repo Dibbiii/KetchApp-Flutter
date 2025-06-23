@@ -139,7 +139,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         const SizedBox(height: 24),
                         SizedBox(
-                          height: 400, // Definisci un'altezza fissa per il TimerPage
+                          height: 400,
                           child: const TodaysTomatoesCard(),
                         ),
                         const SizedBox(height: 30),

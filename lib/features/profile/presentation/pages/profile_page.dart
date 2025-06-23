@@ -2,7 +2,7 @@ import 'dart:io'; // For File
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart'; // For ImageSource
+import 'package:image_picker/image_picker.dart';
 import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
 import 'package:ketchapp_flutter/features/profile/bloc/profile_bloc.dart';
 import 'package:ketchapp_flutter/features/profile/bloc/profile_event.dart';
@@ -33,6 +33,10 @@ class _ProfilePageState extends State<ProfilePage> {
           _showShimmer = false;
         });
       }
+    });
+    // Carica achievements tramite bloc
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProfileBloc>().add(LoadAchievements());
     });
   }
 
@@ -152,7 +156,7 @@ class _ProfilePageState extends State<ProfilePage> {
     InputDecoration styledInputDecoration({
       required String labelText,
       required IconData iconData,
-      bool readOnly = true, // Assuming fields are read-only for now
+      bool readOnly = true,
     }) {
       return InputDecoration(
         labelText: labelText,
@@ -183,30 +187,9 @@ class _ProfilePageState extends State<ProfilePage> {
       );
     }
 
-    final List<Achievement> achievements = [
-      Achievement(icon: Icons.timer_outlined, title: 'Study for 5 hours', isCompleted: true),
-      Achievement(icon: Icons.self_improvement_outlined, title: 'Distraction-free session', isCompleted: false),
-      Achievement(icon: Icons.leaderboard_outlined, title: 'Top 10 Global Ranking', isCompleted: false),
-      Achievement(icon: Icons.check_circle_outline, title: 'Complete all Tomatoes', isCompleted: true),
-      Achievement(icon: Icons.whatshot_outlined, title: 'Continue the Streak', isCompleted: false),
-      Achievement(icon: Icons.radar_outlined, title: 'Achieve 90% focus rate during the study session', isCompleted: false),
-      Achievement(icon: Icons.share_outlined, title: 'Share your achievements', isCompleted: false),
-      Achievement(icon: Icons.star_outline, title: 'Rate the app', isCompleted: false),
-    ];
-
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            tooltip: 'Impostazioni',
-            onPressed: () {
-              context.push('/settings');
-            },
-          ),
-        ],
       ),
       body: BlocListener<ProfileBloc, ProfileState>(
         listener: (context, state) {
@@ -249,8 +232,20 @@ class _ProfilePageState extends State<ProfilePage> {
                     backgroundImage: FileImage(state.localPreviewFile!));
               } else if (state.photoUrl != null) {
                 avatarContent = CircleAvatar(
-                    radius: 50,
-                    backgroundImage: NetworkImage(state.photoUrl!));
+                  radius: 50,
+                  backgroundColor: colors.surfaceContainerHighest,
+                  child: ClipOval(
+                    child: Image.network(
+                      state.photoUrl!,
+                      fit: BoxFit.cover,
+                      width: 100,
+                      height: 100,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(Icons.account_circle, size: 100, color: colors.onSurfaceVariant.withAlpha(153));
+                      },
+                    ),
+                  ),
+                );
               } else {
                 avatarContent = Icon(Icons.account_circle,
                     size: 100, color: colors.onSurfaceVariant.withAlpha(153));
@@ -358,59 +353,78 @@ class _ProfilePageState extends State<ProfilePage> {
                         style: textTheme.titleLarge?.copyWith(color: colors.onSurface),
                       ),
                       const SizedBox(height: 8),
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: achievements.length,
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 1.8, // Più spazio verticale
-                        ),
-                        itemBuilder: (context, index) {
-                          final achievement = achievements[index];
-                          return Card(
-                            color: achievement.isCompleted
-                                ? colors.primaryContainer.withAlpha(179)
-                                : colors.surfaceContainer.withAlpha(179),
-                            elevation: 0,
-                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: BorderSide(
-                                  color: achievement.isCompleted ? colors.primary.withAlpha(128) : colors.outline.withAlpha(51),
-                                  width: 1,
+                      Builder(
+                        builder: (context) {
+                          if (state is ProfileLoaded) {
+                            final achievementsLoading = state.achievementsLoading;
+                            final achievementsError = state.achievementsError;
+                            final allAchievements = state.allAchievements;
+                            final completedAchievementTitles = state.completedAchievementTitles;
+                            if (achievementsLoading) {
+                              return const Center(child: CircularProgressIndicator());
+                            } else if (achievementsError != null) {
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(achievementsError, style: textTheme.bodyMedium?.copyWith(color: colors.error)),
+                              );
+                            } else {
+                              return GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: allAchievements.length,
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  mainAxisSpacing: 12,
+                                  crossAxisSpacing: 12,
+                                  childAspectRatio: 1.8,
                                 ),
-                              ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(5.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Flexible(
-                                    child: Icon(
-                                      achievement.icon,
-                                      color: achievement.isCompleted ? colors.onPrimaryContainer : colors.onSurfaceVariant,
-                                      size: 28,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Flexible(
-                                    child: Text(
-                                      achievement.title,
-                                      textAlign: TextAlign.center,
-                                      style: textTheme.bodySmall?.copyWith(
-                                        color: achievement.isCompleted ? colors.onPrimaryContainer : colors.onSurfaceVariant,
+                                itemBuilder: (context, index) {
+                                  final achievement = allAchievements[index];
+                                  final isCompleted = completedAchievementTitles.contains(achievement.title);
+                                  return Card(
+                                    color: isCompleted
+                                        ? colors.primaryContainer.withAlpha(179)
+                                        : colors.surfaceContainer.withAlpha(179),
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      side: BorderSide(
+                                        color: isCompleted ? colors.primary.withAlpha(128) : colors.outline.withAlpha(51),
+                                        width: 1,
                                       ),
-                                      maxLines: 3,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(5.0),
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Flexible(
+                                            child: achievement.iconUrl.isNotEmpty
+                                                ? Image.network(achievement.iconUrl, height: 28, width: 28, color: isCompleted ? colors.onPrimaryContainer : colors.onSurfaceVariant)
+                                                : Icon(Icons.emoji_events_outlined, color: isCompleted ? colors.onPrimaryContainer : colors.onSurfaceVariant, size: 28),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Flexible(
+                                            child: Text(
+                                              achievement.title,
+                                              textAlign: TextAlign.center,
+                                              style: textTheme.bodySmall?.copyWith(
+                                                color: isCompleted ? colors.onPrimaryContainer : colors.onSurfaceVariant,
+                                              ),
+                                              maxLines: 3,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            }
+                          }
+                          return const SizedBox.shrink();
                         },
                       ),
                       const SizedBox(height: 24),
@@ -430,7 +444,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               );
             }
-            // Fallback for any unhandled state
             return const Center(child: Text('Stato sconosciuto.'));
           },
         ),
@@ -439,15 +452,3 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
-// Helper class for Achievements (if not already defined elsewhere)
-class Achievement {
-  final IconData icon;
-  final String title;
-  final bool isCompleted;
-
-  Achievement({
-    required this.icon,
-    required this.title,
-    required this.isCompleted,
-  });
-}

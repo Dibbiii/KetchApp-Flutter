@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // For DateUtils
 
-// Helper function to get days in the week, starting from Monday
 List<DateTime> _getDaysInWeekForHistogram(DateTime dateInWeek) {
   DateTime startOfWeek = dateInWeek.subtract(
     Duration(days: dateInWeek.weekday - DateTime.monday),
@@ -69,7 +68,7 @@ class WeeklyHistogramWidget extends StatelessWidget {
             right: yAxisLabelWidth + 4,
             top: 0,
             bottom:
-                xAxisElementsCombinedHeight, // Adjusted bottom for grid lines
+                xAxisElementsCombinedHeight,
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final double availableHeight = constraints.maxHeight;

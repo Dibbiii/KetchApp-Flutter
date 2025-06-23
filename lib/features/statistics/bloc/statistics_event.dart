@@ -9,7 +9,7 @@ abstract class StatisticsEvent extends Equatable {
 }
 
 class StatisticsLoadRequested extends StatisticsEvent {
-  final double currentTotalStudyHours; // From SummaryState
+  final double currentTotalStudyHours;
 
   const StatisticsLoadRequested({required this.currentTotalStudyHours});
 
@@ -32,7 +32,6 @@ class StatisticsDateSelectedFromHistogram extends StatisticsEvent {
   List<Object?> get props => [selectedDate];
 }
 
-// Event to notify the BLoC about updates from SummaryState
 class StatisticsTotalStudyHoursUpdated extends StatisticsEvent {
   final double newTotalStudyHours;
 

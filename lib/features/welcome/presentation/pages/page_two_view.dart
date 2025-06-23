@@ -20,17 +20,11 @@ PageViewModel buildPageTwoViewModel({
           shape: BoxShape.circle,
         ),
         child: ClipOval(
-          child: Image.network(
-            'https://picsum.photos/seed/\${title.hashCode}/200/200',
+          child: Image.asset(
+            'assets/images/Tomato_Image.png',
             width: 200.0,
             height: 200.0,
             fit: BoxFit.cover,
-            errorBuilder:
-                (context, error, stackTrace) => Icon(
-                  Icons.broken_image,
-                  size: 200.0,
-                  color: primaryAccentColor,
-                ),
           ),
         ),
       ),

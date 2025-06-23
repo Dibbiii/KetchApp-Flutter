@@ -96,7 +96,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           email: emailToLogin,
           password: event.password,
         );
-        // Non emettere Authenticated qui, lo stream authStateChanges lo farà
       } on FirebaseAuthException catch (e) {
         emit(AuthError(_mapAuthErrorCodeToMessage(e.code)));
       } catch (e) {
@@ -106,7 +105,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     on<AuthRegisterRequested>((event, emit) async {
       emit(AuthVerifying());
-      UserCredential? userCredential; // Dichiaralo qui per accedervi nel blocco catch
+      UserCredential? userCredential;
 
       try {
         userCredential =
@@ -116,18 +115,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         );
 
         if (userCredential.user != null) {
-          // Chiama il tuo backend per salvare/verificare l'utente
+          // Chiama il backend per salvare/verificare l'utente
           await _apiService.postData('users', { // Sostituisci 'users/register'
             'firebaseUid': userCredential.user!.uid,
             'email': event.email,
             'username': event.username,
-            // Aggiungi altri campi se necessario
           });
-          // Se la chiamata al backend ha successo, lo stream authStateChanges
-          // gestirà l'emissione dello stato Authenticated.
-          // Non è necessario emettere Authenticated qui.
         } else {
-          // Questo caso dovrebbe essere raro se createUserWithEmailAndPassword ha successo
           emit(const AuthError('Registrazione Firebase riuscita ma utente nullo.'));
         }
       } on FirebaseAuthException catch (e) {
@@ -138,18 +132,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       } on EmailAlreadyExistsInBackendException catch (e) { 
         await userCredential?.user?.delete();
         emit(AuthError(e.message));
-      } on ConflictException catch (e) { 
-        // Questo potrebbe coprire altri tipi di 409 se UserAlreadyExistsException è troppo generica
-        // o se il backend restituisce un 409 non specifico per username/email.
+      } on ConflictException catch (e) {
         await userCredential?.user?.delete();
         emit(AuthError(e.message));
       } on ApiException catch (e) { 
         await userCredential?.user?.delete();
         emit(AuthError(
             'Registrazione Firebase riuscita, ma errore del server: ${e.message}'));
-      } catch (e, s) { // Aggiunto StackTrace s per un debug migliore
+      } catch (e, s) {
         await userCredential?.user?.delete();
-        // Aggiungi e.toString() e lo stack trace per un debug più dettagliato
         print('[AuthBloc] Errore generico in AuthRegisterRequested: ${e.toString()}');
         print('[AuthBloc] StackTrace: ${s.toString()}');
         emit(AuthError('Errore sconosciuto durante la registrazione: ${e.toString()}'));
@@ -179,29 +170,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
         final UserCredential userCredential = await _firebaseAuth.signInWithCredential(credential);
         
-        // Se l'utente è nuovo e devi registrarlo nel tuo backend
+        // Se l'utente è nuovo, lo devo registrare nel backend
         if (userCredential.user != null && userCredential.additionalUserInfo?.isNewUser == true) {
           try {
             await _apiService.postData('users', {
               'firebaseUid': userCredential.user!.uid,
               'email': userCredential.user!.email,
               'username': userCredential.user!.displayName ?? userCredential.user!.email?.split('@')[0], // Fallback per username
-              // Aggiungi altri campi se necessario, es. nome visualizzato
               'displayName': userCredential.user!.displayName,
             });
-            // Lo stream authStateChanges gestirà l'emissione di Authenticated
           } on ApiException catch (e) {
-            // Se la registrazione al backend fallisce, fai il logout da Firebase e mostra errore
             await _firebaseAuth.signOut();
-            await _googleSignIn.signOut(); // Assicurati di fare signOut anche da Google
+            await _googleSignIn.signOut();
             emit(AuthError('Login Google riuscito, ma errore registrazione backend: ${e.message}'));
             return;
           }
         }
-        // Se l'utente esiste già o la registrazione al backend (se nuova) è andata a buon fine,
-        // lo stream authStateChanges emetterà Authenticated.
-        // Non è necessario emettere Authenticated(userCredential.user!) qui esplicitamente
-        // se _userSubscription è attivo e gestisce _AuthUserChanged.
 
       } on FirebaseAuthException catch (e) {
         emit(AuthError(_mapAuthErrorCodeToMessage(e.code)));
@@ -215,9 +199,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLogoutRequested>((event, emit) async {
       emit(AuthVerifying());
       try {
-        await _googleSignIn.signOut(); // Aggiungi signOut da Google
+        await _googleSignIn.signOut();
         await _firebaseAuth.signOut();
-        // Lo stream authStateChanges emetterà Unauthenticated
       } catch (e) {
         emit(const AuthError('Errore durante il logout.'));
       }

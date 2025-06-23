@@ -48,7 +48,7 @@ class UsernameAlreadyExistsException extends ConflictException { // Usata specif
       : super(message);
 }
 
-class EmailAlreadyExistsInBackendException extends ConflictException { // Usata specificamente in postData
+class EmailAlreadyExistsInBackendException extends ConflictException {
   EmailAlreadyExistsInBackendException([String message = 'Questa email è già registrata nel sistema.'])
       : super(message);
 }
@@ -63,5 +63,3 @@ class FetchDataException extends ApiException {
   FetchDataException([String message = 'Errore durante il recupero dei dati.'])
       : super(message);
 }
-
-// Puoi aggiungere altre eccezioni specifiche se necessario

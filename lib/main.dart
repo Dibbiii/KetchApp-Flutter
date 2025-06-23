@@ -19,7 +19,6 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
 
-  // Initialize date formatting for the Italian locale
   await initializeDateFormatting('it_IT', null);
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);

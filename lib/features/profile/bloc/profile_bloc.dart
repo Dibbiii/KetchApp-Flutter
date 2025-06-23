@@ -31,6 +31,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<ProfileImagePickRequested>(_onProfileImagePickRequested);
     on<ProfileImageUploadRequested>(_onProfileImageUploadRequested);
     on<ProfileImageDeleteRequested>(_onProfileImageDeleteRequested);
+    on<LoadAchievements>(_onLoadAchievements);
   }
 
   Future<void> _onLoadProfile(
@@ -180,6 +181,59 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       }
     } else {
       emit(const ProfileError('Profilo non caricato. Impossibile eliminare l\'immagine.'));
+    }
+  }
+
+  Future<void> _onLoadAchievements(
+      LoadAchievements event, Emitter<ProfileState> emit) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) {
+      if (state is ProfileLoaded) {
+        emit((state as ProfileLoaded).copyWith(
+          achievementsLoading: false,
+          achievementsError: 'Utente non autenticato.',
+        ));
+      }
+      return;
+    }
+    if (state is ProfileLoaded) {
+      emit((state as ProfileLoaded).copyWith(
+        achievementsLoading: true,
+        achievementsError: null,
+      ));
+    }
+    try {
+      String? userUuid;
+      final authState = _authBloc.state;
+      if (authState is Authenticated) {
+        userUuid = authState.userUuid;
+      }
+      if (userUuid != null) {
+        final all = await _apiService.getAllAchievements();
+        final completed = await _apiService.getUserAchievements(userUuid);
+        if (state is ProfileLoaded) {
+          emit((state as ProfileLoaded).copyWith(
+            allAchievements: all,
+            completedAchievementTitles: completed.map((a) => a.title).toSet(),
+            achievementsLoading: false,
+            achievementsError: null,
+          ));
+        }
+      } else {
+        if (state is ProfileLoaded) {
+          emit((state as ProfileLoaded).copyWith(
+            achievementsLoading: false,
+            achievementsError: 'Utente non autenticato.',
+          ));
+        }
+      }
+    } catch (e) {
+      if (state is ProfileLoaded) {
+        emit((state as ProfileLoaded).copyWith(
+          achievementsLoading: false,
+          achievementsError: 'Errore nel caricamento achievements: ${e.toString()}',
+        ));
+      }
     }
   }
 }

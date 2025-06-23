@@ -2,7 +2,6 @@ part of 'statistics_bloc.dart';
 
 enum StatisticsStatus { initial, loading, loaded, error }
 
-// Add this enum for the overlay options
 enum ActivityDetailType { screenTime, notificationsReceived, timesOpened }
 
 class StatisticsState extends Equatable {
@@ -12,7 +11,6 @@ class StatisticsState extends Equatable {
   final double recordStudyHours;
   final DateTime bestStudyDay;
   final String? errorMessage;
-  // Add this property to manage the selected overlay option
   final ActivityDetailType selectedActivityDetailType;
   final List<dynamic> subjectStats;
   final List<dynamic> weeklyDatesData;
@@ -34,8 +32,7 @@ class StatisticsState extends Equatable {
     final now = DateTime.now();
     return StatisticsState(
       displayedCalendarDate: now,
-      bestStudyDay: now, // Default best study day
-      // Ensure initial state also has a default for the new property
+      bestStudyDay: now,
       selectedActivityDetailType: ActivityDetailType.screenTime,
     );
   }
@@ -48,7 +45,6 @@ class StatisticsState extends Equatable {
     DateTime? bestStudyDay,
     String? errorMessage,
     bool clearErrorMessage = false,
-    // Add the new property to copyWith
     ActivityDetailType? selectedActivityDetailType,
     List<dynamic>? subjectStats,
     List<dynamic>? weeklyDatesData,
@@ -62,7 +58,6 @@ class StatisticsState extends Equatable {
       bestStudyDay: bestStudyDay ?? this.bestStudyDay,
       errorMessage:
           clearErrorMessage ? null : errorMessage ?? this.errorMessage,
-      // Update the new property
       selectedActivityDetailType:
           selectedActivityDetailType ?? this.selectedActivityDetailType,
       subjectStats: subjectStats ?? this.subjectStats,
@@ -78,7 +73,6 @@ class StatisticsState extends Equatable {
     recordStudyHours,
     bestStudyDay,
     errorMessage,
-    // Add the new property to props for Equatable comparison
     selectedActivityDetailType,
     subjectStats,
     weeklyDatesData,

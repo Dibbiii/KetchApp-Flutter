@@ -18,7 +18,6 @@ class _SummaryPageState extends State<SummaryPage> {
   Timer? _timer;
   bool isPaused = false;
 
-  // Configuration constants
   final int sessionDuration = 50;
   final int breakDuration = 10;
   final int hourStart = 9;
