@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:ketchapp_flutter/features/plan/models/plan_model.dart';
 import 'package:ketchapp_flutter/models/tomato.dart';
 import 'package:ketchapp_flutter/models/activity_action.dart';
@@ -88,10 +89,12 @@ class ApiService {
   }
 
   Future<String> getUserUUIDByFirebaseUid(String firebaseUid) async {
-    final response = await http.get(
-        Uri.parse('$_baseUrl/users/firebase/$firebaseUid'));
-    final responseData = await _processResponse(response);
-    return responseData.toString();
+    final responseData = await fetchData('users/firebase/$firebaseUid');
+    final responseString = responseData.toString();
+    if (responseString.contains("uuid:")) { // che soluzione di merda
+      return responseString.split(' ').last.replaceAll(RegExp(r'[^\w-]'), '');
+    }
+    return responseString;
   }
 
   Future<void> createPlan(PlanModel plan) async {
@@ -133,10 +136,12 @@ class ApiService {
   }
 
   Future<List<Tomato>> getTodaysTomatoes(String userUuid) async {
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     // ignore: avoid_print
-    print('Fetching tomatoes for user: $userUuid');
-    final response = await fetchData('users/$userUuid/tomatoes/today');
+    print('Fetching tomatoes for user: $userUuid for date: $today');
+    final response = await fetchData('users/$userUuid/tomatoes?date=$today');
     final List<dynamic> tomatoesJson = response as List<dynamic>;
+    print('Fetched ${tomatoesJson.length} tomatoes for user: $userUuid');
     return tomatoesJson.map((json) => Tomato.fromJson(json)).toList();
   }
 

@@ -8,18 +8,30 @@ abstract class TimerState extends Equatable {
   List<Object> get props => [duration];
 }
 
-class TimerInitial extends TimerState {
-  const TimerInitial(super.duration);
+class WaitingFirstTomato extends TimerState {
+  const WaitingFirstTomato() : super(0);
 }
 
-class TimerRunInProgress extends TimerState {
-  const TimerRunInProgress(super.duration);
+class TomatoTimerInProgress extends TimerState {
+  const TomatoTimerInProgress(super.duration);
 }
 
-class TimerRunPause extends TimerState {
-  const TimerRunPause(super.duration);
+class TomatoTimerPaused extends TimerState {
+  const TomatoTimerPaused(super.duration);
 }
 
-class TimerRunComplete extends TimerState {
-  const TimerRunComplete() : super(0);
+class BreakTimerInProgress extends TimerState {
+  const BreakTimerInProgress(super.duration);
+}
+
+class BreakTimerPaused extends TimerState {
+  const BreakTimerPaused(super.duration);
+}
+
+class WaitingNextTomato extends TimerState {
+  const WaitingNextTomato() : super(0);
+}
+
+class SessionComplete extends TimerState {
+  const SessionComplete() : super(0);
 }

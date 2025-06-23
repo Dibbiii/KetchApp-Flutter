@@ -2,8 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:ketchapp_flutter/models/tomato.dart';
 import 'package:ketchapp_flutter/services/api_service.dart';
 import 'package:provider/provider.dart';
@@ -12,8 +10,7 @@ import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
 import '../bloc/timer_bloc.dart';
 
 class TimerPage extends StatelessWidget {
-  final String tomatoId;
-  const TimerPage({super.key, required this.tomatoId});
+  const TimerPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -21,14 +18,26 @@ class TimerPage extends StatelessWidget {
     final authState = context.watch<AuthBloc>().state;
 
     if (authState is Authenticated) {
-      final tomatoIdInt = int.parse(tomatoId);
-      return BlocProvider(
-        create: (context) => TimerBloc(
-          apiService: apiService,
-          userUUID: authState.userUuid,
-          tomatoId: tomatoIdInt,
-        ),
-        child: TimerView(tomatoId: tomatoId),
+      return FutureBuilder<List<Tomato>>(
+        future: apiService.getTodaysTomatoes(authState.userUuid),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          } else if (snapshot.hasError) {
+            return Scaffold(
+              body: Center(child: Text('Error: ${snapshot.error}')),
+            );
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Scaffold(
+              body: Center(child: Text('No tomatoes for today!')),
+            );
+          } else {
+            final tomatoes = snapshot.data!;
+            return TimerView(tomatoes: tomatoes);
+          }
+        },
       );
     } else {
       return const Scaffold(
@@ -41,53 +50,49 @@ class TimerPage extends StatelessWidget {
 }
 
 class TimerView extends StatefulWidget {
-  final String tomatoId;
-  const TimerView({super.key, required this.tomatoId});
+  final List<Tomato> tomatoes;
+  const TimerView({super.key, required this.tomatoes});
 
   @override
   State<TimerView> createState() => _TimerViewState();
 }
 
 class _TimerViewState extends State<TimerView> {
-  late Future<Tomato> _tomatoFuture;
-
-  final List<TimerAction> _actions = [];
-  DateTime? _startTime;
-  DateTime? _endTime;
-  Timer? _rebuildTimer;
+  int _currentTomatoIndex = 0;
+  int _currentPomodoroIndex = 0;
+  late TimerBloc _timerBloc;
 
   @override
   void initState() {
     super.initState();
-    _tomatoFuture = ApiService().getTomatoById(int.parse(widget.tomatoId));
+    _createNewBloc();
+  }
+
+  void _createNewBloc() {
+    final apiService = Provider.of<ApiService>(context, listen: false);
+    final authState = context.read<AuthBloc>().state;
+    if (authState is Authenticated) {
+      _timerBloc = TimerBloc(
+        apiService: apiService,
+        userUUID: authState.userUuid,
+        tomatoId: widget.tomatoes[_currentTomatoIndex].id,
+      );
+    }
   }
 
   @override
   void dispose() {
-    _rebuildTimer?.cancel();
+    _timerBloc.close();
     super.dispose();
   }
 
-  void _handleTimerAction(String type) {
+  void _onTomatoSelected(int index) {
     setState(() {
-      _actions.insert(0, TimerAction(type: type, timestamp: DateTime.now()));
+      _currentTomatoIndex = index;
+      _currentPomodoroIndex = 0;
+      _timerBloc.close();
+      _createNewBloc();
     });
-
-    final bloc = context.read<TimerBloc>();
-    switch (type) {
-      case 'start':
-        // This case might need adjustment depending on the new logic
-        break;
-      case 'pause':
-        bloc.add(const TimerPaused());
-        break;
-      case 'resume':
-        bloc.add(const TimerResumed());
-        break;
-      case 'end':
-        bloc.add(const TimerFinished());
-        break;
-    }
   }
 
   String formatTimer(int seconds) {
@@ -98,361 +103,240 @@ class _TimerViewState extends State<TimerView> {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = Theme.of(context).colorScheme;
-    final TextTheme textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final currentTomato = widget.tomatoes[_currentTomatoIndex];
 
-    return FutureBuilder<Tomato>(
-        future: _tomatoFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-                body: Center(child: CircularProgressIndicator()));
-          } else if (snapshot.hasError) {
-            return Scaffold(
-                body: Center(child: Text('Error: ${snapshot.error}')));
-          } else if (snapshot.hasData) {
-            final tomato = snapshot.data!;
-            var sessionDurationInSeconds =
-                tomato.endAt.difference(tomato.startAt).inSeconds;
+    final numPomodoros = currentTomato.pomodoros;
+    final totalDurationInSeconds =
+        currentTomato.endAt.difference(currentTomato.startAt).inSeconds;
 
-            if (sessionDurationInSeconds <= 0) {
-              sessionDurationInSeconds = 1500; // 25 minutes
-            }
+    int pomodoroDurationSeconds;
+    int breakDurationInSeconds;
 
-            if (context.watch<TimerBloc>().state is TimerInitial) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (!mounted) return;
-                context
-                    .read<TimerBloc>()
-                    .add(TimerStarted(duration: sessionDurationInSeconds));
-                setState(() {
-                  _startTime = DateTime.now();
-                  _actions.insert(
-                      0, TimerAction(type: 'start', timestamp: _startTime!));
-                });
-              });
-            }
+    if (currentTomato.pauseEnd != null &&
+        currentTomato.pauseEnd!.isBefore(currentTomato.endAt) &&
+        numPomodoros > 0) {
+      pomodoroDurationSeconds =
+          currentTomato.endAt.difference(currentTomato.pauseEnd!).inSeconds;
 
-            return BlocConsumer<TimerBloc, TimerState>(
-              listener: (context, state) {
-                if (state is TimerRunComplete) {
-                  _rebuildTimer?.cancel();
-                  setState(() {
-                    _endTime = DateTime.now();
-                  });
-                } else if (state is! TimerRunPause) {
-                  _rebuildTimer?.cancel();
-                } else {
-                  _rebuildTimer =
-                      Timer.periodic(const Duration(seconds: 1), (timer) {
-                    if (mounted) {
-                      setState(() {});
-                    }
-                  });
-                }
-              },
-              builder: (context, state) {
-                final isPaused = state is TimerRunPause;
-                final predictedEndTime =
-                    DateTime.now().add(Duration(seconds: state.duration));
-                final double progress = (sessionDurationInSeconds == 0)
-                    ? 1.0
-                    : 1 - (state.duration / sessionDurationInSeconds);
+      final totalPomodorosDuration = pomodoroDurationSeconds * numPomodoros;
+      final totalBreaksDuration =
+          totalDurationInSeconds - totalPomodorosDuration;
 
-                TimerAction? lastPauseAction;
-                try {
-                  lastPauseAction =
-                      _actions.firstWhere((a) => a.type == 'pause');
-                } catch (e) {
-                  lastPauseAction = null;
-                }
+      if (numPomodoros > 1) {
+        breakDurationInSeconds = (totalBreaksDuration / (numPomodoros - 1)).round();
+        if (breakDurationInSeconds < 0) {
+          breakDurationInSeconds = 0;
+        }
+      } else {
+        breakDurationInSeconds = 0;
+      }
+    } else {
+      // Fallback to old logic if pauseEnd is not available or invalid
+      breakDurationInSeconds = currentTomato.shortBreak * 60;
+      final totalBreakDurationInSeconds =
+          (numPomodoros > 1 ? numPomodoros - 1 : 0) * breakDurationInSeconds;
+      pomodoroDurationSeconds = numPomodoros > 0
+          ? ((totalDurationInSeconds - totalBreakDurationInSeconds) /
+                  numPomodoros)
+              .round()
+              .clamp(0, totalDurationInSeconds)
+          : 0;
+    }
 
-                TimerAction? lastResumeAction;
-                try {
-                  lastResumeAction =
-                      _actions.firstWhere((a) => a.type == 'resume');
-                } catch (e) {
-                  lastResumeAction = null;
-                }
-                return SafeArea(
-                  child: Scaffold(
-                    appBar: AppBar(
-                      title: Text(tomato.subject),
-                      elevation: 0,
-                      backgroundColor: Colors.transparent,
-                    ),
-                    floatingActionButtonLocation:
-                        FloatingActionButtonLocation.centerFloat,
-                    floatingActionButton: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (state is! TimerRunComplete)
-                          SizedBox(
-                            width: 80,
-                            height: 80,
-                            child: FloatingActionButton(
-                              heroTag: "pause_resume",
-                              onPressed: () {
-                                if (isPaused) {
-                                  _handleTimerAction('resume');
-                                } else {
-                                  _handleTimerAction('pause');
-                                }
-                              },
-                              child: Icon(
-                                  isPaused ? Icons.play_arrow : Icons.pause,
-                                  size: 40),
+    return BlocProvider.value(
+      value: _timerBloc,
+      child: Scaffold(
+        body: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                height: 70,
+                child: ListView.builder(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: widget.tomatoes.length,
+                  itemBuilder: (context, index) {
+                    final tomato = widget.tomatoes[index];
+                    final isSelected = index == _currentTomatoIndex;
+                    return GestureDetector(
+                      onTap: () => _onTomatoSelected(index),
+                      child: Container(
+                        width: 100,
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? colors.primary
+                              : colors.surfaceVariant,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Text(
+                            tomato.subject,
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: isSelected
+                                  ? colors.onPrimary
+                                  : colors.onSurfaceVariant,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        const SizedBox(width: 24),
-                        if (state is! TimerRunComplete)
-                          SizedBox(
-                            width: 80,
-                            height: 80,
-                            child: FloatingActionButton(
-                              heroTag: "end",
-                              onPressed: () => _handleTimerAction('end'),
-                              backgroundColor: Colors.red,
-                              child: const Icon(Icons.stop, size: 40),
-                            ),
-                          ),
-                        if (state is TimerRunComplete)
-                          FloatingActionButton.extended(
-                            heroTag: "done",
-                            onPressed: () => context.go('/home'),
-                            label: const Text('Done', style: TextStyle(fontSize: 20)),
-                            icon: const Icon(Icons.check, size: 30),
-                          ),
-                      ],
-                    ),
-                    body: Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              Card(
+                margin:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        currentTomato.subject,
+                        style: theme.textTheme.headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
                         children: [
-                          SizedBox(
-                            width: 220,
-                            height: 220,
-                            child: Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                CircularProgressIndicator(
-                                  value: progress,
-                                  strokeWidth: 12,
-                                  backgroundColor:
-                                      colors.surfaceContainerHighest,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      colors.primary),
-                                ),
-                                Center(
-                                  child: Text(
-                                    formatTimer(state.duration),
-                                    style: textTheme.displayMedium?.copyWith(
-                                        color: colors.primary,
-                                        fontWeight: FontWeight.bold,
-                                        fontFeatures: const [
-                                          FontFeature.tabularFigures()
-                                        ]),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 12.0, horizontal: 24.0),
-                            decoration: BoxDecoration(
-                              color: colors.surfaceContainerHighest
-                                  .withAlpha(128),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                if (_startTime != null)
-                                  Column(
-                                    children: [
-                                      Text('Started At',
-                                          style: textTheme.titleSmall),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        DateFormat('HH:mm')
-                                            .format(_startTime!),
-                                        style: textTheme.titleLarge?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: colors.primary),
-                                      ),
-                                      Text('UTC', style: textTheme.bodySmall),
-                                    ],
-                                  ),
-                                if (state is! TimerRunComplete &&
-                                    _startTime != null)
-                                  Column(
-                                    children: [
-                                      Text('Predicted End',
-                                          style: textTheme.titleSmall),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        DateFormat('HH:mm')
-                                            .format(predictedEndTime),
-                                        style: textTheme.titleLarge?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: colors.primary),
-                                      ),
-                                      Text('UTC', style: textTheme.bodySmall),
-                                    ],
-                                  ),
-                                if (_endTime != null)
-                                  Column(
-                                    children: [
-                                      Text('Ended At',
-                                          style: textTheme.titleSmall),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        DateFormat('HH:mm')
-                                            .format(_endTime!),
-                                        style: textTheme.titleLarge?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: colors.primary),
-                                      ),
-                                      Text('UTC', style: textTheme.bodySmall),
-                                    ],
-                                  ),
-                                if (lastPauseAction != null)
-                                  Column(
-                                    children: [
-                                      Text('Paused At',
-                                          style: textTheme.titleSmall),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        DateFormat('HH:mm').format(
-                                            lastPauseAction.timestamp),
-                                        style: textTheme.titleLarge?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: colors.primary),
-                                      ),
-                                      Text('UTC', style: textTheme.bodySmall),
-                                    ],
-                                  ),
-                                if (lastResumeAction != null &&
-                                    lastPauseAction != null &&
-                                    lastResumeAction.timestamp
-                                        .isAfter(lastPauseAction.timestamp))
-                                  Column(
-                                    children: [
-                                      Text('Resumed At',
-                                          style: textTheme.titleSmall),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        DateFormat('HH:mm').format(
-                                            lastResumeAction.timestamp),
-                                        style: textTheme.titleLarge?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: colors.primary),
-                                      ),
-                                      Text('UTC', style: textTheme.bodySmall),
-                                    ],
-                                  ),
-                              ],
-                            ),
+                          Icon(Icons.schedule,
+                              size: 18, color: colors.onSurfaceVariant),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${currentTomato.pomodoros} pomodoros',
+                            style: theme.textTheme.bodyLarge,
                           ),
                           const Spacer(),
-                          Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
-                                children: List.generate(
-                                    tomato.pomodoros > 0
-                                        ? tomato.pomodoros
-                                        : 4, (index) {
-                                  final int currentPomodoro = 1; // Placeholder
-                                  final breakStartTime = predictedEndTime.add(
-                                      Duration(
-                                          minutes: (tomato.shortBreak +
-                                                  tomato.endAt
-                                                      .difference(
-                                                          tomato.startAt)
-                                                      .inMinutes) *
-                                              index));
-                                  final nextTomatoStartTime =
-                                      breakStartTime.add(Duration(
-                                          minutes: tomato.shortBreak));
-
-                                  return Column(
-                                    children: [
-                                      Icon(
-                                        index < currentPomodoro
-                                            ? Icons.circle
-                                            : Icons.circle_outlined,
-                                        color: Colors.red.shade400,
-                                        size: 20,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        "Break Start",
-                                        style: textTheme.bodySmall,
-                                      ),
-                                      Text(
-                                        DateFormat('HH:mm')
-                                            .format(breakStartTime),
-                                        style: textTheme.bodyMedium?.copyWith(
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        "Tomato Start",
-                                        style: textTheme.bodySmall,
-                                      ),
-                                      Text(
-                                        DateFormat('HH:mm')
-                                            .format(nextTomatoStartTime),
-                                        style: textTheme.bodyMedium?.copyWith(
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  );
-                                }),
-                              ),
-                            ],
+                          Icon(Icons.local_cafe_outlined,
+                              size: 18, color: colors.onSurfaceVariant),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${currentTomato.shortBreak} min break',
+                            style: theme.textTheme.bodyLarge,
                           ),
-                          const Spacer(),
                         ],
                       ),
-                    ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children:
+                            List.generate(currentTomato.pomodoros, (i) {
+                          return Container(
+                            width: 24,
+                            height: 24,
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            decoration: BoxDecoration(
+                              color: i < _currentPomodoroIndex
+                                  ? colors.primary
+                                  : i == _currentPomodoroIndex
+                                      ? colors.primary.withOpacity(0.5)
+                                      : colors.surfaceVariant,
+                              shape: BoxShape.circle,
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
                   ),
-                );
-              },
-            );
-          } else {
-            return const Scaffold(
-                body: Center(child: Text('No tomato data found.')));
-          }
-        });
-  }
-}
-
-class TimerAction {
-  final String type;
-  final DateTime timestamp;
-
-  TimerAction({required this.type, required this.timestamp});
-
-  String get formattedTimestamp =>
-      '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}:${timestamp.second.toString().padLeft(2, '0')}';
-
-  IconData get icon {
-    switch (type) {
-      case 'start':
-        return Icons.play_arrow;
-      case 'pause':
-        return Icons.pause;
-      case 'resume':
-        return Icons.play_circle_outline;
-      case 'end':
-        return Icons.stop;
-      default:
-        return Icons.help_outline;
-    }
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    BlocBuilder<TimerBloc, TimerState>(
+                      builder: (context, state) {
+                        final duration =
+                            (state is WaitingFirstTomato || state is WaitingNextTomato)
+                                ? pomodoroDurationSeconds
+                                : state.duration;
+                        return Text(
+                          formatTimer(duration),
+                          style: theme.textTheme.displayLarge?.copyWith(
+                            fontSize: 80,
+                            fontWeight: FontWeight.bold,
+                            color: colors.primary,
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 30),
+                    BlocBuilder<TimerBloc, TimerState>(
+                      builder: (context, state) {
+                        final bloc = context.read<TimerBloc>();
+                        if (state is WaitingFirstTomato ||
+                            state is WaitingNextTomato) {
+                          return ElevatedButton.icon(
+                            onPressed: () => bloc.add(TimerStarted(
+                                tomatoDuration: pomodoroDurationSeconds,
+                                breakDuration: breakDurationInSeconds)),
+                            icon: const Icon(Icons.play_arrow),
+                            label: const Text('START'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: colors.primary,
+                              foregroundColor: colors.onPrimary,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 32, vertical: 16),
+                              textStyle: theme.textTheme.titleLarge,
+                            ),
+                          );
+                        } else if (state is TomatoTimerInProgress ||
+                            state is BreakTimerInProgress) {
+                          return ElevatedButton.icon(
+                            onPressed: () => bloc.add(const TimerPaused()),
+                            icon: const Icon(Icons.pause),
+                            label: const Text('PAUSE'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: colors.primary,
+                              foregroundColor: colors.onPrimary,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 32, vertical: 16),
+                              textStyle: theme.textTheme.titleLarge,
+                            ),
+                          );
+                        } else if (state is TomatoTimerPaused ||
+                            state is BreakTimerPaused) {
+                          return ElevatedButton.icon(
+                            onPressed: () => bloc.add(const TimerResumed()),
+                            icon: const Icon(Icons.play_arrow),
+                            label: const Text('RESUME'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: colors.primary,
+                              foregroundColor: colors.onPrimary,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 32, vertical: 16),
+                              textStyle: theme.textTheme.titleLarge,
+                            ),
+                          );
+                        } else if (state is SessionComplete) {
+                          return Text(
+                            "Well done!",
+                            style: theme.textTheme.headlineSmall
+                                ?.copyWith(color: colors.secondary),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
