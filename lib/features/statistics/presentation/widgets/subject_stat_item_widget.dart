@@ -24,7 +24,6 @@ class SubjectStatItemWidget extends StatelessWidget {
     final TextTheme textTheme = Theme.of(context).textTheme;
 
     return InkWell(
-      // Wrap with InkWell for tap feedback and handling
       onTap: onTap, // Assign the onTap callback
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12.0),

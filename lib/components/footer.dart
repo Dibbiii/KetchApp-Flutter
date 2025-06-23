@@ -82,10 +82,6 @@ class _FooterState extends State<Footer> {
 
   Widget _buildActiveIcon(IconData iconData, bool isSelected,
       ColorScheme colors) {
-    // For activeIcon, we always want the primary color if it's selected,
-    // but the container styling is handled by the `icon` builder.
-    // So, we just return the icon with the primary color.
-    // The BottomNavigationBar will use this when the item is selected.
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       decoration: BoxDecoration(
@@ -143,14 +139,10 @@ class _FooterState extends State<Footer> {
       unselectedItemColor: colors.onSurface,
       onTap: _onItemTapped,
       showUnselectedLabels: true,
-      // Ensure unselected labels are visible
       showSelectedLabels: true,
-      // Ensure selected labels are visible
-      // To make the background of the BottomNavigationBar match the previous BottomAppBar
       backgroundColor: bottomNavBarTheme.backgroundColor,
       elevation: 4.0,
       type: BottomNavigationBarType.fixed,
-      // Ensures all items are shown and labels are consistent
       selectedLabelStyle: TextStyle(fontSize: 11, color: colors.primary),
       unselectedLabelStyle: TextStyle(
           fontSize: 11, color: colors.onSurface.withOpacity(0.7)),

@@ -3,13 +3,10 @@ import 'package:googleapis/calendar/v3.dart' as cal;
 import 'package:googleapis_auth/googleapis_auth.dart' as gapi_auth;
 import 'package:http/http.dart' as http;
 
-// Assicurati che gli scope siano definiti, potrebbero essere condivisi con AuthBloc
 const List<String> _calendarScopes = <String>[
   cal.CalendarApi.calendarReadonlyScope,
 ];
 
-// La classe GoogleHttpClient potrebbe non essere più necessaria con il prossimo cambiamento.
-// Per ora la lasciamo, ma se authenticatedClient funziona, possiamo rimuoverla.
 class GoogleHttpClient extends http.BaseClient {
   final Map<String, String> _headers;
   final http.Client _client = http.Client();
@@ -45,11 +42,9 @@ class CalendarService {
         gapi_auth.AccessToken(
           "Bearer",
           googleAuth.accessToken!,
-          // La scadenza effettiva è gestita dalla libreria quando si usa authenticatedClient
-          // Fornire una stima qui è meno critico ma comunque buona pratica.
           DateTime.now().toUtc().add(const Duration(minutes: 55)), // Stima leggermente inferiore a 1 ora
         ),
-        null, // Refresh token non è generalmente disponibile con Google Sign-In lato client
+        null,
         _calendarScopes,
       );
     } catch (e) {
@@ -62,7 +57,6 @@ class CalendarService {
       return null;
     }
 
-    // Utilizza authenticatedClient per creare un client HTTP che gestisce automaticamente l'autenticazione.
     final httpClient = gapi_auth.authenticatedClient(
         http.Client(), // Un client HTTP di base
         credentials,
@@ -98,10 +92,8 @@ class CalendarService {
     } catch (e) {
       print('CalendarService: Errore nel recuperare gli eventi: $e');
       if (e is cal.DetailedApiRequestError) {
-        // DetailedApiRequestError from googleapis/calendar/v3.dart
         print('CalendarService: Dettagli DetailedApiRequestError: ${e.message}, Status: ${e.status}, Errors: ${e.errors}');
       } else {
-        // Log for any other type of error
         print('CalendarService: Tipo errore non specifico: ${e.runtimeType}');
       }
       return [];

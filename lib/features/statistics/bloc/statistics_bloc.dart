@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
 
-import '../../../services/api_service.dart'; // For @immutable
+import '../../../services/api_service.dart';
 
 part 'statistics_event.dart';
 part 'statistics_state.dart';

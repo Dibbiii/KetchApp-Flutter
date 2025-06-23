@@ -76,7 +76,6 @@ class _TimerViewState extends State<TimerView> {
     final bloc = context.read<TimerBloc>();
     switch (type) {
       case 'start':
-        // This case might need adjustment depending on the new logic
         break;
       case 'pause':
         bloc.add(const TimerPaused());

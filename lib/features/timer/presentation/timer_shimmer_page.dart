@@ -14,7 +14,6 @@ class TimerShrimmerPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ActionChip shimmer
               Align(
                 alignment: Alignment.center,
                 child: Shimmer.fromColors(

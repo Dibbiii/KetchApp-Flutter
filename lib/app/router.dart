@@ -11,7 +11,6 @@ import 'package:ketchapp_flutter/features/auth/presentation/pages/register_page.
 import 'package:ketchapp_flutter/features/home/presentation/pages/home_page.dart';
 import 'package:ketchapp_flutter/features/plan/layouts/plan_layout.dart';
 import 'package:ketchapp_flutter/features/rankings/presentation/ranking_page.dart';
-import 'package:ketchapp_flutter/features/settings/presentation/settings_page.dart';
 import 'package:ketchapp_flutter/features/statistics/bloc/statistics_bloc.dart';
 import 'package:ketchapp_flutter/features/timer/presentation/timer_page.dart';
 import 'package:ketchapp_flutter/features/welcome/presentation/pages/welcome_page.dart';
@@ -19,7 +18,6 @@ import 'package:ketchapp_flutter/features/profile/presentation/pages/profile_pag
 import '../features/auth/bloc/auth_bloc.dart';
 import '../features/statistics/presentation/statistics_page.dart';
 import 'package:ketchapp_flutter/features/auth/presentation/pages/forgot_password_page.dart';
-import 'package:ketchapp_flutter/features/settings/presentation/white_noises_page.dart';
 
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<dynamic> stream) {
@@ -95,16 +93,8 @@ final GoRouter router = GoRouter(
           builder: (context, state) => const RankingPage(),
         ),
         GoRoute(
-          path: '/settings',
-          builder: (context, state) => const SettingsPage(),
-        ),
-        GoRoute(
           path: '/profile',
           builder: (context, state) => const ProfilePage(),
-        ),
-        GoRoute(
-          path: '/white_noises_page',
-          builder: (context, state) => const WhiteNoisesPage(),
         ),
       ],
     ),

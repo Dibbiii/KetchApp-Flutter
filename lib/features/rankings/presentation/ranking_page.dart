@@ -10,7 +10,6 @@ import 'package:ketchapp_flutter/features/rankings/bloc/ranking_event.dart';
 import 'package:ketchapp_flutter/features/rankings/bloc/ranking_state.dart';
 import 'package:ketchapp_flutter/features/rankings/presentation/ranking_shrimmer_page.dart';
 
-// Define a class to hold user data including rank and hours
 class UserRankData {
   final String name;
   final int rank;
@@ -35,17 +34,16 @@ class RankingPage extends StatefulWidget {
 }
 
 class _RankingPageState extends State<RankingPage> {
-  // Define separate lists for friends and global users using UserRankData
 
   List<UserRankData> _allGlobalUsers = [];
 
   List<UserRankData> _activeList =
-      []; // This will point to either _allFriendsUsers or _allGlobalUsers
+      [];
   List<UserRankData> _filteredUsers = [];
   String _currentSearchQuery = ''; // To store the current search query
-  Timer? _debounce; // Timer for debouncing search input
+  Timer? _debounce;
   late ConfettiController
-      _confettiController; // Controller for confetti animation
+      _confettiController;
 
   @override
   void initState() {
@@ -53,9 +51,8 @@ class _RankingPageState extends State<RankingPage> {
     context.read<RankingBloc>().add(LoadRanking());
     _confettiController = ConfettiController(
       duration: const Duration(seconds: 2),
-    ); // Initialize confetti controller
+    );
 
-    // Set initial list based on tab 0 and perform initial filtering
     _setActiveListAndFilter();
   }
 
@@ -66,7 +63,6 @@ class _RankingPageState extends State<RankingPage> {
         _performFiltering();
       });
     }
-    // Play confetti if there's a top-ranked user
     if (_filteredUsers.isNotEmpty &&
         _filteredUsers.first.rank == 1 &&
         _currentSearchQuery.isEmpty) {
@@ -80,12 +76,11 @@ class _RankingPageState extends State<RankingPage> {
 
   @override
   void dispose() {
-    _debounce?.cancel(); // Cancel the timer if it's active
+    _debounce?.cancel();
     _confettiController.dispose(); // Dispose confetti controller
     super.dispose();
   }
 
-  // Called when text changes in TextField
   void _filterUsers(String query) {
     _currentSearchQuery = query;
     _performFiltering();
@@ -101,7 +96,6 @@ class _RankingPageState extends State<RankingPage> {
     }
   }
 
-  // Performs the actual filtering logic
   void _performFiltering() {
     final listToFilter = _activeList;
 
@@ -113,7 +107,6 @@ class _RankingPageState extends State<RankingPage> {
         }).toList();
 
     if (mounted) {
-      // Check mounted before calling setState
       setState(() {
         _filteredUsers = filtered;
       });
@@ -207,15 +200,10 @@ class _RankingPageState extends State<RankingPage> {
                     confettiController: _confettiController,
                     blastDirection: 3.14 / 2,
                     maxBlastForce: 10,
-                    // increased
                     minBlastForce: 5,
-                    // increased
                     emissionFrequency: 0.12,
-                    // more frequent
                     numberOfParticles: 30,
-                    // more particles
                     gravity: 0.08,
-                    // slightly slower fall
                     shouldLoop: false,
                     colors: const [
                       Colors.green,
@@ -279,19 +267,14 @@ class _RankingPageState extends State<RankingPage> {
   }
 
   Widget _buildRankingListBloc(RankingState state) {
-    // Use _filteredUsers for display
     final users = _filteredUsers;
     final filter = state is RankingLoaded ? state.filter : RankingFilter.hours;
-    // Ordina in base al filtro
     List<UserRankData> sortedUsers = List.from(users);
     if (filter == RankingFilter.hours) {
       sortedUsers.sort((a, b) => b.hours.compareTo(a.hours));
     } else if (filter == RankingFilter.streak) {
-      // Qui puoi aggiungere la logica per streak se hai il dato
     } else if (filter == RankingFilter.advancements) {
-      // Qui puoi aggiungere la logica per advancements se hai il dato
     }
-    // Soglie di ore per ogni rank
     const int crystalThreshold = 6;
     const int goldThreshold = 5;
     const int ironThreshold = 4;

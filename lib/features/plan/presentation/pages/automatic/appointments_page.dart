@@ -31,7 +31,6 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
         _calendarEvents = events;
       });
     } catch (e) {
-      // Gestisci l'errore, magari mostrando un messaggio all'utente
       print("Errore nel caricare gli eventi da Google Calendar: $e");
     } finally {
       setState(() {
@@ -52,17 +51,15 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Icon Placeholder (Styled like WelcomePage icons)
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: colors.primary.withValues(alpha: 0.1),
-              // Use accent color background
-              shape: BoxShape.circle, // Make it circular like WelcomePage
+              shape: BoxShape.circle,
             ),
             child: Icon(
-              Icons.menu_book, // Example: Use a relevant icon
-              size: 60.0, // Slightly smaller than WelcomePage main icon
+              Icons.menu_book,
+              size: 60.0,
             ),
           ),
           const SizedBox(height: 24),
@@ -70,7 +67,6 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
           Text(
             'Add Your Appointments',
             style: textTheme.headlineSmall?.copyWith(
-              // Use headlineSmall for page titles
               fontWeight: FontWeight.bold,
               color: colors.onSurface,
             ),
@@ -82,31 +78,27 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
             'Add your appointments for the day',
             style: textTheme.bodyLarge?.copyWith(
               color: colors.onSurface.withValues(alpha: 0.8),
-              // Match text opacity
               height: 1.5,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 40), // Space before button/list
-          // Add Subject Button (Styled like WelcomePage 'Done')
+          const SizedBox(height: 40),
           FilledButton.icon(
             icon: const Icon(Icons.add),
             label: const Text('Add appointment'),
             style: FilledButton.styleFrom(
               minimumSize: const Size(double.infinity, 50),
-              // Make button wider
               backgroundColor: colors.primary,
               foregroundColor: colors.onPrimary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(
                   8,
-                ), // Match WelcomePage radius
+                ),
               ),
               textStyle: textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ).copyWith(
-              // Remove splash/highlight like WelcomePage
               overlayColor: const WidgetStatePropertyAll(Colors.transparent),
             ),
             onPressed: () async {
@@ -115,15 +107,15 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                 builder: (BuildContext context) {
                   String input = '';
                   return AlertDialog(
-                    title: const Text('Add Appointment'), // Keep title simple
+                    title: const Text('Add Appointment'),
                     content: TextField(
                       onChanged: (value) {
                         input = value;
                       },
                       decoration: const InputDecoration(
-                        hintText: 'Enter Appointment', // Updated hint text
+                        hintText: 'Enter Appointment',
                       ),
-                      autofocus: true, // Focus the text field immediately
+                      autofocus: true,
                     ),
                     actions: [
                       TextButton(
@@ -140,15 +132,15 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                       TextButton(
                         onPressed: () {
                           if (input.trim().isNotEmpty) {
-                            // Only pop if not empty
+
                             Navigator.of(context).pop(input.trim());
                           }
                         },
                         style: TextButton.styleFrom(
                           foregroundColor:
-                              colors.primary, // Use accent color for confirm
+                              colors.primary,
                         ),
-                        child: const Text('Add'), // Updated text
+                        child: const Text('Add'),
                       ),
                     ],
                   );
@@ -165,8 +157,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
               }
             },
           ),
-          const SizedBox(height: 24), // Space between button and list
-          // Subject List (Improved Styling)
+          const SizedBox(height: 24),
           Expanded(
             child: _isLoadingCalendarEvents
                 ? const Center(child: CircularProgressIndicator())
@@ -184,7 +175,6 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                         itemCount: _subjects.length + _calendarEvents.length,
                         itemBuilder: (context, index) {
                           if (index < _subjects.length) {
-                            // Elementi esistenti da _subjects
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 4.0),
                               color: colors.surfaceContainerHighest.withOpacity(0.5),
@@ -218,7 +208,6 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                               ),
                             );
                           } else {
-                            // Eventi da Google Calendar
                             final eventIndex = index - _subjects.length;
                             final event = _calendarEvents[eventIndex];
                             return Card(
@@ -244,7 +233,6 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                                   '${event.start?.dateTime?.toLocal() ?? event.start?.date?.toLocal() ?? 'Data non specificata'}',
                                   style: textTheme.bodySmall,
                                 ),
-                                // Puoi aggiungere altre info come event.description, event.location etc.
                               ),
                             );
                           }

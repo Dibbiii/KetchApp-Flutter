@@ -46,7 +46,7 @@ class RankingBloc extends Bloc<RankingEvent, RankingState> {
       }).toList();
       emit(RankingLoaded(users, RankingFilter.hours));
     } catch (e) {
-      emit(RankingError(e.toString())); // Emitting error so UI can handle it
+      emit(RankingError(e.toString()));
     }
   }
 

@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// A Text widget with an animated gradient color effect.
-///
-/// The text will display a scrolling gradient color effect
-/// that animates continuously with the specified duration.
 class AnimatedGradientText extends StatefulWidget {
   final String text;
   final List<Color> colors;
@@ -38,12 +34,11 @@ class _AnimatedGradientTextState extends State<AnimatedGradientText>
   @override
   void dispose() {
     _controller.dispose();
-    super.dispose(); // Must call super.dispose()
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Ensure there are at least two colors for a gradient
     final effectiveColors =
         widget.colors.length >= 2
             ? widget.colors
@@ -55,7 +50,6 @@ class _AnimatedGradientTextState extends State<AnimatedGradientText>
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
-        // Animate the gradient horizontally
         final double shift = _animation.value * 2.0;
 
         return ShaderMask(

@@ -20,7 +20,7 @@ class _RegisterPageState extends State<RegisterPage> {
   late final TextEditingController _passwordController;
   late final TextEditingController _confirmPasswordController;
 
-  bool _showShimmer = true; // Variabile temporanea per shimmer
+  bool _showShimmer = true;
 
   @override
   void initState() {
@@ -91,7 +91,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 );
             }
-            // Successful registration navigation is typically handled by the router based on AuthState changes
           },
           child: _showShimmer
               ? const RegisterShimmerPage()
@@ -99,7 +98,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   child: SingleChildScrollView(
                     padding: EdgeInsets.symmetric(
                       horizontal: size.width * 0.08,
-                    ), // Matched with LoginPage
+                    ),
                     child: Form(
                       key: _formKey,
                       child: BlocBuilder<AuthBloc, AuthState>(
@@ -112,7 +111,6 @@ class _RegisterPageState extends State<RegisterPage> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              // Google logo style (copied from LoginPage)
                               Container(
                                 margin: const EdgeInsets.only(bottom: 32),
                                 decoration: BoxDecoration(
@@ -140,7 +138,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 ),
                               ),
                               Text(
-                                'Create account', // Changed title for registration
+                                'Create account',
                                 style: textTheme.headlineMedium?.copyWith(
                                   fontWeight: FontWeight.w600,
                                   color: colors.onSurface,
@@ -149,7 +147,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'to get started with KetchApp', // Changed subtitle
+                                'to get started with KetchApp',
                                 style: textTheme.bodyMedium?.copyWith(
                                   color: colors.onSurface.withOpacity(0.7),
                                 ),
@@ -157,11 +155,10 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                               const SizedBox(height: 32),
                               Material(
-                                // TextFormField styling matched with LoginPage
                                 elevation: 1,
                                 borderRadius: BorderRadius.circular(8),
                                 child: TextFormField(
-                                  controller: _usernameController, // CHANGED to _usernameController
+                                  controller: _usernameController,
                                   style: textTheme.bodyLarge?.copyWith(
                                     color: colors.onSurface,
                                   ),
@@ -198,11 +195,10 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                               const SizedBox(height: 16),
                               Material(
-                                // TextFormField styling matched with LoginPage
                                 elevation: 1,
                                 borderRadius: BorderRadius.circular(8),
                                 child: TextFormField(
-                                  controller: _emailController, // Correct controller for email
+                                  controller: _emailController,
                                   style: textTheme.bodyLarge?.copyWith(
                                     color: colors.onSurface,
                                   ),

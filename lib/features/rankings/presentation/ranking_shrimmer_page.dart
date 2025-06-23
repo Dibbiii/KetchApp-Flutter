@@ -12,7 +12,7 @@ class RankingShrimmerPage extends StatelessWidget {
         if (showSearchBar)
           Column(
             children: [
-              const SizedBox(height: 48), // Spazio per TabBar (Friends/Global)
+              const SizedBox(height: 48),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
                 child: Shimmer.fromColors(

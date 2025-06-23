@@ -115,42 +115,11 @@ class _LoginFormState extends State<_LoginForm> {
                   radius: 32,
                   backgroundColor:
                   Colors.white, // Assuming a light theme context
-                  child: Image.network(
-                    'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/1200px-Google_2015_logo.svg.png',
+                  child: Image.asset(
+                    'assets/images/KetchApp_Logo.png',
                     width: 48,
-                    // Slightly increased size
                     height: 48,
-                    // Slightly increased size
                     fit: BoxFit.contain,
-                    loadingBuilder: (BuildContext context,
-                        Widget child,
-                        ImageChunkEvent? loadingProgress,) {
-                      if (loadingProgress == null) return child;
-                      return SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.0,
-                          value:
-                          loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
-                              : null,
-                        ),
-                      );
-                    },
-                    errorBuilder: (BuildContext context,
-                        Object error,
-                        StackTrace? stackTrace,) {
-                      return Text(
-                        'G',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: colors.primary,
-                        ),
-                      );
-                    },
                   ),
                 ),
               ),
@@ -176,10 +145,10 @@ class _LoginFormState extends State<_LoginForm> {
                 elevation: 1,
                 borderRadius: BorderRadius.circular(8),
                 child: TextFormField(
-                  controller: _identifierController, // MODIFICATO
+                  controller: _identifierController,
                   style: textTheme.bodyLarge?.copyWith(color: colors.onSurface),
                   decoration: InputDecoration(
-                    hintText: 'Email or Username', // MODIFICATO
+                    hintText: 'Email or Username',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide.none,
@@ -199,13 +168,12 @@ class _LoginFormState extends State<_LoginForm> {
                       horizontal: 16,
                     ),
                   ),
-                  keyboardType: TextInputType.text, // MODIFICATO: da emailAddress a text
+                  keyboardType: TextInputType.text,
                   textInputAction: TextInputAction.next,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Enter your email or username'; // MODIFICATO
+                      return 'Enter your email or username';
                     }
-                    // Potresti aggiungere una validazione più specifica se necessario
                     return null;
                   },
                 ),
@@ -303,9 +271,9 @@ class _LoginFormState extends State<_LoginForm> {
                   );
                 },
               ),
-              const SizedBox(height: 16), // <--- Padding aggiunto tra Next e Accedi con Google
+              const SizedBox(height: 16),
               ElevatedButton.icon(
-                icon: Image.network( // O usa un'icona SVG/FontIcon di Google
+                icon: Image.network(
                   'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/24px-Google_%22G%22_logo.svg.png',
                   height: 20.0,
                 ),

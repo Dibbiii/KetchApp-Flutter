@@ -18,38 +18,28 @@ class WelcomePage extends StatefulWidget {
 class _WelcomePageState extends State<WelcomePage> {
   final _introKey = GlobalKey<IntroductionScreenState>();
 
-  // REMOVED _buildPageViewModel method as it's now split into separate files
-  // The old _buildPageViewModel logic is now in page_one_view.dart, page_two_view.dart, and page_three_view.dart
-  // The inlined AuthOptionsPage logic is now in page_four_auth_view.dart
-
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
-    // REMOVED: final Size size = MediaQuery.of(context).size; // This is now handled within page_four_auth_view.dart if needed
-    // REMOVED: final Gradient globalBackgroundGradient = LinearGradient(...); // This is now handled within page_four_auth_view.dart
 
     final List<PageViewModel> pages = [
       buildPageOneViewModel(
-        // Called from page_one_view.dart
         colors: colors,
         primaryAccentColor: colors.primary,
       ),
       buildPageTwoViewModel(
-        // Called from page_two_view.dart
         colors: colors,
         primaryAccentColor: colors.primary,
       ),
       buildPageThreeViewModel(
-        // Called from page_three_view.dart
         colors: colors,
         primaryAccentColor: colors.primary,
       ),
     ];
 
-    // Function to navigate after intro completion or skip
     void goToLoginOrRegister(BuildContext ctx) {
-      ctx.pushReplacement('/login'); // Navigate to login after intro
+      ctx.pushReplacement('/login');
     }
 
     const SystemUiOverlayStyle systemUiOverlayStyle = SystemUiOverlayStyle(
@@ -67,7 +57,7 @@ class _WelcomePageState extends State<WelcomePage> {
           color: Theme.of(context).colorScheme.background,
           child: IntroductionScreen(
             key: _introKey,
-            // Assign the key here
+            // Assign the key
             pages: pages,
             onDone: () => goToLoginOrRegister(context),
             // Updated navigation
@@ -81,7 +71,7 @@ class _WelcomePageState extends State<WelcomePage> {
                 foregroundColor: colors.primary,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
-                  vertical: 18, // Increased padding
+                  vertical: 18,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -89,16 +79,16 @@ class _WelcomePageState extends State<WelcomePage> {
               ).copyWith(
                 overlayColor: WidgetStateProperty.all(
                   Colors.yellow.withOpacity(0.15),
-                ), // Yellow hover
+                ),
               ),
               child: Text('Skip', style: textTheme.labelLarge),
             ),
             next: ElevatedButton(
               onPressed: () {
-                _introKey.currentState?.next(); // Use key to go to next page
+                _introKey.currentState?.next();
               },
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.all(16), // Increased padding
+                padding: const EdgeInsets.all(16),
                 shape: const CircleBorder(),
               ).copyWith(
                 overlayColor: WidgetStateProperty.all(
@@ -107,29 +97,31 @@ class _WelcomePageState extends State<WelcomePage> {
               ),
               child: Icon(
                 Icons.arrow_forward,
-                size: 30, // Increased icon size
+                size: 30,
               ),
             ),
-            done: FilledButton(
-              onPressed:
-                  () => goToLoginOrRegister(context), // Updated navigation
-              style: FilledButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            done: Center(
+              child: FilledButton(
+                onPressed: () => goToLoginOrRegister(context),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(240, 66),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 0,
+                  ),
+                ).copyWith(
+                  overlayColor: WidgetStateProperty.all(
+                    Colors.yellow.withOpacity(0.15),
+                  ),
                 ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 30,
-                  vertical: 18, // Increased padding
-                ),
-              ).copyWith(
-                overlayColor: WidgetStateProperty.all(
-                  Colors.yellow.withOpacity(0.15),
-                ), // Yellow hover
-              ),
-              child: Text(
-                'Get Started', // Text for the done button
-                style: textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
+                child: Text(
+                  'Start',
+                  style: textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
@@ -137,25 +129,16 @@ class _WelcomePageState extends State<WelcomePage> {
               size: const Size.square(8.0),
               activeSize: const Size(20.0, 8.0),
               activeColor: colors.primary,
-              color: colors.onSurface.withValues(alpha: 0.2),
               spacing: const EdgeInsets.symmetric(horizontal: 4.0),
               activeShape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(25.0),
               ),
             ),
-            // --- Behavior & Layout ---
             isProgressTap: false,
             freeze: false,
             bodyPadding: EdgeInsets.zero,
-            // Let PageViewModel handle body padding
             controlsPadding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 32.0),
             globalBackgroundColor: Colors.transparent,
-            // When the last page is a custom widget (AuthOptionsPage),
-            // the 'Done' button will appear on that slide.
-            // The 'showDoneButton: true' is default.
-            // If AuthOptionsPage has its own "proceed" buttons, you might hide the global 'Done' button
-            // for the last slide using `overrideDone`.
-            // For now, the global "Done" button will appear.
           ),
         ),
       ),

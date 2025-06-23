@@ -72,8 +72,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     backgroundColor: Colors.green,
                   ),
                 );
-              // Optionally navigate back or to login
-              // context.pop(); 
             } else if (state is AuthError) {
               ScaffoldMessenger.of(context)
                 ..hideCurrentSnackBar()
