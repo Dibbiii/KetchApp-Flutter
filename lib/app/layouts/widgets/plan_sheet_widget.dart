@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart'; // Import for date formatting
 
 import '../../../components/clock_widget.dart';
@@ -33,24 +34,20 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
     FocusNode(),
   ];
   late TextEditingController _sessionTimeController;
-  late TextEditingController _pauseTimeController;
+  late TextEditingController _breakTimeController;
   final List<String> _selectedFriends = [];
 
-  double _dialogPauseSelectedHours = 0.0;
+  double _dialogBreakSelectedHours = 0.0;
   double _dialogSessionSelectedHours = 0.0;
 
   // Add controllers for all main inputs
   final TextEditingController _titleController = TextEditingController();
 
   // You already have _subjectControllers, _calendarControllers, etc.
-  // Add variables for config, calendar, tomatoes, rules
-  final Map<String, dynamic> _config = {
-    'notifications': {'enabled': true, 'sound': 'default', 'vibration': true},
-  };
+  // Add variables for calendar, subjects, rules
 
   // Define fixed calendar events for Lunch, Dinner, and Sleep
-  final List<Map<String, String>> _fixedCalendarEvents = [
-  ];
+  final List<Map<String, String>> _fixedCalendarEvents = [];
 
   // Store calendar times by index
   final Map<int, Map<String, String>> _calendarTimes = {
@@ -68,13 +65,13 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
 
   String? _subjectErrorText;
   String? _sessionTimeErrorText;
-  String? _pauseTimeErrorText;
+  String? _breakTimeErrorText;
 
   @override
   void initState() {
     super.initState();
     _sessionTimeController = TextEditingController(text: 'Add session time');
-    _pauseTimeController = TextEditingController(text: 'Add pause time');
+    _breakTimeController = TextEditingController(text: 'Add break time');
 
     _addSubject();
     _addcalendar();
@@ -97,7 +94,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
       focusNode.dispose();
     }
     _sessionTimeController.dispose();
-    _pauseTimeController.dispose();
+    _breakTimeController.dispose();
     super.dispose();
   }
 
@@ -292,21 +289,21 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
     );
   }
 
-  void _showPauseClockDialog() {
+  void _showBreakClockDialog() {
     double initialFractionalHours = 0.0;
-    if (_pauseTimeController.text.contains('h') ||
-        _pauseTimeController.text.contains('m')) {
+    if (_breakTimeController.text.contains('h') ||
+        _breakTimeController.text.contains('m')) {
       try {
-        if (_pauseTimeController.text.contains('h')) {
-          List<String> parts = _pauseTimeController.text
+        if (_breakTimeController.text.contains('h')) {
+          List<String> parts = _breakTimeController.text
               .replaceAll(' h', '')
               .split(':');
           int hours = int.parse(parts[0]);
           int minutes = parts.length > 1 ? int.parse(parts[1]) : 0;
           initialFractionalHours = hours + (minutes / 60.0);
-        } else if (_pauseTimeController.text.contains('m')) {
+        } else if (_breakTimeController.text.contains('m')) {
           int minutes = int.parse(
-            _pauseTimeController.text.replaceAll(' m', ''),
+            _breakTimeController.text.replaceAll(' m', ''),
           );
           initialFractionalHours = minutes / 60.0;
         }
@@ -315,7 +312,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
       }
     }
     double initialHmmHours = fractionalHoursToHmm(initialFractionalHours);
-    double tempSelectedHmmPauseHours = initialHmmHours;
+    double tempSelectedHmmBreakHours = initialHmmHours;
 
     showDialog(
       context: context,
@@ -330,7 +327,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                 children: <Widget>[
                   Text(
                     formatDurationFromHmm(
-                      tempSelectedHmmPauseHours,
+                      tempSelectedHmmBreakHours,
                       defaultText: "No break",
                     ),
                     style: TextStyle(
@@ -340,10 +337,10 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                   ),
                   const SizedBox(height: 24),
                   MaterialClock(
-                    initialSelectedHours: tempSelectedHmmPauseHours,
+                    initialSelectedHours: tempSelectedHmmBreakHours,
                     onTimeChanged: (selectedHmm) {
                       dialogSetState(() {
-                        tempSelectedHmmPauseHours = selectedHmm;
+                        tempSelectedHmmBreakHours = selectedHmm;
                       });
                     },
                     clockSize: 200.0,
@@ -363,9 +360,9 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
               child: const Text('OK'),
               onPressed: () {
                 setState(() {
-                  _dialogPauseSelectedHours = tempSelectedHmmPauseHours;
-                  _pauseTimeController.text = formatDurationFromHmm(
-                    _dialogPauseSelectedHours,
+                  _dialogBreakSelectedHours = tempSelectedHmmBreakHours;
+                  _breakTimeController.text = formatDurationFromHmm(
+                    _dialogBreakSelectedHours,
                     defaultText: "Add break",
                   );
                 });
@@ -436,7 +433,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
         }
       });
 
-      final tomatoes = _subjectControllers
+      final subjects = _subjectControllers
           .asMap()
           .entries
           .where((entry) => entry.value.text.trim().isNotEmpty)
@@ -447,34 +444,29 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
         final durationString =
             formatDurationFromHmm(durationHmm, defaultText: '0m');
 
-        return TomatoEntry(
+        return SubjectEntry(
           subject: controller.text,
           duration: durationHmm > 0 ? durationString : null,
         );
       }).toList();
 
-      final notificationsConfig =
-          _config['notifications'] as Map<String, dynamic>? ?? {};
-      final config = Config(
-        notifications: Notifications(
-          enabled: notificationsConfig['enabled'] as bool? ?? true,
-          sound: notificationsConfig['sound'] as String? ?? 'default',
-          vibration: notificationsConfig['vibration'] as bool? ?? true,
-        ),
+      final plan = PlanModel(
+        userUUID: userUuid,
         session:
             formatDurationFromHmm(_dialogSessionSelectedHours, defaultText: '0m'),
-        pause:
-            formatDurationFromHmm(_dialogPauseSelectedHours, defaultText: '0m'),
-      );
-
-      final plan = PlanModel(
-        userId: userUuid,
-        config: config,
+        breakDuration:
+            formatDurationFromHmm(_dialogBreakSelectedHours, defaultText: '0m'),
         calendar: calendar,
-        tomatoes: tomatoes,
+        subjects: subjects,
       );
 
       await ApiService().createPlan(plan);
+
+      // Fetch and print today's tomatoes
+      final todaysTomatoes = await ApiService().getTodaysTomatoes(userUuid);
+      if (mounted && todaysTomatoes.isNotEmpty) {
+        context.go('/timer/${todaysTomatoes.first.id}');
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -631,19 +623,19 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                       final sessionError = _dialogSessionSelectedHours == 0.0
                           ? 'Session time must be greater than 0.'
                           : null;
-                      final pauseError = _dialogPauseSelectedHours == 0.0
-                          ? 'Pause time must be greater than 0.'
+                      final breakError = _dialogBreakSelectedHours == 0.0
+                          ? 'Break time must be greater than 0.'
                           : null;
 
                       setState(() {
                         _subjectErrorText = subjectError;
                         _sessionTimeErrorText = sessionError;
-                        _pauseTimeErrorText = pauseError;
+                        _breakTimeErrorText = breakError;
                       });
 
                       if (subjectError != null ||
                           sessionError != null ||
-                          pauseError != null) {
+                          breakError != null) {
                         return;
                       }
                       // Call your API here before closing the sheet
@@ -775,7 +767,15 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                 return const SizedBox.shrink();
               },
             ),
-            const Divider(), // ! Events Section
+            BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, state) {
+                if (state is Authenticated && state.isGoogleSignIn) {
+                  return const Divider(); // ! Events Section
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+            // const Divider(), // ! Events Section - Original position
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1152,7 +1152,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                 ),
               ],
             ),
-            const Divider(), // ! Pause Section
+            const Divider(), // ! Break Section
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -1171,12 +1171,12 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                   child: Padding(
                     padding: const EdgeInsets.only(right: 12.0),
                     child: TextFormField(
-                      controller: _pauseTimeController,
+                      controller: _breakTimeController,
                       readOnly: true,
-                      onTap: _showPauseClockDialog,
+                      onTap: _showBreakClockDialog,
                       style: const TextStyle(fontSize: 16),
                       decoration: InputDecoration(
-                        errorText: _pauseTimeErrorText,
+                        errorText: _breakTimeErrorText,
                         filled: true,
                         fillColor: colors.surfaceContainerHighest.withAlpha(128),
                         border: OutlineInputBorder(
