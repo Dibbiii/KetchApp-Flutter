@@ -35,7 +35,6 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
   ];
   late TextEditingController _sessionTimeController;
   late TextEditingController _breakTimeController;
-  final List<String> _selectedFriends = [];
 
   double _dialogBreakSelectedHours = 0.0;
   double _dialogSessionSelectedHours = 0.0;
@@ -375,30 +374,6 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
     );
   }
 
-  void _showAddFriendsDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return _AddFriendsDialog(
-          selectedFriends: _selectedFriends,
-          onFriendSelected: (String friend) {
-            setState(() {
-              if (!_selectedFriends.contains(friend)) {
-                _selectedFriends.add(friend);
-              }
-            });
-          },
-        );
-      },
-    );
-  }
-
-  void _removeFriend(String friend) {
-    setState(() {
-      _selectedFriends.remove(friend);
-    });
-  }
-
   String formatTime(TimeOfDay time) {
     final now = DateTime.now();
     final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
@@ -647,89 +622,12 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
                 ],
               ),
             ),
-            const Divider(), // ! Friends Section
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12.0,
-                    vertical: 12.0,
-                  ),
-                  child: Icon(
-                    Icons.people_outline,
-                    size: 22,
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
-                Expanded(
-                  child: InkWell(
-                    onTap:
-                        _selectedFriends.isEmpty ? _showAddFriendsDialog : null,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12.0),
-                      margin: EdgeInsets.only(
-                        right: _selectedFriends.isEmpty ? 12.0 : 0.0,
-                      ),
-                      child:
-                          _selectedFriends.isEmpty
-                              ? Text(
-                                'Add friends',
-                                style: TextStyle(
-                                  fontSize: 16.0,
-                                  color: colors.onSurfaceVariant,
-                                ),
-                              )
-                              : Wrap(
-                                spacing: 8.0,
-                                runSpacing: 4.0,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  Chip(
-                                    label: const Text('You'),
-                                    materialTapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 4.0,
-                                      vertical: 0.0,
-                                    ),
-                                  ),
-                                  ..._selectedFriends.map(
-                                    (friend) => Chip(
-                                      label: Text(friend),
-                                      onDeleted: () => _removeFriend(friend),
-                                      materialTapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 4.0,
-                                        vertical: 0.0,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                    ),
-                  ),
-                ),
-                if (_selectedFriends.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4.0, right: 8.0),
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.add_circle_outline,
-                        color: colors.primary,
-                      ),
-                      onPressed: _showAddFriendsDialog,
-                      tooltip: 'Add more friends',
-                      splashRadius: 20.0,
-                    ),
-                  ),
-              ],
-            ),
             const Divider(), // ! Sync with Google Calendar Section
             BlocBuilder<AuthBloc, AuthState>(
               builder: (context, state) {
-                if (state is Authenticated && state.isGoogleSignIn) {
+                if (state is Authenticated &&
+                    state.user.providerData
+                        .any((userInfo) => userInfo.providerId == 'google.com')) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12.0,
@@ -769,7 +667,9 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
             ),
             BlocBuilder<AuthBloc, AuthState>(
               builder: (context, state) {
-                if (state is Authenticated && state.isGoogleSignIn) {
+                if (state is Authenticated &&
+                    state.user.providerData
+                        .any((userInfo) => userInfo.providerId == 'google.com')) {
                   return const Divider(); // ! Events Section
                 }
                 return const SizedBox.shrink();
@@ -1194,186 +1094,6 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
               ],
             ),
             const Divider(), // ! Config Section
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _AddFriendsDialog extends StatefulWidget {
-  final List<String> selectedFriends;
-  final Function(String) onFriendSelected;
-
-  const _AddFriendsDialog({
-    required this.selectedFriends,
-    required this.onFriendSelected,
-  });
-
-  @override
-  State<_AddFriendsDialog> createState() => _AddFriendsDialogState();
-}
-
-class _AddFriendsDialogState extends State<_AddFriendsDialog> {
-  final TextEditingController _searchController = TextEditingController();
-  final FocusNode _searchFocusNode =
-      FocusNode(); // Added for manual focus if needed later
-  final List<String> _allFriends = [
-    'Alice Wonderland',
-    'Bob The Builder',
-    'Charlie Brown',
-    'David Copperfield',
-    'Eve Harrington',
-    'Fiona Gallagher',
-    'George Costanza',
-    'Harry Potter',
-    'Ivy Dickens',
-    'Jack Sparrow',
-    'Katherine Pierce',
-    'Leo Fitz',
-  ];
-  List<String> _filteredFriends = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _filteredFriends = _allFriends;
-    _searchController.addListener(_filterFriends);
-    // Optionally, request focus after the frame is built if autofocus behavior is critical
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   if (mounted) {
-    //     _searchFocusNode.requestFocus();
-    //   }
-    // });
-  }
-
-  @override
-  void dispose() {
-    _searchController.removeListener(_filterFriends);
-    _searchController.dispose();
-    _searchFocusNode.dispose(); // Dispose the focus node
-    super.dispose();
-  }
-
-  void _filterFriends() {
-    final query = _searchController.text.toLowerCase();
-    setState(() {
-      _filteredFriends =
-          _allFriends.where((friend) {
-            return friend.toLowerCase().contains(query);
-          }).toList();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return AlertDialog(
-      backgroundColor: colors.surfaceContainerHigh,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28.0)),
-      titlePadding: const EdgeInsets.only(
-        top: 24.0,
-        left: 24.0,
-        right: 24.0,
-        bottom: 0,
-      ),
-      titleTextStyle: theme.textTheme.headlineSmall?.copyWith(
-        color: colors.onSurface,
-      ),
-      title: const Text('Add Friends'),
-      contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-      content: SizedBox(
-        height: MediaQuery.of(context).size.height * 0.45,
-        width: MediaQuery.of(context).size.width * 0.9,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            TextField(
-              controller: _searchController,
-              focusNode: _searchFocusNode, // Assign the focus node
-              // autofocus: true, // Removed autofocus
-              decoration: InputDecoration(
-                hintText: 'Search friends...',
-                hintStyle: TextStyle(color: colors.onSurfaceVariant),
-                prefixIcon: Icon(
-                  Icons.search_rounded,
-                  color: colors.onSurfaceVariant,
-                ),
-                filled: true,
-                fillColor: colors.surfaceContainerLowest,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(28.0),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 12.0,
-                  horizontal: 16.0,
-                ),
-                isDense: true,
-              ),
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: colors.onSurface,
-              ),
-            ),
-            const SizedBox(height: 16.0),
-            Expanded(
-                  child:
-                  _filteredFriends.isEmpty
-                      ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Text(
-                            'No friends found.',
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: colors.onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                      )
-                      : ListView.builder(
-                        itemCount: _filteredFriends.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          final friend = _filteredFriends[index];
-                          final isSelected = widget.selectedFriends.contains(
-                            friend,
-                          );
-                          return ListTile(
-                            title: Text(
-                              friend,
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                color: colors.onSurface,
-                              ),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 4.0,
-                              vertical: 6.0,
-                            ),
-                            trailing:
-                                isSelected
-                                    ? Icon(
-                                      Icons.check_circle_rounded,
-                                      color: colors.primary,
-                                    )
-                                    : Icon(
-                                      Icons.add_circle_outline_rounded,
-                                      color: colors.outline,
-                                    ),
-                            onTap: () {
-                              if (!isSelected) {
-                                widget.onFriendSelected(friend);
-                                Navigator.pop(context);
-                              }
-                            },
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.0),
-                            ),
-                            tileColor: Colors.transparent,
-                          );
-                        },
-                      ),
-            ),
           ],
         ),
       ),

@@ -1,3 +1,5 @@
+import 'package:ketchapp_flutter/models/activity.dart';
+
 class Tomato {
   final int id;
   final String subject;
@@ -7,6 +9,7 @@ class Tomato {
   final DateTime endAt;
   final DateTime? pauseEnd;
   final int? nextTomatoId;
+  List<Activity> activities;
 
   Tomato({
     required this.id,
@@ -17,6 +20,7 @@ class Tomato {
     required this.endAt,
     this.pauseEnd,
     this.nextTomatoId,
+    this.activities = const [],
   });
 
   Map<String, dynamic> toJson() {

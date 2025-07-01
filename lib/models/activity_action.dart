@@ -2,6 +2,9 @@ enum ActivityAction {
   START,
   END,
   PAUSE,
-  RESUME,
-}
+  RESUME;
 
+  String toShortString() {
+    return toString().split('.').last;
+  }
+}
