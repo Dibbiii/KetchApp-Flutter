@@ -97,6 +97,11 @@ class ApiService {
     try {
       final response = await postData('plans', planData);
       print('Response from createPlan: ${response}');
+      // Notifica immediata di pianificazione completata
+      await NotificationService.schedulePomodoroNotification(
+        'La pianificazione è stata completata',
+        DateTime.now().add(const Duration(seconds: 1)),
+      );
       // Cicla su tutti i pomodori (tomatoes) nella risposta e aggiungili su Google Calendar
       if (response != null && response['subjects'] != null) {
         for (final subject in response['subjects']) {
