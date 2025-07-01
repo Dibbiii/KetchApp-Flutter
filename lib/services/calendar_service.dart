@@ -4,7 +4,7 @@ import 'package:googleapis_auth/googleapis_auth.dart' as gapi_auth;
 import 'package:http/http.dart' as http;
 
 const List<String> _calendarScopes = <String>[
-  cal.CalendarApi.calendarReadonlyScope,
+  cal.CalendarApi.calendarScope,
 ];
 
 class GoogleHttpClient extends http.BaseClient {

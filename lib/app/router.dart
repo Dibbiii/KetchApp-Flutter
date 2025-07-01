@@ -63,10 +63,9 @@ final GoRouter router = GoRouter(
       builder: (context, state) => const ForgotPasswordPage(),
     ),
     GoRoute(
-      path: '/timer/:tomatoId',
+      path: '/timer',
       builder: (context, state) {
-        final tomatoId = state.pathParameters['tomatoId']!;
-        return TimerPage(tomatoId: tomatoId);
+        return TimerPage();
       },
     ),
     ShellRoute(

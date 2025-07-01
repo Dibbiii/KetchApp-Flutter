@@ -7,8 +7,6 @@ class Tomato {
   final DateTime endAt;
   final DateTime? pauseEnd;
   final int? nextTomatoId;
-  final int pomodoros;
-  final int shortBreak;
 
   Tomato({
     required this.id,
@@ -19,8 +17,6 @@ class Tomato {
     required this.endAt,
     this.pauseEnd,
     this.nextTomatoId,
-    required this.pomodoros,
-    required this.shortBreak,
   });
 
   Map<String, dynamic> toJson() {
@@ -33,8 +29,6 @@ class Tomato {
       'end_at': endAt.toIso8601String(),
       'pause_end': pauseEnd?.toIso8601String(),
       'next_tomato_id': nextTomatoId,
-      'pomodoros': pomodoros,
-      'short_break': shortBreak,
     };
   }
 
@@ -47,10 +41,8 @@ class Tomato {
       startAt: DateTime.parse(json['startAt']),
       endAt: DateTime.parse(json['endAt']),
       pauseEnd:
-          json['pauseEnd'] != null ? DateTime.parse(json['pauseEnd']) : null,
+      json['pauseEnd'] != null ? DateTime.parse(json['pauseEnd']) : null,
       nextTomatoId: json['nextTomatoId'],
-      pomodoros: json['pomodoros'] ?? 4, // Default to 4 if not present
-      shortBreak: json['shortBreak'] ?? 5, // Default to 5 if not present
     );
   }
 }
