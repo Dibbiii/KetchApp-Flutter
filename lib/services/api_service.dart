@@ -11,7 +11,7 @@ import 'package:ketchapp_flutter/models/activity.dart';
 import 'package:ketchapp_flutter/models/activity_type.dart';
 
 class ApiService {
-  final String _baseUrl = "http://192.168.43.22:8081/api";
+  final String _baseUrl = "http://192.168.43.117:8081/api";
 
   Future<dynamic> _processResponse(http.Response response) {
     final body = response.body;

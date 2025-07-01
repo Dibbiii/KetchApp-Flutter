@@ -44,3 +44,7 @@ class _TimerTicked extends TimerEvent {
   @override
   List<Object> get props => [duration];
 }
+
+class TimerSkipToEnd extends TimerEvent {
+  const TimerSkipToEnd();
+}
