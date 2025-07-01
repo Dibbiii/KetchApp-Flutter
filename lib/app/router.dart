@@ -9,7 +9,6 @@ import 'package:ketchapp_flutter/features/home/bloc/home_bloc.dart';
 import 'package:ketchapp_flutter/features/auth/presentation/pages/login_page.dart';
 import 'package:ketchapp_flutter/features/auth/presentation/pages/register_page.dart';
 import 'package:ketchapp_flutter/features/home/presentation/pages/home_page.dart';
-import 'package:ketchapp_flutter/features/plan/layouts/plan_layout.dart';
 import 'package:ketchapp_flutter/features/rankings/presentation/ranking_page.dart';
 import 'package:ketchapp_flutter/features/statistics/bloc/statistics_bloc.dart';
 import 'package:ketchapp_flutter/features/timer/presentation/timer_page.dart';
@@ -67,7 +66,7 @@ final GoRouter router = GoRouter(
       path: '/timer/:tomatoId',
       builder: (context, state) {
         final tomatoId = state.pathParameters['tomatoId']!;
-        return TimerPage();
+        return TimerPage(tomatoId: tomatoId);
       },
     ),
     ShellRoute(
@@ -97,22 +96,6 @@ final GoRouter router = GoRouter(
           builder: (context, state) => const ProfilePage(),
         ),
       ],
-    ),
-    GoRoute(
-      path: '/plan/:mode',
-      builder: (context, state) {
-        final mode = state.pathParameters['mode'] ?? 'automatic';
-        PlanMode planMode;
-        switch (mode) {
-          case 'manual':
-            planMode = PlanMode.manual;
-            break;
-          case 'automatic':
-          default:
-            planMode = PlanMode.automatic;
-        }
-        return PlanLayout(mode: planMode);
-      },
     ),
   ],
   errorBuilder: (context, state) => ErrorPage(error: state.error),
