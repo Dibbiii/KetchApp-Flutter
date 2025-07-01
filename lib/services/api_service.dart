@@ -7,6 +7,8 @@ import 'package:ketchapp_flutter/models/achievement.dart';
 import './api_exceptions.dart';
 import 'package:ketchapp_flutter/services/calendar_service.dart';
 import 'package:ketchapp_flutter/services/notification_service.dart';
+import 'package:ketchapp_flutter/models/activity.dart';
+import 'package:ketchapp_flutter/models/activity_type.dart';
 
 class ApiService {
   final String _baseUrl = "http://192.168.43.22:8081/api";
@@ -18,24 +20,26 @@ class ApiService {
       decodedJson = json.decode(body);
     } catch (e) {
       print('Info: Response body is not a valid JSON. Treating as plain text. $e');
+      // Se il corpo non è un JSON valido, lo tratto come testo semplice.
+      decodedJson = body;
     }
 
     switch (response.statusCode) {
       case 200:
       case 201:
-        return Future.value(decodedJson ?? body); 
+        return Future.value(decodedJson);
       case 400:
-        throw BadRequestException(decodedJson?['message'] ?? 'Richiesta non valida');
+        throw BadRequestException(decodedJson is Map ? decodedJson['message'] ?? 'Richiesta non valida' : 'Richiesta non valida');
       case 401:
-        throw UnauthorizedException(decodedJson?['message'] ?? 'Non autorizzato');
+        throw UnauthorizedException(decodedJson is Map ? decodedJson['message'] ?? 'Non autorizzato' : 'Non autorizzato');
       case 403:
-        throw ForbiddenException(decodedJson?['message'] ?? 'Accesso negato');
+        throw ForbiddenException(decodedJson is Map ? decodedJson['message'] ?? 'Accesso negato' : 'Accesso negato');
       case 404:
-        throw NotFoundException(decodedJson?['message'] ?? 'Risorsa non trovata');
+        throw NotFoundException(decodedJson is Map ? decodedJson['message'] ?? 'Risorsa non trovata' : 'Risorsa non trovata');
       case 409: // Conflict
-        throw UserAlreadyExistsException(decodedJson?['message'] ?? 'L\'utente esiste già.');
+        throw UserAlreadyExistsException(decodedJson is Map ? decodedJson['message'] ?? 'L\'utente esiste già.' : 'L\'utente esiste già.');
       case 500:
-        throw InternalServerErrorException(decodedJson?['message'] ?? 'Errore interno del server');
+        throw InternalServerErrorException(decodedJson is Map ? decodedJson['message'] ?? 'Errore interno del server' : 'Errore interno del server');
       default:
         throw FetchDataException(
             'Error occurred while communicating with server with status code: ${response.statusCode}');
@@ -145,7 +149,19 @@ class ApiService {
     print('Fetching tomatoes for user: $userUuid on $todayStr');
     final response = await fetchData('users/$userUuid/tomatoes?date=$todayStr');
     final List<dynamic> tomatoesJson = response as List<dynamic>;
-    return tomatoesJson.map((json) => Tomato.fromJson(json)).toList();
+    List<Tomato> tomatoes = tomatoesJson.map((json) => Tomato.fromJson(json)).toList();
+
+    for (var tomato in tomatoes) {
+      tomato.activities = await getTomatoActivities(tomato.id);
+    }
+
+    return tomatoes;
+  }
+
+  Future<List<Activity>> getTomatoActivities(int tomatoId) async {
+    final response = await fetchData('tomatoes/$tomatoId/activities');
+    final List<dynamic> activitiesJson = response as List<dynamic>;
+    return activitiesJson.map((json) => Activity.fromJson(json)).toList();
   }
 
   Future<List<Achievement>> getAchievements(String userUuid) async {
@@ -173,12 +189,12 @@ class ApiService {
   }
 
   Future<void> createActivity(
-      String userUUID, int tomatoId, ActivityAction action) async {
+      String userUUID, int tomatoId, ActivityAction action, ActivityType type) async {
     try {
       await postData('activities', {
         'userUUID': userUUID,
         'tomatoId': tomatoId,
-        'type': 'TIMER',
+        'type': type.name,
         'action': action.name,
       });
     } catch (e) {

@@ -2,6 +2,7 @@ part of 'timer_bloc.dart';
 
 abstract class TimerState extends Equatable {
   final int duration;
+
   const TimerState(this.duration);
 
   @override
@@ -12,24 +13,40 @@ class WaitingFirstTomato extends TimerState {
   const WaitingFirstTomato() : super(0);
 }
 
+class TomatoTimerReady extends TimerState {
+  const TomatoTimerReady() : super(0);
+}
+
 class TomatoTimerInProgress extends TimerState {
-  const TomatoTimerInProgress(super.duration);
+  const TomatoTimerInProgress(int duration) : super(duration);
 }
 
 class TomatoTimerPaused extends TimerState {
-  const TomatoTimerPaused(super.duration);
+  const TomatoTimerPaused(int duration) : super(duration);
 }
 
 class BreakTimerInProgress extends TimerState {
-  const BreakTimerInProgress(super.duration);
+  final int nextTomatoId;
+  const BreakTimerInProgress(int duration, {required this.nextTomatoId}) : super(duration);
+
+  @override
+  List<Object> get props => [duration, nextTomatoId];
 }
 
 class BreakTimerPaused extends TimerState {
-  const BreakTimerPaused(super.duration);
+  final int nextTomatoId;
+  const BreakTimerPaused(int duration, {required this.nextTomatoId}) : super(duration);
+
+  @override
+  List<Object> get props => [duration, nextTomatoId];
 }
 
 class WaitingNextTomato extends TimerState {
-  const WaitingNextTomato() : super(0);
+  final int nextTomatoId;
+  const WaitingNextTomato({required this.nextTomatoId}) : super(0);
+
+  @override
+  List<Object> get props => [nextTomatoId];
 }
 
 class SessionComplete extends TimerState {
