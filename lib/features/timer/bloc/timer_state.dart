@@ -49,6 +49,14 @@ class WaitingNextTomato extends TimerState {
   List<Object> get props => [nextTomatoId];
 }
 
+class TomatoSwitched extends TimerState {
+  final int newTomatoId;
+  const TomatoSwitched({required this.newTomatoId}) : super(0);
+
+  @override
+  List<Object> get props => [newTomatoId];
+}
+
 class SessionComplete extends TimerState {
   const SessionComplete() : super(0);
 }

@@ -313,7 +313,35 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
           _userUUID, _tomatoId, ActivityAction.END, ActivityType.BREAK);
       if (state is BreakTimerInProgress) {
         final breakState = state as BreakTimerInProgress;
-        emit(WaitingNextTomato(nextTomatoId: breakState.nextTomatoId));
+        // Non emettere WaitingNextTomato, passa direttamente al prossimo tomato
+        _tomatoId = breakState.nextTomatoId;
+
+        // Ottieni il nuovo tomato e calcola la sua durata
+        final newTomato = await _apiService.getTomatoById(_tomatoId);
+        final newTomatoDuration = newTomato.endAt.difference(newTomato.startAt).inSeconds;
+        final newBreakDuration = newTomato.pauseEnd != null
+            ? newTomato.pauseEnd!.difference(newTomato.endAt).inSeconds
+            : 0;
+
+        // Aggiorna le durate nel bloc
+        _tomatoDuration = newTomatoDuration;
+        _breakDuration = newBreakDuration;
+
+        print('Auto-switching to tomato $_tomatoId with duration: $_tomatoDuration seconds');
+
+        // Prima emetti TomatoSwitched per notificare l'UI del cambio
+        emit(TomatoSwitched(newTomatoId: _tomatoId));
+
+        // Aspetta un po' per permettere all'UI di aggiornarsi
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        // Crea automaticamente l'attività START per il nuovo tomato
+        await _apiService.createActivity(
+            _userUUID, _tomatoId, ActivityAction.START, ActivityType.TIMER);
+
+        // Avvia automaticamente il timer del nuovo tomato
+        emit(TomatoTimerInProgress(_tomatoDuration));
+        _startTimer(_tomatoDuration);
       } else if (state is BreakTimerPaused) {
         final breakState = state as BreakTimerPaused;
         emit(WaitingNextTomato(nextTomatoId: breakState.nextTomatoId));
@@ -322,6 +350,20 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     } else if (state is WaitingNextTomato) {
       final waitingState = state as WaitingNextTomato;
       _tomatoId = waitingState.nextTomatoId;
+
+      // Ottieni il nuovo tomato e calcola la sua durata
+      final newTomato = await _apiService.getTomatoById(_tomatoId);
+      final newTomatoDuration = newTomato.endAt.difference(newTomato.startAt).inSeconds;
+      final newBreakDuration = newTomato.pauseEnd != null
+          ? newTomato.pauseEnd!.difference(newTomato.endAt).inSeconds
+          : 0;
+
+      // Aggiorna le durate nel bloc
+      _tomatoDuration = newTomatoDuration;
+      _breakDuration = newBreakDuration;
+
+      print('Switching to tomato $_tomatoId with duration: $_tomatoDuration seconds');
+
       final activities = await _apiService.getTomatoActivities(_tomatoId);
       if (!activities.any((a) => a.action == ActivityAction.START.toShortString())) {
         await _apiService.createActivity(

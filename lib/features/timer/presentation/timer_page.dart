@@ -150,6 +150,13 @@ class _TimerViewState extends State<TimerView> {
             if (nextIndex != -1) {
               _onTomatoSelected(nextIndex);
             }
+          } else if (state is TomatoSwitched) {
+            // Nuovo listener per gestire il cambio automatico di tomato
+            final nextIndex = widget.tomatoes
+                .indexWhere((tomato) => tomato.id == state.newTomatoId);
+            if (nextIndex != -1) {
+              _onTomatoSelected(nextIndex);
+            }
           } else if (state is SessionComplete) {
             // This case might be redundant if WaitingNextTomato handles all transitions.
             // However, keeping it as a fallback.
