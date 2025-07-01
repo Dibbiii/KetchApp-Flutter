@@ -32,8 +32,44 @@
 
   <title>ketchapp_flutter</title>
   <link rel="manifest" href="manifest.json">
+
+  <script src="https://apis.google.com/js/api.js?onload=onGapiLoad" async defer></script>
+  <script>
+    function onGapiLoad() {
+      gapi.load('client', function() {
+        console.log('gapi.client loaded');
+        window.gapiLoaded = true;
+        if (window.flutterReady) {
+          window.startFlutterApp();
+        }
+      });
+    }
+  </script>
+  <script>
+    window.addEventListener('load', function (ev) {
+      window.flutterReady = true;
+      if (window.gapiLoaded) {
+        window.startFlutterApp();
+      }
+    });
+
+    window.startFlutterApp = function() {
+      _flutter.loader.load({
+        serviceWorker: {
+          serviceWorkerVersion: serviceWorkerVersion,
+        }
+      }).then(function (engineInitializer) {
+        return engineInitializer.initializeEngine();
+      }).then(function (appRunner) {
+        return appRunner.runApp();
+      });
+    }
+  </script>
 </head>
 <body>
+  <script>
+    window.flutterWebRenderer = "html";
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
