@@ -49,10 +49,9 @@ class _StatisticsPageState extends State<StatisticsPage>
     super.didChangeDependencies();
     final statisticsBloc = BlocProvider.of<StatisticsBloc>(context);
     if (statisticsBloc.state.status == StatisticsStatus.initial) {
-      final summaryState = Provider.of<SummaryState>(context, listen: false);
       statisticsBloc.add(
         StatisticsLoadRequested(
-          currentTotalStudyHours: summaryState.totalCompletedHours,
+          currentTotalStudyHours: 0,
         ),
       );
     }
@@ -107,15 +106,7 @@ class _StatisticsPageState extends State<StatisticsPage>
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final summaryState = Provider.of<SummaryState>(context);
     final statisticsBloc = BlocProvider.of<StatisticsBloc>(context);
-
-    if (summaryState.totalCompletedHours >
-        statisticsBloc.state.recordStudyHours) {
-      statisticsBloc.add(
-        StatisticsTotalStudyHoursUpdated(summaryState.totalCompletedHours),
-      );
-    }
 
     return BlocBuilder<StatisticsBloc, StatisticsState>(
       builder: (context, state) {

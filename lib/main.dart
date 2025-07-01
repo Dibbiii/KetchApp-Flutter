@@ -5,7 +5,6 @@ import 'firebase_options.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:provider/provider.dart';
 import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
-import 'package:ketchapp_flutter/features/plan/presentation/pages/automatic/summary_state.dart';
 import 'package:ketchapp_flutter/app/app.dart';
 import 'package:ketchapp_flutter/services/api_service.dart';
 import 'package:ketchapp_flutter/features/profile/bloc/profile_bloc.dart';
@@ -50,7 +49,6 @@ Future<void> main() async {
             authBloc: BlocProvider.of<AuthBloc>(context),
           ),
         ),
-        ChangeNotifierProvider(create: (_) => SummaryState()),
       ],
       child: const MyApp(),
     ),
