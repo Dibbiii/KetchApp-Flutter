@@ -118,12 +118,12 @@ class _TimerViewState extends State<TimerView> {
               sessionDurationInSeconds = 1500; // 25 minutes
             }
 
-            if (context.watch<TimerBloc>().state is TimerInitial) {
+            if (context.watch<TimerBloc>().state is WaitingFirstTomato) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (!mounted) return;
-                context
-                    .read<TimerBloc>()
-                    .add(TimerStarted(duration: sessionDurationInSeconds));
+                context.read<TimerBloc>().add(TimerStarted(
+                    tomatoDuration: sessionDurationInSeconds,
+                    breakDuration: 300));
                 setState(() {
                   _startTime = DateTime.now();
                   _actions.insert(
@@ -134,12 +134,12 @@ class _TimerViewState extends State<TimerView> {
 
             return BlocConsumer<TimerBloc, TimerState>(
               listener: (context, state) {
-                if (state is TimerRunComplete) {
+                if (state is SessionComplete) {
                   _rebuildTimer?.cancel();
                   setState(() {
                     _endTime = DateTime.now();
                   });
-                } else if (state is! TimerRunPause) {
+                } else if (state is! TomatoTimerPaused) {
                   _rebuildTimer?.cancel();
                 } else {
                   _rebuildTimer =
@@ -151,7 +151,7 @@ class _TimerViewState extends State<TimerView> {
                 }
               },
               builder: (context, state) {
-                final isPaused = state is TimerRunPause;
+                final isPaused = state is TomatoTimerPaused;
                 final predictedEndTime =
                     DateTime.now().add(Duration(seconds: state.duration));
                 final double progress = (sessionDurationInSeconds == 0)
@@ -185,7 +185,7 @@ class _TimerViewState extends State<TimerView> {
                     floatingActionButton: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        if (state is! TimerRunComplete)
+                        if (state is! SessionComplete)
                           SizedBox(
                             width: 80,
                             height: 80,
@@ -204,7 +204,7 @@ class _TimerViewState extends State<TimerView> {
                             ),
                           ),
                         const SizedBox(width: 24),
-                        if (state is! TimerRunComplete)
+                        if (state is! SessionComplete)
                           SizedBox(
                             width: 80,
                             height: 80,
@@ -215,7 +215,7 @@ class _TimerViewState extends State<TimerView> {
                               child: const Icon(Icons.stop, size: 40),
                             ),
                           ),
-                        if (state is TimerRunComplete)
+                        if (state is SessionComplete)
                           FloatingActionButton.extended(
                             heroTag: "done",
                             onPressed: () => context.go('/home'),
@@ -284,7 +284,7 @@ class _TimerViewState extends State<TimerView> {
                                       Text('UTC', style: textTheme.bodySmall),
                                     ],
                                   ),
-                                if (state is! TimerRunComplete &&
+                                if (state is! SessionComplete &&
                                     _startTime != null)
                                   Column(
                                     children: [

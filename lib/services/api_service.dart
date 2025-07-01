@@ -7,7 +7,7 @@ import 'package:ketchapp_flutter/models/achievement.dart';
 import './api_exceptions.dart';
 
 class ApiService {
-  final String _baseUrl = "http://192.168.1.22:8081/api";
+  final String _baseUrl = "http://10.178.10.143:8081/api";
 
   Future<dynamic> _processResponse(http.Response response) {
     final body = response.body;
@@ -125,8 +125,10 @@ class ApiService {
   }
 
   Future<List<Tomato>> getTodaysTomatoes(String userUuid) async {
-    print('Fetching tomatoes for user: $userUuid');
-    final response = await fetchData('users/$userUuid/tomatoes/today');
+    final today = DateTime.now().toUtc();
+    final todayStr = "${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}";
+    print('Fetching tomatoes for user: $userUuid on $todayStr');
+    final response = await fetchData('users/$userUuid/tomatoes?date=$todayStr');
     final List<dynamic> tomatoesJson = response as List<dynamic>;
     return tomatoesJson.map((json) => Tomato.fromJson(json)).toList();
   }

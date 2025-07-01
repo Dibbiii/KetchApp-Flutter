@@ -45,8 +45,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           final userUuid = await _apiService.getUserUUIDByFirebaseUid(event.user!.uid);
           emit(Authenticated(event.user!, userUuid));
         } catch (e) {
-          await _firebaseAuth.signOut();
-          emit(AuthError("Failed to sync with backend: ${e.toString()}"));
+          emit(AuthError(e.toString()));
         }
       } else {
         emit(Unauthenticated());
@@ -57,20 +56,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthVerifying());
       try {
         String emailToLogin;
-        // Determina se l'identifier è un'email o un username
-        if (event.identifier.contains('@') && event.identifier.contains('.')) { 
+        if (event.identifier.contains('@') && event.identifier.contains('.')) {
           emailToLogin = event.identifier;
-        } else { //dall'username bisogna recuperare l'email perchè firebase utilizza l'email come identificatore primario per l'accesso con email e password
+        } else {
           try {
             final userData = await _apiService.findEmailByUsername(event.identifier);
-            // Assumendo che findEmailByUsername restituisca una mappa con la chiave 'email'
-            // o direttamente la stringa dell'email se il backend è strutturato così.
-            // Se userData è una mappa:
             if (userData is Map<String, dynamic> && userData['email'] != null) {
               emailToLogin = userData['email'] as String;
-            } 
-            // Se userData fosse direttamente la stringa email (meno probabile per un API RESTful JSON):
-            else if (userData is String) {
+            } else if (userData is String) {
               emailToLogin = userData;
             }
             else {

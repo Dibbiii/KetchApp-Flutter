@@ -44,7 +44,6 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
       final formattedDate =
           "${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
 
-      // Calculate week range for the API call
       final startOfWeek = date.subtract(Duration(days: date.weekday - 1));
       final endOfWeek = startOfWeek.add(const Duration(days: 6));
       final formattedStart =
