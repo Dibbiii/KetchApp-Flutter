@@ -6,6 +6,7 @@ import 'package:ketchapp_flutter/models/activity_action.dart';
 import 'package:ketchapp_flutter/models/achievement.dart';
 import './api_exceptions.dart';
 import 'package:ketchapp_flutter/services/calendar_service.dart';
+import 'package:ketchapp_flutter/services/notification_service.dart';
 
 class ApiService {
   final String _baseUrl = "http://192.168.43.22:8081/api";
@@ -96,16 +97,29 @@ class ApiService {
     try {
       final response = await postData('plans', planData);
       print('Response from createPlan: ${response}');
-      // Dopo la creazione del piano, aggiungi l'evento su Google Calendar
-      if (planData['start_at'] != null && planData['end_at'] != null) {
-        final start = DateTime.parse(planData['start_at']);
-        final end = DateTime.parse(planData['end_at']);
-        await CalendarService().addEvent(
-          title: planData['subject'] ?? 'Pomodoro',
-          start: start,
-          end: end,
-          description: 'Sessione Pomodoro creata da KetchApp',
-        );
+      // Cicla su tutti i pomodori (tomatoes) nella risposta e aggiungili su Google Calendar
+      if (response != null && response['subjects'] != null) {
+        for (final subject in response['subjects']) {
+          final subjectName = subject['name'] ?? 'Pomodoro';
+          if (subject['tomatoes'] != null) {
+            for (final tomato in subject['tomatoes']) {
+              final startAt = tomato['start_at'];
+              final endAt = tomato['end_at'];
+              if (startAt != null && endAt != null) {
+                final start = DateTime.parse(startAt);
+                final end = DateTime.parse(endAt);
+                print('Aggiungo evento Google Calendar: $subjectName, $start - $end');
+                await CalendarService().addEvent(
+                  title: subjectName,
+                  start: start,
+                  end: end,
+                  description: 'Sessione Pomodoro creata da KetchApp',
+                );
+                await NotificationService.schedulePomodoroNotification(subjectName, start);
+              }
+            }
+          }
+        }
       }
     } catch (e) {
       print('Error in createPlan: ${e}');

@@ -107,6 +107,7 @@ class CalendarService {
     required DateTime end,
     String? description,
   }) async {
+    print('addEvent chiamato: $title, $start - $end');
     final calendarApi = await getCalendarApi();
     if (calendarApi == null) {
       print('CalendarService: CalendarApi non disponibile, impossibile aggiungere evento.');
@@ -118,8 +119,8 @@ class CalendarService {
         ..description = description ?? 'Sessione Pomodoro'
         ..start = cal.EventDateTime(dateTime: start.toUtc(), timeZone: 'UTC')
         ..end = cal.EventDateTime(dateTime: end.toUtc(), timeZone: 'UTC');
-      await calendarApi.events.insert(event, 'primary');
-      print('CalendarService: Evento aggiunto con successo!');
+      final inserted = await calendarApi.events.insert(event, 'primary');
+      print('CalendarService: Evento aggiunto con successo! id: ${inserted.id}');
     } catch (e) {
       print('CalendarService: Errore nell\'aggiunta dell\'evento: $e');
     }
