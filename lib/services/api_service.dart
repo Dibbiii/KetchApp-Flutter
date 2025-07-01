@@ -8,7 +8,7 @@ import './api_exceptions.dart';
 import 'package:ketchapp_flutter/services/calendar_service.dart';
 
 class ApiService {
-  final String _baseUrl = "http://10.178.10.143:8081/api";
+  final String _baseUrl = "http://192.168.43.22:8081/api";
 
   Future<dynamic> _processResponse(http.Response response) {
     final body = response.body;
@@ -16,7 +16,7 @@ class ApiService {
     try {
       decodedJson = json.decode(body);
     } catch (e) {
-      print('Error decoding JSON: $e');
+      print('Info: Response body is not a valid JSON. Treating as plain text. $e');
     }
 
     switch (response.statusCode) {

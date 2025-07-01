@@ -211,7 +211,7 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard> {
                                       onPressed: () {
                                         Navigator.of(context).pop();
                                         context
-                                            .go('/timer/${nextTomato.id}');
+                                            .go('/timer');
                                       },
                                     ),
                                   ],

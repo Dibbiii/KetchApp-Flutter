@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "1049541862968-932gio9svpa5rtfar4hp4qrol2ko37va.apps.googleusercontent.com",
+          "client_id": "1049541862968-3tpkvkq3tbsa4gp0okuptol69tfftc5e.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.example.ketchapp_flutter",
-            "certificate_hash": "c91ca8abfaf96c297951a37bca9c8d186dcc4151"
+            "certificate_hash": "b1a2623f864e4d0fc91329f02d7d27e284e8dce9"
           }
         },
         {

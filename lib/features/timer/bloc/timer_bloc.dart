@@ -19,8 +19,8 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
 
   TimerBloc(
       {required ApiService apiService,
-      required String userUUID,
-      required int tomatoId})
+        required String userUUID,
+        required int tomatoId})
       : _apiService = apiService,
         _userUUID = userUUID,
         _tomatoId = tomatoId,
