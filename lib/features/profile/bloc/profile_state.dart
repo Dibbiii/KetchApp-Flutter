@@ -1,6 +1,5 @@
 import 'dart:io'; // Required for File type
 import 'package:equatable/equatable.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Potrebbe essere utile per passare l'utente
 
 abstract class ProfileState extends Equatable {
   const ProfileState();

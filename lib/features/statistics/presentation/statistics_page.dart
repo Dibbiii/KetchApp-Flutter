@@ -9,7 +9,6 @@ import 'package:ketchapp_flutter/features/statistics/presentation/widgets/stat_i
 import 'package:ketchapp_flutter/features/statistics/presentation/widgets/weekly_histogram_widget.dart'; // Import WeeklyHistogramWidget
 import 'package:ketchapp_flutter/features/statistics/presentation/widgets/subject_stat_item_widget.dart'; // Add this import
 
-import '../../plan/presentation/pages/automatic/summary_state.dart';
 
 class StatisticsPage extends StatefulWidget {
   const StatisticsPage({Key? key}) : super(key: key);
