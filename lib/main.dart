@@ -13,14 +13,15 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ketchapp_flutter/features/profile/bloc/achievement_bloc.dart';
+import 'package:ketchapp_flutter/services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
 
   await initializeDateFormatting('it_IT', null);
-
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await NotificationService.initialize(); // Inizializza notifiche
 
   runApp(
     MultiProvider(
@@ -54,3 +55,4 @@ Future<void> main() async {
     ),
   );
 }
+
