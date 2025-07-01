@@ -19,5 +19,9 @@ class Activity {
       createdAt: DateTime.parse(json['createdAt']),
     );
   }
-}
 
+  @override
+  String toString() {
+    return 'Activity{id: $id, type: $type, action: $action, createdAt: $createdAt}';
+  }
+}

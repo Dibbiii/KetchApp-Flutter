@@ -6,6 +6,7 @@ import 'package:ketchapp_flutter/models/activity_action.dart';
 import 'package:ketchapp_flutter/models/activity_type.dart';
 import 'package:ketchapp_flutter/services/api_service.dart';
 
+
 part 'timer_event.dart';
 part 'timer_state.dart';
 
@@ -33,6 +34,7 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     on<TimerFinished>(_onFinished);
     on<NextTransition>(_onNextTransition);
     on<_TimerTicked>(_onTicked);
+    on<TimerSkipToEnd>(_onSkipToEnd);
   }
 
   @override
@@ -42,19 +44,24 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
   }
 
   void _startTimer(int duration) {
+    print('_startTimer called with duration: $duration');
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      print('Timer tick - state.duration: ${state.duration}, isClosed: $isClosed');
       if (isClosed) {
         timer.cancel();
         return;
       }
       if (state.duration > 0) {
+        print('Adding _TimerTicked with duration: ${state.duration - 1}');
         add(_TimerTicked(duration: state.duration - 1));
       } else {
+        print('Timer finished, cancelling and adding NextTransition');
         _timer?.cancel();
         add(const NextTransition());
       }
     });
+    print('Timer periodic created successfully');
   }
 
   void _onLoaded(TimerLoaded event, Emitter<TimerState> emit) async {
@@ -64,15 +71,68 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
       var activities = await _apiService.getTomatoActivities(_tomatoId);
       print('Activities for tomato $_tomatoId: $activities');
 
-      if (activities.any((a) => a.action == ActivityAction.END.toShortString())) {
+      final hasTimerEnd = activities.any((a) =>
+          a.action == ActivityAction.END.toShortString() &&
+          a.type == ActivityType.TIMER.toShortString());
+
+      if (hasTimerEnd) {
         final tomato = await _apiService.getTomatoById(_tomatoId);
         if (tomato.nextTomatoId != null) {
-          emit(WaitingNextTomato(nextTomatoId: tomato.nextTomatoId!));
-          add(const NextTransition()); // Automatically trigger the next transition
+          final hasBreakEnd = activities.any((a) =>
+              a.action == ActivityAction.END.toShortString() &&
+              a.type == ActivityType.BREAK.toShortString());
+          if (hasBreakEnd) {
+            emit(WaitingNextTomato(nextTomatoId: tomato.nextTomatoId!));
+            return;
+          } else {
+            // Handle ongoing break
+            activities.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+            DateTime? lastBreakStartTime;
+            Duration elapsedBreakDuration = Duration.zero;
+
+            for (final activity in activities) {
+              if (activity.type == ActivityType.BREAK.toShortString()) {
+                if (activity.action == ActivityAction.START.toShortString() ||
+                    activity.action == ActivityAction.RESUME.toShortString()) {
+                  lastBreakStartTime = activity.createdAt;
+                } else if (activity.action ==
+                        ActivityAction.PAUSE.toShortString() &&
+                    lastBreakStartTime != null) {
+                  elapsedBreakDuration +=
+                      activity.createdAt.difference(lastBreakStartTime);
+                  lastBreakStartTime = null;
+                }
+              }
+            }
+
+            final lastActivity = activities.last;
+
+            if (lastActivity.type == ActivityType.BREAK.toShortString() &&
+                lastActivity.action == ActivityAction.PAUSE.toShortString()) {
+              final remainingDuration =
+                  _breakDuration - elapsedBreakDuration.inSeconds;
+              emit(BreakTimerPaused(remainingDuration > 0 ? remainingDuration : 0,
+                  nextTomatoId: tomato.nextTomatoId!));
+            } else {
+              // Break is in progress
+              if (lastBreakStartTime != null) {
+                elapsedBreakDuration +=
+                    DateTime.now().toUtc().difference(lastBreakStartTime);
+              }
+              final remainingDuration =
+                  _breakDuration - elapsedBreakDuration.inSeconds;
+              final duration = remainingDuration > 0 ? remainingDuration : 0;
+              emit(BreakTimerInProgress(duration,
+                  nextTomatoId: tomato.nextTomatoId!));
+              _startTimer(duration);
+            }
+            return;
+          }
         } else {
           emit(const SessionComplete());
+          return;
         }
-        return;
       }
 
       if (activities.isEmpty) {
@@ -86,29 +146,47 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
       Duration elapsedDuration = Duration.zero;
 
       for (final activity in activities) {
-        if (activity.action == ActivityAction.START.toShortString() ||
-            activity.action == ActivityAction.RESUME.toShortString()) {
-          lastStartTime = activity.createdAt;
-        } else if (activity.action == ActivityAction.PAUSE.toShortString() &&
-            lastStartTime != null) {
-          elapsedDuration += activity.createdAt.difference(lastStartTime);
-          lastStartTime = null;
+        if (activity.type == ActivityType.TIMER.toShortString()) {
+          if (activity.action == ActivityAction.START.toShortString() ||
+              activity.action == ActivityAction.RESUME.toShortString()) {
+            lastStartTime = activity.createdAt;
+          } else if (activity.action == ActivityAction.PAUSE.toShortString() &&
+              lastStartTime != null) {
+            elapsedDuration += activity.createdAt.difference(lastStartTime);
+            lastStartTime = null;
+          }
         }
       }
 
       final lastActivity = activities.last;
 
-      if (lastActivity.action == ActivityAction.PAUSE.toShortString()) {
+      if (lastActivity.type == ActivityType.TIMER.toShortString() &&
+          lastActivity.action == ActivityAction.PAUSE.toShortString()) {
         final remainingDuration = _tomatoDuration - elapsedDuration.inSeconds;
         emit(TomatoTimerPaused(remainingDuration > 0 ? remainingDuration : 0));
-      } else { // Last activity was START or RESUME
+      } else if (lastActivity.type == ActivityType.TIMER.toShortString() &&
+                 (lastActivity.action == ActivityAction.START.toShortString() ||
+                  lastActivity.action == ActivityAction.RESUME.toShortString())) {
+        // Timer è attivo, calcola il tempo rimanente
         if (lastStartTime != null) {
-          elapsedDuration += DateTime.now().difference(lastStartTime);
+          elapsedDuration += DateTime.now().toUtc().difference(lastStartTime);
         }
         final remainingDuration = _tomatoDuration - elapsedDuration.inSeconds;
         final duration = remainingDuration > 0 ? remainingDuration : 0;
-        emit(TomatoTimerInProgress(duration));
-        _startTimer(duration);
+
+        if (duration > 0) {
+          print('Emitting TomatoTimerInProgress with duration: $duration in _onLoaded');
+          emit(TomatoTimerInProgress(duration));
+          _startTimer(duration);
+        } else {
+          // Il timer è già finito, ma non abbiamo ricevuto la notifica
+          print('Timer already finished, emitting TomatoTimerReady');
+          emit(const TomatoTimerReady());
+        }
+      } else {
+        // Nessuna attività TIMER, mostra ready
+        print('No TIMER activities found, emitting TomatoTimerReady');
+        emit(const TomatoTimerReady());
       }
     } catch (e) {
       // Handle potential errors, e.g., by emitting a failure state
@@ -116,14 +194,21 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
   }
 
   void _onStarted(TimerStarted event, Emitter<TimerState> emit) async {
+    print('Timer starting...');
     // This now only handles the start button press
     try {
+      final tomato = await _apiService.getTomatoById(_tomatoId);
+      print('Starting tomato: $tomato');
+
       var activities = await _apiService.getTomatoActivities(_tomatoId);
-      if (!activities.any((a) => a.action == ActivityAction.START.toShortString())) {
+      print('Current activities: $activities');
+
+      if (!activities.any((a) => a.action == ActivityAction.START.toShortString() && a.type == ActivityType.TIMER.toShortString())) {
         await _apiService.createActivity(
             _userUUID, _tomatoId, ActivityAction.START, ActivityType.TIMER);
         // Refresh activities after adding a new one
         activities = await _apiService.getTomatoActivities(_tomatoId);
+        print('Activities after START creation: $activities');
       }
 
       activities.sort((a, b) => a.createdAt.compareTo(b.createdAt));
@@ -132,26 +217,34 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
       Duration elapsedDuration = Duration.zero;
 
       for (final activity in activities) {
-        if (activity.action == ActivityAction.START.toShortString() ||
-            activity.action == ActivityAction.RESUME.toShortString()) {
-          lastStartTime = activity.createdAt;
-        } else if (activity.action == ActivityAction.PAUSE.toShortString() &&
-            lastStartTime != null) {
-          elapsedDuration += activity.createdAt.difference(lastStartTime);
-          lastStartTime = null;
+        if (activity.type == ActivityType.TIMER.toShortString()) {
+          if (activity.action == ActivityAction.START.toShortString() ||
+              activity.action == ActivityAction.RESUME.toShortString()) {
+            lastStartTime = activity.createdAt;
+          } else if (activity.action == ActivityAction.PAUSE.toShortString() &&
+              lastStartTime != null) {
+            elapsedDuration += activity.createdAt.difference(lastStartTime);
+            lastStartTime = null;
+          }
         }
       }
 
       if (lastStartTime != null) {
-        elapsedDuration += DateTime.now().difference(lastStartTime);
+        elapsedDuration += DateTime.now().toUtc().difference(lastStartTime);
       }
 
       final remainingDuration = _tomatoDuration - elapsedDuration.inSeconds;
       final duration = remainingDuration > 0 ? remainingDuration : 0;
+
+      print('Calculated duration: $duration seconds (remaining: $remainingDuration, elapsed: ${elapsedDuration.inSeconds})');
+
       emit(TomatoTimerInProgress(duration));
+      print('Emitted TomatoTimerInProgress state with duration: $duration');
+
       _startTimer(duration);
+      print('Timer started with duration: $duration');
     } catch (e) {
-      //
+      print('Error in _onStarted: $e');
     }
   }
 
@@ -218,14 +311,14 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     } else if (state is BreakTimerInProgress || state is BreakTimerPaused) {
       await _apiService.createActivity(
           _userUUID, _tomatoId, ActivityAction.END, ActivityType.BREAK);
-      int nextTomatoId;
       if (state is BreakTimerInProgress) {
-        nextTomatoId = (state as BreakTimerInProgress).nextTomatoId;
-      } else {
-        nextTomatoId = (state as BreakTimerPaused).nextTomatoId;
+        final breakState = state as BreakTimerInProgress;
+        emit(WaitingNextTomato(nextTomatoId: breakState.nextTomatoId));
+      } else if (state is BreakTimerPaused) {
+        final breakState = state as BreakTimerPaused;
+        emit(WaitingNextTomato(nextTomatoId: breakState.nextTomatoId));
+        add(const NextTransition()); // Automatically trigger the next transition
       }
-      emit(WaitingNextTomato(nextTomatoId: nextTomatoId));
-      add(const NextTransition()); // Automatically trigger the next transition
     } else if (state is WaitingNextTomato) {
       final waitingState = state as WaitingNextTomato;
       _tomatoId = waitingState.nextTomatoId;
@@ -240,17 +333,53 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
   }
 
   void _onTicked(_TimerTicked event, Emitter<TimerState> emit) {
+    print('_onTicked called with duration: ${event.duration}, current state: ${state.runtimeType}');
     if (event.duration > 0) {
       if (state is TomatoTimerInProgress) {
+        print('Emitting TomatoTimerInProgress with duration: ${event.duration}');
         emit(TomatoTimerInProgress(event.duration));
       } else if (state is BreakTimerInProgress) {
         final breakState = state as BreakTimerInProgress;
+        print('Emitting BreakTimerInProgress with duration: ${event.duration}');
         emit(BreakTimerInProgress(event.duration,
             nextTomatoId: breakState.nextTomatoId));
       }
     } else {
+      print('Timer reached 0, cancelling and adding NextTransition');
       _timer?.cancel();
       add(const NextTransition());
+    }
+  }
+
+  void _onSkipToEnd(TimerSkipToEnd event, Emitter<TimerState> emit) async {
+    print('Skipping to end - leaving 10 seconds...');
+
+    if (state is TomatoTimerInProgress) {
+      // Imposta il timer del pomodoro a 10 secondi
+      _timer?.cancel();
+      emit(TomatoTimerInProgress(10));
+      _startTimer(10);
+      print('Skipped tomato timer to 10 seconds');
+    } else if (state is BreakTimerInProgress) {
+      // Imposta il timer del break a 10 secondi
+      final breakState = state as BreakTimerInProgress;
+      _timer?.cancel();
+      emit(BreakTimerInProgress(10, nextTomatoId: breakState.nextTomatoId));
+      _startTimer(10);
+      print('Skipped break timer to 10 seconds');
+    } else if (state is TomatoTimerPaused) {
+      // Se il pomodoro è in pausa, riprendi con 10 secondi
+      _timer?.cancel();
+      emit(TomatoTimerInProgress(10));
+      _startTimer(10);
+      print('Resumed tomato timer with 10 seconds');
+    } else if (state is BreakTimerPaused) {
+      // Se il break è in pausa, riprendi con 10 secondi
+      final breakState = state as BreakTimerPaused;
+      _timer?.cancel();
+      emit(BreakTimerInProgress(10, nextTomatoId: breakState.nextTomatoId));
+      _startTimer(10);
+      print('Resumed break timer with 10 seconds');
     }
   }
 }

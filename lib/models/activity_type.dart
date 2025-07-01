@@ -3,3 +3,8 @@ enum ActivityType {
   BREAK,
 }
 
+extension ActivityTypeExtension on ActivityType {
+  String toShortString() {
+    return toString().split('.').last;
+  }
+}
