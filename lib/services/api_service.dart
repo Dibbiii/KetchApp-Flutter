@@ -47,7 +47,7 @@ class ApiService {
     return _processResponse(response);
   }
 
-  Future<dynamic> postData(String endpoint, Map<String, dynamic> data) async { 
+  Future<dynamic> postData(String endpoint, Map<String, dynamic> data) async {
     final response = await http.post(
       Uri.parse('$_baseUrl/$endpoint'),
       headers: <String, String>{
@@ -56,22 +56,7 @@ class ApiService {
       body: json.encode(data),
     );
 
-    if (response.statusCode == 201 || response.statusCode == 200) {
-      return json.decode(response.body);
-    } else if (response.statusCode == 409) { // HTTP 409 Conflict - Gestione personalizzata per postData
-      final responseBody = json.decode(response.body);
-      final String? errorCode = responseBody['error_code'] as String?;
-      final String message = responseBody['message'] as String? ?? 'Risorsa già esistente.';
-
-      if (errorCode == 'USERNAME_TAKEN' || message.toLowerCase().contains('username')) {
-        throw UsernameAlreadyExistsException(message);
-      } else if (errorCode == 'EMAIL_TAKEN_BACKEND' || message.toLowerCase().contains('email')) {
-        throw EmailAlreadyExistsInBackendException(message);
-      }
-      throw ConflictException(message);
-    } else {
-      return _processResponse(response);
-    }
+    return _processResponse(response);
   }
 
   Future<dynamic> deleteData(String endpoint) async {

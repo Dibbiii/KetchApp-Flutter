@@ -174,93 +174,101 @@ class _TimerViewState extends State<TimerView> {
               children: [
                 SizedBox(
                   height: 40,
-                  child: Center(
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      scrollDirection: Axis.horizontal,
-                      itemCount: widget.tomatoes.length,
-                      itemBuilder: (context, index) {
-                        final isCompleted = index < _currentTomatoIndex;
-                        final isCurrent = index == _currentTomatoIndex;
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Center(
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            scrollDirection: Axis.horizontal,
+                            itemCount: widget.tomatoes.length,
+                            itemBuilder: (context, index) {
+                              final isCompleted = index < _currentTomatoIndex;
+                              final isCurrent = index == _currentTomatoIndex;
 
-                        return Container(
-                          width: 24,
-                          height: 24,
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: isCompleted || isCurrent
-                                ? Colors.red
-                                : Colors.transparent,
-                            border: Border.all(
-                              color: Colors.red,
-                              width: 2,
-                            ),
+                              return Container(
+                                width: 24,
+                                height: 24,
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 4),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isCompleted || isCurrent
+                                      ? Colors.red
+                                      : Colors.transparent,
+                                  border: Border.all(
+                                    color: Colors.red,
+                                    width: 2,
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.home),
+                        onPressed: () {
+                          Navigator.of(context).pushNamedAndRemoveUntil(
+                              '/home', (Route<dynamic> route) => false);
+                        },
+                      ),
+                    ],
                   ),
                 ),
-                Card(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          currentTomato.subject,
-                          style: theme.textTheme.headlineSmall
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Icon(Icons.schedule,
-                                size: 18, color: colors.onSurfaceVariant),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${widget.tomatoes.length} sessioni',
-                              style: theme.textTheme.bodyLarge,
+                const Spacer(),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        currentTomato.subject,
+                        style: theme.textTheme.headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Icon(Icons.schedule,
+                              size: 18, color: colors.onSurfaceVariant),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${widget.tomatoes.length} sessioni',
+                            style: theme.textTheme.bodyLarge,
+                          ),
+                          const Spacer(),
+                          Icon(Icons.local_cafe_outlined,
+                              size: 18, color: colors.onSurfaceVariant),
+                          const SizedBox(width: 8),
+                          Text(
+                            '$pauseMinutes min pause',
+                            style: theme.textTheme.bodyLarge,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children:
+                        List.generate(numPomodoros, (i) {
+                          return Container(
+                            width: 24,
+                            height: 24,
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            decoration: BoxDecoration(
+                              color: i < _currentPomodoroIndex
+                                  ? colors.primary
+                                  : i == _currentPomodoroIndex
+                                      ? colors.primary // No opacity for now
+                                      : colors.surfaceContainerHighest,
+                              shape: BoxShape.circle,
                             ),
-                            const Spacer(),
-                            Icon(Icons.local_cafe_outlined,
-                                size: 18, color: colors.onSurfaceVariant),
-                            const SizedBox(width: 8),
-                            Text(
-                              '$pauseMinutes min pause',
-                              style: theme.textTheme.bodyLarge,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children:
-                          List.generate(numPomodoros, (i) {
-                            return Container(
-                              width: 24,
-                              height: 24,
-                              margin: const EdgeInsets.symmetric(horizontal: 4),
-                              decoration: BoxDecoration(
-                                color: i < _currentPomodoroIndex
-                                    ? colors.primary
-                                    : i == _currentPomodoroIndex
-                                        ? colors.primary // No opacity for now
-                                        : colors.surfaceContainerHighest,
-                                shape: BoxShape.circle,
-                              ),
-                            );
-                          }),
-                        ),
-                      ],
-                    ),
+                          );
+                        }),
+                      ),
+                    ],
                   ),
                 ),
                 Expanded(
