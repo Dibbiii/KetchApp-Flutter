@@ -5,6 +5,7 @@ import 'package:ketchapp_flutter/models/tomato.dart';
 import 'package:ketchapp_flutter/models/activity_action.dart';
 import 'package:ketchapp_flutter/models/achievement.dart';
 import './api_exceptions.dart';
+import 'package:ketchapp_flutter/services/calendar_service.dart';
 
 class ApiService {
   final String _baseUrl = "http://10.178.10.143:8081/api";
@@ -91,13 +92,23 @@ class ApiService {
 
   Future<void> createPlan(PlanModel plan) async {
     final planData = plan.toJson();
-    // ignore: avoid_print
     print('Creating plan with data: ${json.encode(planData)}');
     try {
       final response = await postData('plans', planData);
-      print('Response from createPlan: $response');
+      print('Response from createPlan: ${response}');
+      // Dopo la creazione del piano, aggiungi l'evento su Google Calendar
+      if (planData['start_at'] != null && planData['end_at'] != null) {
+        final start = DateTime.parse(planData['start_at']);
+        final end = DateTime.parse(planData['end_at']);
+        await CalendarService().addEvent(
+          title: planData['subject'] ?? 'Pomodoro',
+          start: start,
+          end: end,
+          description: 'Sessione Pomodoro creata da KetchApp',
+        );
+      }
     } catch (e) {
-      print('Error in createPlan: $e');
+      print('Error in createPlan: ${e}');
       rethrow;
     }
   }

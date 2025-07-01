@@ -99,4 +99,30 @@ class CalendarService {
       return [];
     }
   }
+
+  /// Aggiunge un evento (pomodoro) su Google Calendar
+  Future<void> addEvent({
+    required String title,
+    required DateTime start,
+    required DateTime end,
+    String? description,
+  }) async {
+    final calendarApi = await getCalendarApi();
+    if (calendarApi == null) {
+      print('CalendarService: CalendarApi non disponibile, impossibile aggiungere evento.');
+      return;
+    }
+    try {
+      final event = cal.Event()
+        ..summary = title
+        ..description = description ?? 'Sessione Pomodoro'
+        ..start = cal.EventDateTime(dateTime: start.toUtc(), timeZone: 'UTC')
+        ..end = cal.EventDateTime(dateTime: end.toUtc(), timeZone: 'UTC');
+      await calendarApi.events.insert(event, 'primary');
+      print('CalendarService: Evento aggiunto con successo!');
+    } catch (e) {
+      print('CalendarService: Errore nell\'aggiunta dell\'evento: $e');
+    }
+  }
 }
+
