@@ -4,8 +4,7 @@ import 'package:ketchapp_flutter/features/statistics/presentation/statistics_shr
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_bloc/flutter_bloc.dart'; // Import BLoC
-import 'package:ketchapp_flutter/features/statistics/bloc/statistics_bloc.dart'; // Import your BLoC
-import 'package:ketchapp_flutter/features/statistics/presentation/widgets/stat_item_widget.dart'; // Import StatItemWidget
+import 'package:ketchapp_flutter/features/statistics/bloc/statistics_bloc.dart'; // Import your BLoC// Import StatItemWidget
 import 'package:ketchapp_flutter/features/statistics/presentation/widgets/weekly_histogram_widget.dart'; // Import WeeklyHistogramWidget
 import 'package:ketchapp_flutter/features/statistics/presentation/widgets/subject_stat_item_widget.dart'; // Add this import
 
@@ -23,7 +22,6 @@ class _StatisticsPageState extends State<StatisticsPage>
   bool _showShimmer = true;
 
   late final AnimationController _animationController;
-  late final Animation<double> _fadeAnimation;
 
   List<dynamic> statistics = [];
 
@@ -36,10 +34,6 @@ class _StatisticsPageState extends State<StatisticsPage>
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 180),
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
     );
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
@@ -100,9 +94,6 @@ class _StatisticsPageState extends State<StatisticsPage>
     return result.isEmpty ? '0 min' : result;
   }
 
-  void _showTagSelector(BuildContext context) {
-    // Rimosso: non più necessario
-  }
 
   @override
   void dispose() {
@@ -161,8 +152,6 @@ class _StatisticsPageState extends State<StatisticsPage>
                     Center(
                       child: Column(
                         children: [
-                          // ActionChip rimosso
-                          // const SizedBox(height: 12),
                           Text(
                             _formatTotalHours(
                               state.weeklyStudyData.isNotEmpty
