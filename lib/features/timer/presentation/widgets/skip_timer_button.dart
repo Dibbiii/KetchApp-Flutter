@@ -11,6 +11,9 @@ class SkipTimerButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     return BlocBuilder<TimerBloc, TimerState>(
       builder: (context, state) {
         // Il button è sempre visibile, ma abilitato solo quando il timer è attivo
@@ -19,16 +22,31 @@ class SkipTimerButton extends StatelessWidget {
             state is BreakTimerInProgress ||
             state is BreakTimerPaused;
 
-        return FloatingActionButton(
-          onPressed: isTimerActive ? () {
+        final isBreak = state is BreakTimerInProgress || state is BreakTimerPaused;
+
+        if (!isTimerActive) {
+          return const SizedBox.shrink(); // Hide button when timer is not active
+        }
+
+        return FloatingActionButton.extended(
+          onPressed: () {
             context.read<TimerBloc>().add(const TimerSkipToEnd());
-          } : null, // Disabilita il button quando il timer non è attivo
-          backgroundColor: isTimerActive ? Colors.orange : Colors.grey,
-          child: Icon(
-            Icons.fast_forward,
-            color: isTimerActive ? Colors.white : Colors.white70,
+          },
+          backgroundColor: isBreak ? colors.secondaryContainer : colors.tertiaryContainer,
+          foregroundColor: isBreak ? colors.onSecondaryContainer : colors.onTertiaryContainer,
+          elevation: 2,
+          extendedPadding: const EdgeInsets.symmetric(horizontal: 20),
+          icon: Icon(
+            Icons.fast_forward_rounded,
+            size: 20,
           ),
-          tooltip: isTimerActive ? 'Salta a 10 secondi' : 'Timer non attivo',
+          label: Text(
+            'Skip to 10s',
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          tooltip: 'Skip to last 10 seconds',
         );
       },
     );
