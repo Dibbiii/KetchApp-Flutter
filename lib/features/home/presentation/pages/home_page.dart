@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ketchapp_flutter/features/home/bloc/home_bloc.dart';
 import 'package:ketchapp_flutter/features/home/presentation/widgets/todays_tomatoes_card.dart';
+import 'package:ketchapp_flutter/features/home/presentation/widgets/home_shimmer_page.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class HomePage extends StatefulWidget {
@@ -119,7 +120,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         body: BlocBuilder<HomeBloc, HomeState>(
           builder: (context, state) {
             if (state is HomeLoading) {
-              return _buildLoadingState(context, colors, textTheme);
+              return const HomeShimmerPage();
             } else if (state is HomeLoaded) {
               return _buildLoadedState(context, colors, textTheme);
             } else if (state is HomeError) {
@@ -131,9 +132,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         ),
         floatingActionButton: BlocBuilder<HomeBloc, HomeState>(
           builder: (context, state) {
-            if (state is HomeLoaded) {
-              return _buildFloatingActionButton(context, colors);
-            }
             return const SizedBox.shrink();
           },
         ),
@@ -142,59 +140,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildLoadingState(BuildContext context, ColorScheme colors, TextTheme textTheme) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            colors.primary.withOpacity(0.03),
-            colors.surface,
-          ],
-        ),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: colors.primaryContainer.withOpacity(0.8),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: colors.primary.withOpacity(0.1),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: CircularProgressIndicator(
-                strokeWidth: 3,
-                color: colors.primary,
-                backgroundColor: colors.primary.withOpacity(0.1),
-              ),
-            ),
-            const SizedBox(height: 32),
-            Text(
-              'Preparing your focus journey...',
-              style: textTheme.titleLarge?.copyWith(
-                color: colors.onSurface,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Getting everything ready for you',
-              style: textTheme.bodyMedium?.copyWith(
-                color: colors.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return const HomeShimmerPage();
   }
 
   Widget _buildLoadedState(BuildContext context, ColorScheme colors, TextTheme textTheme) {
@@ -323,7 +269,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(16), // Ridotto da 24 a 16
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -337,7 +283,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(10), // Ridotto da 12 a 10
                     decoration: BoxDecoration(
                       color: colors.primary.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(16),
@@ -348,7 +294,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       size: 28,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12), // Ridotto da 16 a 12
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,7 +307,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             letterSpacing: -0.25,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2), // Ridotto da 4 a 2
                         Text(
                           "Your focus sessions await",
                           style: textTheme.bodyMedium?.copyWith(
@@ -491,31 +437,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFloatingActionButton(BuildContext context, ColorScheme colors) {
-    return FloatingActionButton.extended(
-      heroTag: "home_page_fab", // Aggiungi un tag unico
-      onPressed: _showNotification,
-      backgroundColor: colors.primaryContainer,
-      foregroundColor: colors.onPrimaryContainer,
-      elevation: 6,
-      highlightElevation: 12,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      icon: Icon(
-        Icons.notifications_active_outlined,
-        size: 24,
-      ),
-      label: Text(
-        'Test Notification',
-        style: TextStyle(
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.5,
-        ),
       ),
     );
   }

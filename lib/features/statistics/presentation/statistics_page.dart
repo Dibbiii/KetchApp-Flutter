@@ -474,7 +474,6 @@ class _StatisticsPageState extends State<StatisticsPage>
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
               decoration: BoxDecoration(
@@ -490,6 +489,7 @@ class _StatisticsPageState extends State<StatisticsPage>
                 tooltip: 'Previous week',
               ),
             ),
+            const SizedBox(width: 16), // Spazio tra freccia sinistra e giorno
             Expanded(
               child: TextButton(
                 onPressed: () => statisticsBloc.add(StatisticsTodayRequested()),
@@ -510,6 +510,7 @@ class _StatisticsPageState extends State<StatisticsPage>
                 ),
               ),
             ),
+            const SizedBox(width: 16), // Spazio tra giorno e freccia destra
             Container(
               decoration: BoxDecoration(
                 color: colors.surfaceContainerHigh,
@@ -551,7 +552,7 @@ class _StatisticsPageState extends State<StatisticsPage>
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(16), // Ridotto da 24 a 16
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -565,7 +566,7 @@ class _StatisticsPageState extends State<StatisticsPage>
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(10), // Ridotto da 12 a 10
                     decoration: BoxDecoration(
                       color: colors.primary.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(16),
@@ -576,7 +577,7 @@ class _StatisticsPageState extends State<StatisticsPage>
                       size: 28,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12), // Ridotto da 16 a 12
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -589,7 +590,7 @@ class _StatisticsPageState extends State<StatisticsPage>
                             letterSpacing: -0.25,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2), // Ridotto da 4 a 2
                         Text(
                           "Your focus patterns this week",
                           style: textTheme.bodyMedium?.copyWith(
@@ -639,7 +640,7 @@ class _StatisticsPageState extends State<StatisticsPage>
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(16), // Ridotto da 24 a 16
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -653,7 +654,7 @@ class _StatisticsPageState extends State<StatisticsPage>
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(10), // Ridotto da 12 a 10
                     decoration: BoxDecoration(
                       color: colors.secondary.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(16),
@@ -664,7 +665,7 @@ class _StatisticsPageState extends State<StatisticsPage>
                       size: 28,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12), // Ridotto da 16 a 12
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -677,7 +678,7 @@ class _StatisticsPageState extends State<StatisticsPage>
                             letterSpacing: -0.25,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2), // Ridotto da 4 a 2
                         Text(
                           "Detailed study time per subject",
                           style: textTheme.bodyMedium?.copyWith(
