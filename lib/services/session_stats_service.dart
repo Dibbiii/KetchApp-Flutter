@@ -271,17 +271,21 @@ class SessionStatsService {
           final action = _getActivityProperty(activity, 'action');
           final time = _getActivityProperty(activity, 'createdAt') as DateTime?;
 
-          if (time == null) continue;
+          if (time == null || action == null) continue;
 
           print('  📝 $action at $time');
 
-          if (action == 'start' || action == 'resume') {
+          // Normalizza le azioni per il confronto
+          final normalizedAction = action.toString().toLowerCase();
+
+          if (normalizedAction == 'start' || normalizedAction == 'resume') {
             lastStartTime = time;
-          } else if (action == 'pause' || action == 'end') {
+            print('    🟢 Iniziato periodo di lavoro');
+          } else if (normalizedAction == 'pause' || normalizedAction == 'end') {
             if (lastStartTime != null) {
               final duration = time.difference(lastStartTime);
               totalWorkingTime += duration;
-              print('    ⏱️ Aggiunto segmento: ${duration.inSeconds}s');
+              print('    ⏱️ Aggiunto segmento: ${duration.inMinutes}min ${duration.inSeconds % 60}s');
               lastStartTime = null;
             }
           }
@@ -294,7 +298,7 @@ class SessionStatsService {
       if (lastStartTime != null) {
         final currentDuration = DateTime.now().difference(lastStartTime);
         totalWorkingTime += currentDuration;
-        print('    ⏱️ Aggiunto tempo corrente: ${currentDuration.inSeconds}s');
+        print('    ⏱️ Aggiunto tempo corrente: ${currentDuration.inMinutes}min ${currentDuration.inSeconds % 60}s');
       }
 
       print('✅ Tempo totale di lavoro: ${totalWorkingTime.inMinutes}min ${totalWorkingTime.inSeconds % 60}s');
@@ -318,19 +322,30 @@ class SessionStatsService {
           final action = _getActivityProperty(activity, 'action');
           final time = _getActivityProperty(activity, 'createdAt') as DateTime?;
 
-          if (time == null) continue;
+          if (time == null || action == null) continue;
 
-          if (action == 'pause') {
+          // Normalizza le azioni per il confronto
+          final normalizedAction = action.toString().toLowerCase();
+
+          if (normalizedAction == 'pause') {
             lastPauseTime = time;
-          } else if ((action == 'resume' || action == 'end') && lastPauseTime != null) {
+            print('    ⏸️ Iniziata pausa at $time');
+          } else if ((normalizedAction == 'resume' || normalizedAction == 'end') && lastPauseTime != null) {
             final pauseDuration = time.difference(lastPauseTime);
             totalPausedTime += pauseDuration;
-            print('    ⏸️ Pausa durata: ${pauseDuration.inSeconds}s');
+            print('    ⏸️ Pausa durata: ${pauseDuration.inMinutes}min ${pauseDuration.inSeconds % 60}s');
             lastPauseTime = null;
           }
         } catch (e) {
           print('⚠️ Errore nel calcolare pausa: $e');
         }
+      }
+
+      // Se è ancora in pausa, aggiungi il tempo fino ad ora
+      if (lastPauseTime != null) {
+        final currentPauseDuration = DateTime.now().difference(lastPauseTime);
+        totalPausedTime += currentPauseDuration;
+        print('    ⏸️ Pausa corrente: ${currentPauseDuration.inMinutes}min ${currentPauseDuration.inSeconds % 60}s');
       }
 
       print('✅ Tempo totale di pausa: ${totalPausedTime.inMinutes}min ${totalPausedTime.inSeconds % 60}s');

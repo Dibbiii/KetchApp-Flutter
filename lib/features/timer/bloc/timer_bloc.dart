@@ -51,6 +51,8 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     on<_TimerTicked>(_onTicked);
     on<TimerSkipToEnd>(_onSkipToEnd);
     on<NavigateToSummary>(_onNavigateToSummary);
+    on<CheckScheduledTime>(_onCheckScheduledTime);
+    on<_ScheduleTimerTicked>(_onScheduleTimerTicked);
   }
 
   @override
@@ -400,6 +402,33 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     _tomatoDuration = newTomato.endAt.difference(newTomato.startAt).inSeconds;
     _breakDuration = newTomato.pauseEnd?.difference(newTomato.endAt).inSeconds ?? 0;
 
+    // 🕐 NUOVO: Controlla se il pomodoro deve iniziare ora o è programmato per dopo
+    final scheduledStartTime = newTomato.startAt;
+    final currentTime = DateTime.now().toUtc();
+
+    print('🕐 Controllo orario pomodoro $nextTomatoId:');
+    print('   Programmato per: $scheduledStartTime');
+    print('   Ora corrente: $currentTime');
+
+    if (scheduledStartTime.isAfter(currentTime)) {
+      // Il pomodoro è programmato per il futuro - dobbiamo aspettare
+      final waitTime = scheduledStartTime.difference(currentTime);
+      print('⏰ Il prossimo pomodoro inizierà tra ${_formatDuration(waitTime)}');
+
+      emit(WaitingForScheduledTime(
+        nextTomatoId: nextTomatoId,
+        scheduledStartTime: scheduledStartTime,
+        remainingWaitTime: waitTime,
+      ));
+
+      // Avvia un timer per aggiornare il countdown
+      _startScheduleTimer(waitTime, emit);
+      return;
+    }
+
+    // Il pomodoro può iniziare ora
+    print('✅ Il pomodoro può iniziare ora');
+
     if (autoStart) {
       // Auto-switch with notification
       emit(TomatoSwitched(newTomatoId: _tomatoId));
@@ -409,13 +438,55 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
       emit(TomatoTimerInProgress(_tomatoDuration));
       _startTimer(_tomatoDuration);
     } else {
-      // Manual switch
-      final activities = await _apiService.getTomatoActivities(_tomatoId);
-      if (!_hasActivity(activities, ActivityAction.START, ActivityType.TIMER)) {
-        await _apiService.createActivity(_userUUID, _tomatoId, ActivityAction.START, ActivityType.TIMER);
+      // Manual switch - mostra che è pronto per iniziare
+      emit(TomatoTimerReady());
+    }
+  }
+
+  /// Avvia un timer per il countdown dell'attesa
+  void _startScheduleTimer(Duration waitTime, Emitter<TimerState> emit) {
+    _timer?.cancel();
+    _timer = Timer.periodic(_timerInterval, (timer) {
+      if (isClosed) {
+        timer.cancel();
+        return;
       }
-      emit(TomatoTimerInProgress(_tomatoDuration));
-      _startTimer(_tomatoDuration);
+
+      final currentState = state;
+      if (currentState is WaitingForScheduledTime) {
+        final newWaitTime = currentState.scheduledStartTime.difference(DateTime.now().toUtc());
+
+        if (newWaitTime.inSeconds <= 0) {
+          // È ora di iniziare il pomodoro!
+          timer.cancel();
+          print('🎯 È ora di iniziare il pomodoro ${currentState.nextTomatoId}!');
+          emit(TomatoTimerReady());
+        } else {
+          // Aggiorna il countdown
+          emit(WaitingForScheduledTime(
+            nextTomatoId: currentState.nextTomatoId,
+            scheduledStartTime: currentState.scheduledStartTime,
+            remainingWaitTime: newWaitTime,
+          ));
+        }
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  /// Helper per formattare la durata in modo leggibile
+  String _formatDuration(Duration duration) {
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+    final seconds = duration.inSeconds.remainder(60);
+
+    if (hours > 0) {
+      return '${hours}h ${minutes}m ${seconds}s';
+    } else if (minutes > 0) {
+      return '${minutes}m ${seconds}s';
+    } else {
+      return '${seconds}s';
     }
   }
 
@@ -474,6 +545,47 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
       emit(NavigatingToSummary(completedTomatoIds: List.unmodifiable(_completedTomatoIds)));
     } catch (e) {
       emit(const TimerError(message: 'Failed to navigate to summary'));
+    }
+  }
+
+  Future<void> _onCheckScheduledTime(CheckScheduledTime event, Emitter<TimerState> emit) async {
+    try {
+      final tomato = await _apiService.getTomatoById(_tomatoId);
+
+      // Controlla se il pomodoro è programmato per ora
+      final scheduledStartTime = tomato.startAt;
+      final currentTime = DateTime.now().toUtc();
+
+      if (scheduledStartTime.isAfter(currentTime)) {
+        // Il pomodoro è programmato per il futuro
+        final waitTime = scheduledStartTime.difference(currentTime);
+        emit(WaitingForScheduledTime(
+          nextTomatoId: _tomatoId,
+          scheduledStartTime: scheduledStartTime,
+          remainingWaitTime: waitTime,
+        ));
+        _startScheduleTimer(waitTime, emit);
+      } else {
+        // Il pomodoro può iniziare ora
+        emit(const TomatoTimerReady());
+      }
+    } catch (e) {
+      emit(const TimerError(message: 'Failed to check scheduled time'));
+    }
+  }
+
+  void _onScheduleTimerTicked(_ScheduleTimerTicked event, Emitter<TimerState> emit) {
+    final currentState = state;
+    if (currentState is WaitingForScheduledTime) {
+      if (event.remainingTime.inSeconds > 0) {
+        emit(WaitingForScheduledTime(
+          nextTomatoId: currentState.nextTomatoId,
+          scheduledStartTime: currentState.scheduledStartTime,
+          remainingWaitTime: event.remainingTime,
+        ));
+      } else {
+        emit(const TomatoTimerReady());
+      }
     }
   }
 }

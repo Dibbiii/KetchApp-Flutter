@@ -57,3 +57,15 @@ class NavigateToSummary extends TimerEvent {
   @override
   List<Object> get props => [completedTomatoIds];
 }
+
+class CheckScheduledTime extends TimerEvent {
+  const CheckScheduledTime();
+}
+
+class _ScheduleTimerTicked extends TimerEvent {
+  final Duration remainingTime;
+  const _ScheduleTimerTicked({required this.remainingTime});
+
+  @override
+  List<Object> get props => [remainingTime];
+}

@@ -18,6 +18,7 @@ class _MainLayoutState extends State<MainLayout> {
     return Scaffold(
       body: widget.child,
       floatingActionButton: FloatingActionButton(
+        heroTag: "main_layout_fab", // Aggiungi un tag unico
         onPressed: () {
           showModalBottomSheet(
             context: context,
