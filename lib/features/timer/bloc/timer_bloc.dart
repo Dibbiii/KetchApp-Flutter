@@ -22,6 +22,9 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
   int _tomatoDuration = 0;
   int _breakDuration = 0;
 
+  // Tracciamento dei pomodori completati nella sessione
+  final List<int> _completedTomatoIds = [];
+
   // Cache for activity strings to avoid repeated conversions
   static final Map<ActivityAction, String> _actionStringCache = {
     for (final action in ActivityAction.values) action: action.toShortString(),
@@ -47,6 +50,7 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     on<NextTransition>(_onNextTransition);
     on<_TimerTicked>(_onTicked);
     on<TimerSkipToEnd>(_onSkipToEnd);
+    on<NavigateToSummary>(_onNavigateToSummary);
   }
 
   @override
@@ -347,6 +351,11 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
   Future<void> _handleTomatoToBreakTransition(Emitter<TimerState> emit) async {
     await _apiService.createActivity(_userUUID, _tomatoId, ActivityAction.END, ActivityType.TIMER);
 
+    // Aggiungi il pomodoro corrente alla lista dei completati
+    if (!_completedTomatoIds.contains(_tomatoId)) {
+      _completedTomatoIds.add(_tomatoId);
+    }
+
     final tomato = await _apiService.getTomatoById(_tomatoId);
 
     if (tomato.nextTomatoId != null) {
@@ -354,7 +363,8 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
       emit(BreakTimerInProgress(_breakDuration, nextTomatoId: tomato.nextTomatoId!));
       _startTimer(_breakDuration);
     } else {
-      emit(const SessionComplete());
+      // Fine della sessione - naviga al riepilogo
+      emit(NavigatingToSummary(completedTomatoIds: List.unmodifiable(_completedTomatoIds)));
     }
   }
 
@@ -447,6 +457,23 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
         _startTimer(_skipToEndDuration);
       default:
         break;
+    }
+  }
+
+  Future<void> _onNavigateToSummary(NavigateToSummary event, Emitter<TimerState> emit) async {
+    _timer?.cancel();
+
+    // Logica per il tracciamento dei pomodori completati
+    try {
+      // Aggiungi l'ID del pomodoro corrente se non è già tracciato
+      if (!_completedTomatoIds.contains(_tomatoId)) {
+        _completedTomatoIds.add(_tomatoId);
+      }
+
+      // Invia gli ID dei pomodori completati alla schermata di riepilogo
+      emit(NavigatingToSummary(completedTomatoIds: List.unmodifiable(_completedTomatoIds)));
+    } catch (e) {
+      emit(const TimerError(message: 'Failed to navigate to summary'));
     }
   }
 }

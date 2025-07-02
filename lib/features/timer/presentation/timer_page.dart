@@ -5,9 +5,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:ketchapp_flutter/models/tomato.dart';
 import 'package:ketchapp_flutter/services/api_service.dart';
+import 'package:ketchapp_flutter/services/session_stats_service.dart';
 import 'package:provider/provider.dart';
 import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
-import 'package:ketchapp_flutter/models/activity.dart';
+import 'package:ketchapp_flutter/features/timer/presentation/timer_summary_page.dart';
 
 import '../bloc/timer_bloc.dart';
 import 'widgets/skip_timer_button.dart';
@@ -116,6 +117,86 @@ class _TimerViewState extends State<TimerView> {
     return 0;
   }
 
+  /// Naviga alla pagina di riepilogo della sessione
+  Future<void> _navigateToSummary(BuildContext context, List<int> completedTomatoIds) async {
+    print('🚀 _navigateToSummary chiamata con IDs: $completedTomatoIds');
+
+    try {
+      final apiService = Provider.of<ApiService>(context, listen: false);
+      final sessionStatsService = SessionStatsService(apiService);
+
+      print('📊 Inizio calcolo statistiche...');
+      // Calcola le statistiche della sessione
+      final sessionSummary = await sessionStatsService.calculateSessionStats(completedTomatoIds);
+
+      print('✅ Statistiche calcolate, mostrando riepilogo...');
+
+      // Invece di navigare, mostriamo la pagina di riepilogo come dialog/overlay
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => Dialog.fullscreen(
+            child: TimerSummaryPage(
+              sessionSummary: sessionSummary,
+              onGoHome: () {
+                Navigator.of(context).pop(); // Chiudi il dialog
+                // Poi prova a tornare alla home
+                try {
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                } catch (e) {
+                  print('Errore nel tornare alla home: $e');
+                  // Se anche questo fallisce, proviamo con maybePop
+                  Navigator.of(context).maybePop();
+                }
+              },
+              onPlanAgain: () {
+                Navigator.of(context).pop(); // Chiudi il dialog
+                print('Pianifica nuova sessione richiesta - TODO: implementare');
+                // Per ora torniamo alla home
+                try {
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                } catch (e) {
+                  print('Errore nel tornare alla home: $e');
+                  Navigator.of(context).maybePop();
+                }
+              },
+            ),
+          ),
+        );
+        print('🎯 Dialog riepilogo mostrato!');
+      } else {
+        print('❌ Widget non montato, riepilogo annullato');
+      }
+    } catch (e, stackTrace) {
+      print('💥 Errore durante la navigazione al riepilogo: $e');
+      print('Stack trace: $stackTrace');
+      // Fallback: mostra un semplice dialog di errore
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Sessione Completata'),
+            content: const Text('La sessione è stata completata con successo!'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  try {
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  } catch (e) {
+                    Navigator.of(context).maybePop();
+                  }
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -144,6 +225,8 @@ class _TimerViewState extends State<TimerView> {
       },
       child: BlocListener<TimerBloc, TimerState>(
         listener: (context, state) {
+          print('🔔 BlocListener ricevuto stato: ${state.runtimeType}');
+
           if (state is WaitingNextTomato) {
             final nextIndex = widget.tomatoes
                 .indexWhere((tomato) => tomato.id == state.nextTomatoId);
@@ -157,7 +240,12 @@ class _TimerViewState extends State<TimerView> {
             if (nextIndex != -1) {
               _onTomatoSelected(nextIndex);
             }
+          } else if (state is NavigatingToSummary) {
+            print('🎯 NavigatingToSummary ricevuto con IDs: ${state.completedTomatoIds}');
+            // Naviga alla pagina di riepilogo quando la sessione è completata
+            _navigateToSummary(context, state.completedTomatoIds);
           } else if (state is SessionComplete) {
+            print('✅ SessionComplete ricevuto');
             // This case might be redundant if WaitingNextTomato handles all transitions.
             // However, keeping it as a fallback.
             final nextTomatoIndex = _currentTomatoIndex + 1;
@@ -223,7 +311,7 @@ class _TimerViewState extends State<TimerView> {
                                 child: CircularProgressIndicator(
                                   value: progress,
                                   strokeWidth: 12,
-                                  backgroundColor: colors.surface.withOpacity(0.1),
+                                  backgroundColor: colors.surface.withValues(alpha: 0.1),
                                   valueColor: AlwaysStoppedAnimation<Color>(
                                     isBreak ? Colors.green.shade300 : colors.primary,
                                   ),
@@ -306,6 +394,19 @@ class _TimerViewState extends State<TimerView> {
                               "Well done!",
                               style: theme.textTheme.headlineSmall
                                   ?.copyWith(color: colors.secondary),
+                            );
+                          } else if (state is NavigatingToSummary) {
+                            return Column(
+                              children: [
+                                const CircularProgressIndicator(),
+                                const SizedBox(height: 16),
+                                Text(
+                                  "Caricamento riepilogo...",
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: colors.primary,
+                                  ),
+                                ),
+                              ],
                             );
                           }
                           return const SizedBox.shrink();
