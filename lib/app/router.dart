@@ -19,6 +19,7 @@ import 'package:ketchapp_flutter/features/profile/presentation/pages/profile_pag
 import '../features/auth/bloc/auth_bloc.dart';
 import '../features/statistics/presentation/statistics_page.dart';
 import 'package:ketchapp_flutter/features/auth/presentation/pages/forgot_password_page.dart';
+import 'package:ketchapp_flutter/features/statistics/presentation/tomato_summary_page.dart';
 
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<dynamic> stream) {
@@ -104,6 +105,12 @@ final GoRouter router = GoRouter(
                   StatisticsBloc(authBloc: context.read<AuthBloc>()),
               child: StatisticsPage(),
             );
+          },
+        ),
+        GoRoute(
+          path: '/timer-summary',
+          builder: (context, state) {
+            return TimerSummaryPage();
           },
         ),
         GoRoute(

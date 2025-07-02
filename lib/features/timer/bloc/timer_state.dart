@@ -49,6 +49,30 @@ class WaitingNextTomato extends TimerState {
   List<Object> get props => [nextTomatoId];
 }
 
+class WaitingForScheduledTime extends TimerState {
+  final int nextTomatoId;
+  final DateTime scheduledStartTime;
+  final Duration remainingWaitTime;
+
+  const WaitingForScheduledTime({
+    required this.nextTomatoId,
+    required this.scheduledStartTime,
+    required this.remainingWaitTime,
+  }) : super(0);
+
+  @override
+  List<Object> get props => [nextTomatoId, scheduledStartTime, remainingWaitTime];
+}
+
+class TomatoScheduled extends TimerState {
+  final int remainingTime;
+
+  const TomatoScheduled(this.remainingTime) : super(remainingTime);
+
+  @override
+  List<Object> get props => [remainingTime];
+}
+
 class TimerError extends TimerState {
   final String message;
   const TimerError({required this.message}) : super(0);
@@ -78,4 +102,3 @@ class NavigatingToSummary extends TimerState {
   @override
   List<Object> get props => [completedTomatoIds];
 }
-

@@ -29,6 +29,7 @@ class SkipTimerButton extends StatelessWidget {
         }
 
         return FloatingActionButton.extended(
+          heroTag: "skip_timer_fab", // Aggiungi un tag unico
           onPressed: () {
             context.read<TimerBloc>().add(const TimerSkipToEnd());
           },
