@@ -60,3 +60,11 @@ class TomatoSwitched extends TimerState {
 class SessionComplete extends TimerState {
   const SessionComplete() : super(0);
 }
+
+class TimerError extends TimerState {
+  final String message;
+  const TimerError({required this.message}) : super(0);
+
+  @override
+  List<Object> get props => [message];
+}
