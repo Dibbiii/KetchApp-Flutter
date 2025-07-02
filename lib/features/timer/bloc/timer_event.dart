@@ -48,3 +48,12 @@ class _TimerTicked extends TimerEvent {
 class TimerSkipToEnd extends TimerEvent {
   const TimerSkipToEnd();
 }
+
+class NavigateToSummary extends TimerEvent {
+  final List<int> completedTomatoIds;
+
+  const NavigateToSummary({required this.completedTomatoIds});
+
+  @override
+  List<Object> get props => [completedTomatoIds];
+}
