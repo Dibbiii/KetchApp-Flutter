@@ -9,6 +9,8 @@ import 'package:ketchapp_flutter/features/home/bloc/home_bloc.dart';
 import 'package:ketchapp_flutter/features/auth/presentation/pages/login_page.dart';
 import 'package:ketchapp_flutter/features/auth/presentation/pages/register_page.dart';
 import 'package:ketchapp_flutter/features/home/presentation/pages/home_page.dart';
+import 'package:ketchapp_flutter/features/plan/models/plan_model.dart';
+import 'package:ketchapp_flutter/features/plan/presentation/pages/plan_creation_loading_page.dart';
 import 'package:ketchapp_flutter/features/rankings/presentation/ranking_page.dart';
 import 'package:ketchapp_flutter/features/statistics/bloc/statistics_bloc.dart';
 import 'package:ketchapp_flutter/features/timer/presentation/timer_page.dart';
@@ -63,6 +65,19 @@ final GoRouter router = GoRouter(
       builder: (context, state) => const ForgotPasswordPage(),
     ),
     GoRoute(
+      path: '/plan-creation-loading',
+      redirect: (context, state) {
+        if (state.extra is! PlanModel) {
+          return '/home?refresh=true';
+        }
+        return null;
+      },
+      builder: (context, state) {
+        final plan = state.extra as PlanModel;
+        return PlanCreationLoadingPage(plan: plan);
+      },
+    ),
+    GoRoute(
       path: '/timer',
       builder: (context, state) {
         return TimerPage();
@@ -75,7 +90,12 @@ final GoRouter router = GoRouter(
             child: MainLayout(child: child),
           ),
       routes: [
-        GoRoute(path: '/home', builder: (context, state) => const HomePage()),
+        GoRoute(
+            path: '/home',
+            builder: (context, state) {
+              final refresh = state.uri.queryParameters['refresh'] == 'true';
+              return HomePage(refresh: refresh);
+            }),
         GoRoute(
           path: '/statistics',
           builder: (context, state) {

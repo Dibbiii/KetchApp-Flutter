@@ -6,7 +6,8 @@ import 'package:ketchapp_flutter/features/home/presentation/widgets/todays_tomat
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final bool refresh;
+  const HomePage({super.key, this.refresh = false});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -15,12 +16,18 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final PageController _pageController = PageController();
 
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   @override
   void initState() {
     super.initState();
     _initializeNotifications();
+    if (widget.refresh) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<HomeBloc>().add(LoadHomeData());
+      });
+    }
   }
 
   Future<void> _initializeNotifications() async {

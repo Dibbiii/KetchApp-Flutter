@@ -65,6 +65,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
   String? _subjectErrorText;
   String? _sessionTimeErrorText;
   String? _breakTimeErrorText;
+  bool _saveAttempted = false;
 
   @override
   void initState() {
@@ -73,8 +74,6 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
     _breakTimeController = TextEditingController(text: 'Add break time');
 
     _addSubject();
-    _addcalendar();
-    // Non aggiungere più eventi fissi qui
   }
 
   @override
@@ -545,8 +544,13 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
+    return Scaffold(
+      body: _buildBody(),
+      bottomNavigationBar: _buildSaveButton(),
+    );
+  }
+
+  Widget _buildBody() {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return SizedBox(
@@ -554,548 +558,568 @@ class _ShowBottomSheetState extends State<ShowBottomSheet> {
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildHeader(),
+            const Divider(),
+            _buildGoogleSync(),
+            const Divider(),
+            _buildSectionTitle("Your Appointments"),
+            _buildCalendarSection(),
+            const Divider(),
+            _buildSectionTitle("Subjects to Study"),
+            _buildSubjectsSection(),
+            const Divider(),
+            _buildSectionTitle("Timer Settings"),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: colors.primary,
-                      foregroundColor: colors.onPrimary,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16.0),
-                      ),
-                      minimumSize: const Size(0, 36),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    onPressed: () async {
-                      final subjects = _subjectControllers
-                          .map((c) => c.text.trim())
-                          .where((t) => t.isNotEmpty)
-                          .toList();
-
-                      String? subjectError;
-                      if (subjects.isEmpty) {
-                        subjectError = 'Please add at least one subject.';
-                      } else {
-                        final hasDuration = _subjectDurations.values.any((d) => d > 0);
-                        if (!hasDuration) {
-                          subjectError =
-                              'At least one subject must have a duration greater than 0.';
-                        }
-                      }
-
-                      final sessionError = _dialogSessionSelectedHours == 0.0
-                          ? 'Session time must be greater than 0.'
-                          : null;
-                      final breakError = _dialogBreakSelectedHours == 0.0
-                          ? 'Break time must be greater than 0.'
-                          : null;
-
-                      setState(() {
-                        _subjectErrorText = subjectError;
-                        _sessionTimeErrorText = sessionError;
-                        _breakTimeErrorText = breakError;
-                      });
-
-                      if (subjectError != null ||
-                          sessionError != null ||
-                          breakError != null) {
-                        return;
-                      }
-                      // Call your API here before closing the sheet
-                      await _createPlan();
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Save', style: TextStyle(fontSize: 14)),
-                  ),
-                ],
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+              child: Text(
+                'Set the duration for your study sessions and breaks.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ),
-            const Divider(), // ! Sync with Google Calendar Section
-            BlocBuilder<AuthBloc, AuthState>(
-              builder: (context, state) {
-                if (state is Authenticated &&
-                    state.user.providerData
-                        .any((userInfo) => userInfo.providerId == 'google.com')) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12.0,
-                      vertical: 8.0,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.sync, color: colors.onSurfaceVariant, size: 22),
-                        const SizedBox(width: 16),
-                        Text(
-                          'Sync with Google Calendar',
-                          style: TextStyle(
-                            fontSize: 16.0,
-                            color: colors.onSurfaceVariant,
-                          ),
-                        ),
-                        const Spacer(),
-                        Switch(
-                          value: _syncWithGoogleCalendar,
-                          onChanged: (bool value) {
-                            setState(() {
-                              _syncWithGoogleCalendar = value;
-                              if (_syncWithGoogleCalendar) {
-                                _fetchGoogleCalendarEvents();
-                              } else {
-                                _clearGoogleCalendarEvents();
-                              }
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  );
-                }
-                return const SizedBox.shrink();
-              },
+            _buildTimerSettingsSection(),
+            const Divider(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Create New Plan',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGoogleSync() {
+    final colors = Theme.of(context).colorScheme;
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        if (state is Authenticated &&
+            state.user.providerData
+                .any((userInfo) => userInfo.providerId == 'google.com')) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
             ),
-            BlocBuilder<AuthBloc, AuthState>(
-              builder: (context, state) {
-                if (state is Authenticated &&
-                    state.user.providerData
-                        .any((userInfo) => userInfo.providerId == 'google.com')) {
-                  return const Divider(); // ! Events Section
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-            // const Divider(), // ! Events Section - Original position
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                  child: Icon(
-                    Icons.event_note,
-                    size: 22,
+                Icon(Icons.sync, color: colors.onSurfaceVariant, size: 22),
+                const SizedBox(width: 16),
+                Text(
+                  'Sync with Google Calendar',
+                  style: TextStyle(
+                    fontSize: 16.0,
                     color: colors.onSurfaceVariant,
                   ),
                 ),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Show fixed calendars first
-                      ..._fixedCalendarEvents.map(
-                        (fixed) => Container(
-                          margin: const EdgeInsets.only(
-                            bottom: 4.0,
-                            right: 12.0,
+                const Spacer(),
+                Switch(
+                  value: _syncWithGoogleCalendar,
+                  onChanged: (bool value) {
+                    setState(() {
+                      _syncWithGoogleCalendar = value;
+                      if (_syncWithGoogleCalendar) {
+                        _fetchGoogleCalendarEvents();
+                      } else {
+                        _clearGoogleCalendarEvents();
+                      }
+                    });
+                  },
+                ),
+              ],
+            ),
+          );
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+      child: Text(
+        title,
+        style: Theme.of(context)
+            .textTheme
+            .titleLarge
+            ?.copyWith(fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildCalendarSection() {
+    final colors = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ..._calendarControllers.asMap().entries.map((entry) {
+          int idx = entry.key;
+          TextEditingController controller = entry.value;
+          FocusNode focusNode = _calendarFocusNodes[idx];
+          final startAt = _calendarTimes[idx]?['start_at'] ?? '';
+          final endAt = _calendarTimes[idx]?['end_at'] ?? '';
+          final bool showError =
+              _saveAttempted && (startAt.isEmpty || endAt.isEmpty);
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                margin:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                decoration: BoxDecoration(
+                  color: colors.surfaceContainerHighest.withAlpha(128),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: controller,
+                        focusNode: focusNode,
+                        readOnly: _googleCalendarEvents.contains(idx),
+                        decoration: InputDecoration(
+                          hintText: 'Enter calendar event',
+                          border: InputBorder.none,
+                          isDense: true,
+                          prefixIcon: _googleCalendarEvents.contains(idx)
+                              ? Icon(
+                                  Icons.calendar_today_rounded,
+                                  size: 16,
+                                  color: colors.primary
+                                      .withAlpha((0.7 * 255).toInt()),
+                                )
+                              : null,
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                        ),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: _googleCalendarEvents.contains(idx)
+                              ? colors.onSurface.withAlpha((0.8 * 255).toInt())
+                              : colors.onSurface,
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () async {
+                        final result = await showDialog<Map<String, String>>(
+                          context: context,
+                          builder: (context) => _calendarTimeDialog(
+                            initialStart: startAt,
+                            initialEnd: endAt,
+                            isGoogleCalendarEvent:
+                                _googleCalendarEvents.contains(idx),
                           ),
+                        );
+                        if (result != null) {
+                          setState(() {
+                            _calendarTimes[idx] = result;
+                          });
+                        }
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 8.0),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12.0, vertical: 8.0),
+                        decoration: BoxDecoration(
+                          color: showError
+                              ? colors.errorContainer.withOpacity(0.5)
+                              : colors.primaryContainer,
+                          borderRadius: BorderRadius.circular(8.0),
+                          border: Border.all(
+                              color: showError ? colors.error : colors.primary,
+                              width: 1),
+                        ),
+                        child: Text(
+                          (startAt.isNotEmpty && endAt.isNotEmpty)
+                              ? '$startAt - $endAt'
+                              : 'Set time',
+                          style: TextStyle(
+                            color: showError
+                                ? colors.onErrorContainer
+                                : colors.onPrimaryContainer,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      splashRadius: 18,
+                      onPressed: () => _removecalendarAt(idx),
+                    ),
+                  ],
+                ),
+              ),
+              if (showError)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 16, 8),
+                  child: Text(
+                    'Please set a time for this event.',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+            ],
+          );
+        }).toList(),
+        Padding(
+          padding: const EdgeInsets.only(left: 16.0, top: 8),
+          child: TextButton.icon(
+            onPressed: _addcalendar,
+            icon: const Icon(Icons.add_circle_outline_rounded),
+            label: const Text('Add event'),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSubjectsSection() {
+    final colors = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+          child: Text(
+            'Add the subjects you want to study and specify how long you want to study each one.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (_subjectControllers.isNotEmpty)
+          ..._subjectControllers.asMap().entries.map((entry) {
+            int idx = entry.key;
+            TextEditingController controller = entry.value;
+            FocusNode focusNode = _subjectFocusNodes[idx];
+            final durationHmm = _subjectDurations[idx] ?? 0.0;
+            final durationText =
+                formatDurationFromHmm(durationHmm, defaultText: '');
+            final bool isDurationSet = durationHmm > 0;
+            final bool showError = _saveAttempted && !isDurationSet;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceContainerHighest.withAlpha(128),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: controller,
+                          focusNode: focusNode,
+                          decoration: const InputDecoration(
+                            hintText: 'Enter subject',
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                          ),
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => _showSubjectDurationDialog(idx),
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 8.0),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12.0, vertical: 8.0),
                           decoration: BoxDecoration(
-                            color: colors.surfaceContainerHighest.withAlpha(
-                              128,
+                            color: showError
+                                ? colors.errorContainer.withOpacity(0.5)
+                                : colors.primaryContainer,
+                            borderRadius: BorderRadius.circular(20.0),
+                            border: Border.all(
+                              color:
+                                  showError ? colors.error : colors.primary,
+                              width: 1,
                             ),
-                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: TextEditingController(
-                                    text: fixed['title'],
-                                  ),
-                                  readOnly: true,
-                                  decoration: InputDecoration(
-                                    hintText: 'Enter calendar event',
-                                    border: InputBorder.none,
-                                    isDense: true,
-                                    prefixIcon: Icon(
-                                      Icons.lock_clock,
-                                      size: 16,
-                                      color: colors.primary.withAlpha(
-                                        (0.7 * 255).toInt(),
-                                      ),
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 12,
-                                    ),
-                                  ),
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: colors.onSurface.withAlpha(
-                                      (0.8 * 255).toInt(),
-                                    ),
-                                  ),
+                              Icon(
+                                Icons.timer_outlined,
+                                size: 16,
+                                color: showError
+                                    ? colors.onErrorContainer
+                                    : colors.onPrimaryContainer,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                isDurationSet ? durationText : 'Set Duration',
+                                style: TextStyle(
+                                  color: showError
+                                      ? colors.onErrorContainer
+                                      : colors.onPrimaryContainer,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              Container(
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 8.0,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12.0,
-                                  vertical: 8.0,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: colors.primaryContainer,
-                                  borderRadius: BorderRadius.circular(8.0),
-                                  border: Border.all(
-                                    color: colors.primary,
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Text(
-                                  '${fixed['start_at']} - ${fixed['end_at']}',
-                                  style: TextStyle(
-                                    color: colors.onPrimaryContainer,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                              // No delete button for fixed calendars
                             ],
                           ),
                         ),
                       ),
-                      // ...existing code for user calendars...
-                      ..._calendarControllers.asMap().entries.map((entry) {
-                        int idx = entry.key;
-                        TextEditingController controller = entry.value;
-                        FocusNode focusNode = _calendarFocusNodes[idx];
-                        final startAt = _calendarTimes[idx]?['start_at'] ?? '';
-                        final endAt = _calendarTimes[idx]?['end_at'] ?? '';
-                        return Container(
-                          margin: const EdgeInsets.only(
-                            bottom: 4.0,
-                            right: 12.0,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colors.surfaceContainerHighest.withAlpha(
-                              128,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: controller,
-                                  focusNode: focusNode,
-                                  readOnly: _googleCalendarEvents.contains(idx),
-                                  // Make Google Calendar events read-only
-                                  decoration: InputDecoration(
-                                    hintText: 'Enter calendar',
-                                    border: InputBorder.none,
-                                    isDense: true,
-                                    prefixIcon:
-                                        _googleCalendarEvents.contains(idx)
-                                            ? Icon(
-                                              Icons.calendar_today_rounded,
-                                              size: 16,
-                                              color: colors.primary.withAlpha(
-                                                (0.7 * 255).toInt(),
-                                              ),
-                                            )
-                                            : null,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 12,
-                                    ),
-                                  ),
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color:
-                                        _googleCalendarEvents.contains(idx)
-                                            ? colors.onSurface.withAlpha(
-                                              (0.8 * 255).toInt(),
-                                            )
-                                            : colors.onSurface,
-                                  ),
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: () async {
-                                  final result =
-                                      await showDialog<Map<String, String>>(
-                                        context: context,
-                                        builder:
-                                            (context) => _calendarTimeDialog(
-                                              initialStart: startAt,
-                                              initialEnd: endAt,
-                                              isGoogleCalendarEvent:
-                                                  _googleCalendarEvents
-                                                      .contains(
-                                                        idx,
-                                                      ), // Pass directly
-                                            ),
-                                      );
-                                  if (result != null) {
-                                    setState(() {
-                                      _calendarTimes[idx] = result;
-                                    });
-                                  }
-                                },
-                                child: Container(
-                                  margin: const EdgeInsets.symmetric(
-                                    horizontal: 8.0,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12.0,
-                                    vertical: 8.0,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: colors.primaryContainer,
-                                    borderRadius: BorderRadius.circular(8.0),
-                                    border: Border.all(
-                                      color: colors.primary,
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    (startAt.isNotEmpty && endAt.isNotEmpty)
-                                        ? '$startAt - $endAt'
-                                        : 'Set time',
-                                    style: TextStyle(
-                                      color: colors.onPrimaryContainer,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.close, size: 20),
-                                splashRadius: 18,
-                                onPressed: () => _removecalendarAt(idx),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20),
+                        splashRadius: 18,
+                        onPressed: () => _removeSubjectAt(idx),
+                      ),
                     ],
                   ),
                 ),
-              ],
-            ),
-            InkWell(
-              onTap: _addcalendar,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 16.0,
-                  horizontal: 58.0,
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      'Add calendar',
+                if (showError)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 16, 8),
+                    child: Text(
+                      'Please set a duration for this subject.',
                       style: TextStyle(
-                        fontSize: 16.0,
-                        color: colors.onSurfaceVariant,
+                        color: Theme.of(context).colorScheme.error,
+                        fontSize: 12,
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const Divider(), // ! Subjects Section
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                  child: Icon(
-                    Icons.subject,
-                    size: 22,
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
-                if (_subjectControllers.isNotEmpty)
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children:
-                          _subjectControllers.asMap().entries.map((entry) {
-                        int idx = entry.key;
-                        TextEditingController controller = entry.value;
-                        FocusNode focusNode = _subjectFocusNodes[idx];
-                        final durationHmm = _subjectDurations[idx] ?? 0.0;
-                        final durationText =
-                            formatDurationFromHmm(durationHmm, defaultText: '');
-                        return Container(
-                          margin: const EdgeInsets.only(
-                            bottom: 4.0,
-                            right: 12.0,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colors.surfaceContainerHighest.withAlpha(
-                              128,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: TextFormField(
-                                  controller: controller,
-                                  focusNode: focusNode,
-                                  decoration: const InputDecoration(
-                                    hintText: 'Enter subject',
-                                    border: InputBorder.none,
-                                    isDense: true,
-                                    contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 12,
-                                    ),
-                                  ),
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: () => _showSubjectDurationDialog(idx),
-                                child: Text(durationHmm > 0 ? durationText : 'Set Duration'),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.close, size: 20),
-                                splashRadius: 18,
-                                onPressed: () => _removeSubjectAt(idx),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
                     ),
                   ),
               ],
+            );
+          }).toList(),
+        Padding(
+          padding: const EdgeInsets.only(left: 16.0, top: 8),
+          child: TextButton.icon(
+            onPressed: _addSubject,
+            icon: const Icon(Icons.add_circle_outline_rounded),
+            label: const Text('Add subject'),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.primary,
             ),
-            InkWell(
-              onTap: _addSubject,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 16.0,
-                  horizontal: 58.0,
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      'Add subject',
-                      style: TextStyle(
-                        fontSize: 16.0,
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            if (_subjectErrorText != null)
-              Padding(
-                padding: const EdgeInsets.only(left: 58.0, right: 12.0, bottom: 8.0),
-                child: Text(
-                  _subjectErrorText!,
-                  style: TextStyle(
-                      color: Theme.of(context).colorScheme.error, fontSize: 12),
-                ),
-              ),
-            const Divider(), // ! Session Section
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                  child: Icon(
-                    Icons.meeting_room_outlined,
-                    size: 22,
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 12.0),
-                    child: TextFormField(
-                      controller: _sessionTimeController,
-                      readOnly: true,
-                      onTap: _showSessionClockDialog,
-                      style: const TextStyle(fontSize: 16),
-                      decoration: InputDecoration(
-                        errorText: _sessionTimeErrorText,
-                        filled: true,
-                        fillColor: colors.surfaceContainerHighest.withAlpha(128),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 12,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const Divider(), // ! Break Section
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                  child: Icon(
-                    Icons.pause_circle_outline_rounded,
-                    size: 22,
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 12.0),
-                    child: TextFormField(
-                      controller: _breakTimeController,
-                      readOnly: true,
-                      onTap: _showBreakClockDialog,
-                      style: const TextStyle(fontSize: 16),
-                      decoration: InputDecoration(
-                        errorText: _breakTimeErrorText,
-                        filled: true,
-                        fillColor: colors.surfaceContainerHighest.withAlpha(128),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 12,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const Divider(), // ! Config Section
-          ],
+          ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildTimerSettingsSection() {
+    final colors = Theme.of(context).colorScheme;
+    final bool showSessionError =
+        _saveAttempted && _dialogSessionSelectedHours == 0.0;
+    final bool showBreakError = _saveAttempted && _dialogBreakSelectedHours == 0.0;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextFormField(
+              controller: _sessionTimeController,
+              readOnly: true,
+              onTap: _showSessionClockDialog,
+              style: const TextStyle(fontSize: 16),
+              decoration: InputDecoration(
+                labelText: "Session",
+                errorText: _sessionTimeErrorText,
+                filled: true,
+                fillColor: showSessionError
+                    ? colors.errorContainer.withOpacity(0.5)
+                    : colors.surfaceContainerHighest.withAlpha(128),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: showSessionError
+                      ? BorderSide(color: colors.error)
+                      : BorderSide.none,
+                ),
+                prefixIcon: Icon(
+                  Icons.timelapse_rounded,
+                  color: showSessionError
+                      ? colors.error
+                      : colors.onSurfaceVariant,
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: TextFormField(
+              controller: _breakTimeController,
+              readOnly: true,
+              onTap: _showBreakClockDialog,
+              style: const TextStyle(fontSize: 16),
+              decoration: InputDecoration(
+                labelText: "Break",
+                errorText: _breakTimeErrorText,
+                filled: true,
+                fillColor: showBreakError
+                    ? colors.errorContainer.withOpacity(0.5)
+                    : colors.surfaceContainerHighest.withAlpha(128),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: showBreakError
+                      ? BorderSide(color: colors.error)
+                      : BorderSide.none,
+                ),
+                prefixIcon: Icon(
+                  Icons.pause_circle_outline_rounded,
+                  color: showBreakError
+                      ? colors.error
+                      : colors.onSurfaceVariant,
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSaveButton() {
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      child: FilledButton.icon(
+        icon: const Icon(Icons.save),
+        label: const Text('Save Plan'),
+        style: FilledButton.styleFrom(
+          backgroundColor: colors.primary,
+          foregroundColor: colors.onPrimary,
+          minimumSize: const Size.fromHeight(52),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        onPressed: () async {
+          setState(() {
+            _saveAttempted = true;
+          });
+
+          final subjects = _subjectControllers
+              .asMap()
+              .entries
+              .where((entry) => entry.value.text.trim().isNotEmpty)
+              .toList();
+
+          String? subjectError;
+          if (subjects.isEmpty) {
+            subjectError = 'Please add at least one subject.';
+          } else {
+            final allDurationsSet = subjects.every((entry) {
+              final idx = entry.key;
+              return (_subjectDurations[idx] ?? 0.0) > 0.0;
+            });
+
+            if (!allDurationsSet) {
+              subjectError = 'Please set a duration for every subject.';
+            }
+          }
+
+          final sessionError = _dialogSessionSelectedHours == 0.0
+              ? 'Session time must be greater than 0.'
+              : null;
+          final breakError = _dialogBreakSelectedHours == 0.0
+              ? 'Break time must be greater than 0.'
+              : null;
+
+          setState(() {
+            _subjectErrorText = subjectError;
+            _sessionTimeErrorText = sessionError;
+            _breakTimeErrorText = breakError;
+          });
+
+          if (subjectError != null ||
+              sessionError != null ||
+              breakError != null) {
+            return;
+          }
+
+          final authState = context.read<AuthBloc>().state;
+          if (authState is! Authenticated) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text('You must be logged in to create a plan.')),
+              );
+            }
+            return;
+          }
+
+          final firebaseUid = authState.user.uid;
+          final userUuid = await ApiService().getUserUUIDByFirebaseUid(firebaseUid);
+
+          final calendar = <CalendarEntry>[];
+          _calendarControllers.asMap().forEach((idx, controller) {
+            final title = controller.text.trim();
+            if (title.isNotEmpty) {
+              final times = _calendarTimes[idx] ?? {'start_at': '', 'end_at': ''};
+              final startAt = times['start_at']!;
+              final endAt = times['end_at']!;
+              calendar.add(
+                  CalendarEntry(startAt: startAt, endAt: endAt, title: title));
+            }
+          });
+
+          final subjectsWithDuration = _subjectControllers
+              .asMap()
+              .entries
+              .where((entry) => entry.value.text.trim().isNotEmpty)
+              .map((entry) {
+            final idx = entry.key;
+            final controller = entry.value;
+            final durationHmm = _subjectDurations[idx] ?? 0.0;
+            final durationString =
+                formatDurationFromHmm(durationHmm, defaultText: '0m');
+
+            return SubjectEntry(
+              subject: controller.text,
+              duration: durationHmm > 0 ? durationString : null,
+            );
+          }).toList();
+
+          final plan = PlanModel(
+            userUUID: userUuid,
+            session:
+                formatDurationFromHmm(_dialogSessionSelectedHours, defaultText: '0m'),
+            breakDuration:
+                formatDurationFromHmm(_dialogBreakSelectedHours, defaultText: '0m'),
+            calendar: calendar,
+            subjects: subjectsWithDuration,
+          );
+
+          if (mounted) {
+            context.go('/plan-creation-loading', extra: plan);
+          }
+        },
       ),
     );
   }

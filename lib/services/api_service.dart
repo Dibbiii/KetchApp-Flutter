@@ -11,7 +11,7 @@ import 'package:ketchapp_flutter/models/activity.dart';
 import 'package:ketchapp_flutter/models/activity_type.dart';
 
 class ApiService {
-  final String _baseUrl = "http://10.178.10.143:8081/api";
+  final String _baseUrl = "http://192.168.43.22:8081/api";
 
   Future<dynamic> _processResponse(http.Response response) {
     final body = response.body;
@@ -86,11 +86,6 @@ class ApiService {
     try {
       final response = await postData('plans', planData);
       print('Response from createPlan: ${response}');
-      // Notifica immediata di pianificazione completata
-      await NotificationService.schedulePomodoroNotification(
-        'La pianificazione è stata completata',
-        DateTime.now().add(const Duration(seconds: 1)),
-      );
       // Cicla su tutti i pomodori (tomatoes) nella risposta e aggiungili su Google Calendar
       if (response != null && response['subjects'] != null) {
         for (final subject in response['subjects']) {
