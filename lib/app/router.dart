@@ -108,9 +108,10 @@ final GoRouter router = GoRouter(
           },
         ),
         GoRoute(
-          path: '/timer-summary',
+          path: '/timer-summary/:id',
           builder: (context, state) {
-            return TimerSummaryPage();
+            final id = state.pathParameters['id'];
+            return TimerSummaryPage(id: id);
           },
         ),
         GoRoute(

@@ -1,5 +1,6 @@
 // import 'dart:async'; // Removed unused import
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
 String formatDurationFromHmm(double hmmHours, {String defaultText = "No time set"}) {
@@ -62,11 +63,13 @@ class MaterialClock extends StatefulWidget {
   State<MaterialClock> createState() => _MaterialClockState();
 }
 
-class _MaterialClockState extends State<MaterialClock> {
+class _MaterialClockState extends State<MaterialClock> with SingleTickerProviderStateMixin {
   double _hourAngle = 0.0;
   double _selectedHours = 0.0; // Stores H.MM format
   double _lastAngle = 0.0;
   int _turns = 0;
+  late AnimationController _controller;
+  late Animation<double> _handAnimation;
 
   @override
   void initState() {
@@ -82,6 +85,15 @@ class _MaterialClockState extends State<MaterialClock> {
     _turns = totalFractionalHours.floor();
     _hourAngle = (totalFractionalHours - _turns) * 2 * pi;
     _lastAngle = _hourAngle;
+
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 250));
+    _handAnimation = Tween<double>(begin: _hourAngle, end: _hourAngle).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   void _updateHourHand(Offset localPosition) {
@@ -114,6 +126,8 @@ class _MaterialClockState extends State<MaterialClock> {
     setState(() {
       _hourAngle = angle;
       _selectedHours = double.parse('$hoursPart.${minutesPart.toString().padLeft(2, '0')}');
+      _handAnimation = Tween<double>(begin: _handAnimation.value, end: _hourAngle).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+      _controller.forward(from: 0);
     });
     widget.onTimeChanged(_selectedHours);
   }
@@ -128,34 +142,102 @@ class _MaterialClockState extends State<MaterialClock> {
 
      _lastAngle = angle;
      _updateHourHand(localPosition);
-
-
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return SizedBox(
       width: widget.clockSize,
-      height: widget.clockSize,
-      child: GestureDetector(
-        onPanStart: (details) {
-          RenderBox box = context.findRenderObject() as RenderBox;
-          Offset local = box.globalToLocal(details.globalPosition);
-          _onPanStartGesture(local);
-        },
-        onPanUpdate: (details) {
-          RenderBox box = context.findRenderObject() as RenderBox;
-          Offset local = box.globalToLocal(details.globalPosition);
-          _updateHourHand(local);
-        },
-        child: CustomPaint(
-          painter: _ClockPainter(
-            hourAngle: _hourAngle,
-            colors: colors,
+      height: widget.clockSize + 60,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Glassmorphism background
+          Container(
+            width: widget.clockSize + 32,
+            height: widget.clockSize + 32,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(widget.clockSize),
+              gradient: LinearGradient(
+                colors: [colors.primaryContainer.withOpacity(0.25), colors.surface.withOpacity(0.7)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: colors.shadow.withOpacity(0.10),
+                  blurRadius: 32,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+              border: Border.all(
+                color: colors.primary.withOpacity(0.08),
+                width: 2,
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(widget.clockSize),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: const SizedBox(),
+              ),
+            ),
           ),
-        ),
+          // Clock face and hand
+          GestureDetector(
+            onPanStart: (details) {
+              RenderBox box = context.findRenderObject() as RenderBox;
+              Offset local = box.globalToLocal(details.globalPosition);
+              _onPanStartGesture(local);
+            },
+            onPanUpdate: (details) {
+              RenderBox box = context.findRenderObject() as RenderBox;
+              Offset local = box.globalToLocal(details.globalPosition);
+              _updateHourHand(local);
+            },
+            child: AnimatedBuilder(
+              animation: _handAnimation,
+              builder: (context, child) {
+                return CustomPaint(
+                  painter: _ClockPainter(
+                    hourAngle: _handAnimation.value,
+                    colors: colors,
+                  ),
+                  size: Size(widget.clockSize, widget.clockSize),
+                );
+              },
+            ),
+          ),
+          // Digital time display
+          Positioned(
+            top: widget.clockSize / 2 - 32,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+              decoration: BoxDecoration(
+                color: colors.surface.withOpacity(0.85),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: colors.primary.withOpacity(0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Text(
+                formatDurationFromHmm(_selectedHours, defaultText: "Set time"),
+                style: textTheme.headlineSmall?.copyWith(
+                  color: colors.primary,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -175,31 +257,34 @@ class _ClockPainter extends CustomPainter {
     final center = size.center(Offset.zero);
     final radius = size.width / 2;
 
-    // 1. Draw clock face
-    final facePaint = Paint()..color = colors.surface;
+    // 1. Draw clock face with gradient
+    final faceRect = Rect.fromCircle(center: center, radius: radius);
+    final facePaint = Paint()
+      ..shader = LinearGradient(
+        colors: [colors.surface, colors.primaryContainer.withOpacity(0.18)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(faceRect);
     canvas.drawCircle(center, radius, facePaint);
 
     // 2. Draw clock outline
     final outlinePaint = Paint()
-      ..color = colors.outline.withOpacity(0.5)
+      ..color = colors.primary.withOpacity(0.18)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
+      ..strokeWidth = 2.5;
     canvas.drawCircle(center, radius, outlinePaint);
 
-    // 3. Draw tick marks instead of numbers
+    // 3. Draw tick marks
     final tickPaint = Paint()..strokeCap = StrokeCap.round;
     const double tickPadding = 12.0;
     final double innerRadius = radius - tickPadding;
 
     for (int i = 0; i < 60; i++) {
-      final angle = (i * 6) * (pi / 180); // 6 degrees per minute
+      final angle = (i * 6) * (pi / 180);
       final isHourMark = i % 5 == 0;
-
-      tickPaint.color = colors.onSurface.withOpacity(isHourMark ? 1.0 : 0.6);
-      tickPaint.strokeWidth = isHourMark ? 2.5 : 1.5;
-
-      final double tickStart = isHourMark ? innerRadius - 8.0 : innerRadius - 4.0;
-
+      tickPaint.color = isHourMark ? colors.primary : colors.onSurface.withOpacity(0.25);
+      tickPaint.strokeWidth = isHourMark ? 3.2 : 1.2;
+      final double tickStart = isHourMark ? innerRadius - 10.0 : innerRadius - 4.0;
       final startPoint = Offset(
         center.dx + tickStart * sin(angle),
         center.dy - tickStart * cos(angle),
@@ -208,37 +293,38 @@ class _ClockPainter extends CustomPainter {
         center.dx + innerRadius * sin(angle),
         center.dy - innerRadius * cos(angle),
       );
-
       canvas.drawLine(startPoint, endPoint, tickPaint);
     }
 
-    // 4. Draw hour hand with a thumb
-    final handLength = radius * 0.85;
+    // 4. Draw hour hand with glow
+    final handLength = radius * 0.82;
     final handEnd = Offset(
       center.dx + handLength * sin(hourAngle),
       center.dy - handLength * cos(hourAngle),
     );
-
     final handPaint = Paint()
       ..color = colors.primary
-      ..strokeWidth = 2.5
-      ..strokeCap = StrokeCap.round;
-
+      ..strokeWidth = 5.5
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 2.5);
     canvas.drawLine(center, handEnd, handPaint);
 
-    // 5. Draw the thumb at the end of the hand
-    final thumbPaint = Paint()..color = colors.primary;
-    canvas.drawCircle(handEnd, 10, thumbPaint);
+    // 5. Draw the thumb at the end of the hand (with glow)
+    final thumbPaint = Paint()
+      ..color = colors.primary
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4.0);
+    canvas.drawCircle(handEnd, 13, thumbPaint);
     final thumbInnerPaint = Paint()..color = colors.surface;
-    canvas.drawCircle(handEnd, 4, thumbInnerPaint);
+    canvas.drawCircle(handEnd, 6, thumbInnerPaint);
 
     // 6. Draw center pivot
     final centerDotPaint = Paint()..color = colors.primary;
-    canvas.drawCircle(center, 5, centerDotPaint);
+    canvas.drawCircle(center, 7, centerDotPaint);
+    final centerDotInnerPaint = Paint()..color = colors.surface;
+    canvas.drawCircle(center, 3, centerDotInnerPaint);
   }
 
   @override
   bool shouldRepaint(covariant _ClockPainter oldDelegate) =>
       oldDelegate.hourAngle != hourAngle || oldDelegate.colors != colors;
 }
-

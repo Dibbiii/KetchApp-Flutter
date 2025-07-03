@@ -60,7 +60,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _initializeNotifications() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    AndroidInitializationSettings('@mipmap/ic_launcher');
     const InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
     );
@@ -69,7 +69,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _showNotification() async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
+    AndroidNotificationDetails(
       'your_channel_id',
       'Notifiche',
       channelDescription: 'Notifiche locali',
@@ -78,7 +78,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ticker: 'ticker',
     );
     const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
+    NotificationDetails(android: androidPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.show(
       0,
       'Ciao!',
@@ -97,8 +97,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = Theme.of(context).colorScheme;
-    final TextTheme textTheme = Theme.of(context).textTheme;
+    final ColorScheme colors = Theme
+        .of(context)
+        .colorScheme;
+    final TextTheme textTheme = Theme
+        .of(context)
+        .textTheme;
 
     final SystemUiOverlayStyle systemUiOverlayStyle = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -129,19 +133,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             }
           },
         ),
-        floatingActionButton: BlocBuilder<HomeBloc, HomeState>(
-          builder: (context, state) {
-            if (state is HomeLoaded) {
-              return _buildFloatingActionButton(context, colors);
-            }
-            return const SizedBox.shrink();
-          },
-        ),
       ),
     );
   }
 
-  Widget _buildLoadingState(BuildContext context, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildLoadingState(BuildContext context, ColorScheme colors,
+      TextTheme textTheme) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -197,7 +194,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildLoadedState(BuildContext context, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildLoadedState(BuildContext context, ColorScheme colors,
+      TextTheme textTheme) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -241,7 +239,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildWelcomeHeader(BuildContext context, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildWelcomeHeader(BuildContext context, ColorScheme colors,
+      TextTheme textTheme) {
     return Column(
       children: [
         Container(
@@ -302,7 +301,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildTomatoesSection(BuildContext context, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildTomatoesSection(BuildContext context, ColorScheme colors,
+      TextTheme textTheme) {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
@@ -384,7 +384,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildErrorState(BuildContext context, ColorScheme colors, TextTheme textTheme, HomeError state) {
+  Widget _buildErrorState(BuildContext context, ColorScheme colors,
+      TextTheme textTheme, HomeError state) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -432,7 +433,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
               const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   color: colors.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(16),
@@ -453,7 +455,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 style: FilledButton.styleFrom(
                   backgroundColor: colors.primaryContainer,
                   foregroundColor: colors.onPrimaryContainer,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -466,7 +469,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildInitializingState(BuildContext context, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildInitializingState(BuildContext context, ColorScheme colors,
+      TextTheme textTheme) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -491,31 +495,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFloatingActionButton(BuildContext context, ColorScheme colors) {
-    return FloatingActionButton.extended(
-      heroTag: "home_page_fab", // Aggiungi un tag unico
-      onPressed: _showNotification,
-      backgroundColor: colors.primaryContainer,
-      foregroundColor: colors.onPrimaryContainer,
-      elevation: 6,
-      highlightElevation: 12,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      icon: Icon(
-        Icons.notifications_active_outlined,
-        size: 24,
-      ),
-      label: Text(
-        'Test Notification',
-        style: TextStyle(
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.5,
-        ),
       ),
     );
   }
