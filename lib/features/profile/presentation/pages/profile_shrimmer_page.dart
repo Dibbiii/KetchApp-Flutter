@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ProfileShrimmerPage extends StatelessWidget {
@@ -7,54 +8,61 @@ class ProfileShrimmerPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return Scaffold(
-      backgroundColor: colors.surface,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20.0),
-          child: Shimmer.fromColors(
-            baseColor: colors.onSurface.withOpacity(0.08),
-            highlightColor: colors.onSurface.withOpacity(0.18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    height: 108,
-                    width: 108,
-                    margin: const EdgeInsets.only(bottom: 24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
+
+    final SystemUiOverlayStyle systemUiOverlayStyle = SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: colors.brightness == Brightness.light
+          ? Brightness.dark
+          : Brightness.light,
+      statusBarBrightness: colors.brightness,
+      systemNavigationBarColor: colors.surface,
+      systemNavigationBarIconBrightness: colors.brightness == Brightness.light
+          ? Brightness.dark
+          : Brightness.light,
+    );
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: systemUiOverlayStyle,
+      child: Scaffold(
+        backgroundColor: colors.surface,
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                colors.primary.withAlpha((255 * 0.05).round()),
+                colors.surface,
+              ],
+            ),
+          ),
+          child: SafeArea(
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
+                    child: Shimmer.fromColors(
+                      baseColor: colors.onSurface.withOpacity(0.08),
+                      highlightColor: colors.onSurface.withOpacity(0.18),
+                      child: Column(
+                        children: [
+                          _buildProfileHeader(context, colors),
+                          const SizedBox(height: 40),
+                          _buildProfileInfoSection(context, colors),
+                          const SizedBox(height: 32),
+                          _buildAchievementsSection(context, colors),
+                          const SizedBox(height: 32),
+                          _buildLogoutSection(context, colors),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-                Container(height: 56, width: double.infinity, margin: const EdgeInsets.only(bottom: 16), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8))),
-                Container(height: 56, width: double.infinity, margin: const EdgeInsets.only(bottom: 32), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8))),
-                Container(height: 28, width: 120, margin: const EdgeInsets.only(bottom: 8), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8))),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: 4,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 1.8, // Più spazio verticale, coerente con la pagina reale
-                  ),
-                  itemBuilder: (context, index) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      margin: EdgeInsets.zero,
-                    );
-                  },
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: 32),
                 ),
-                const SizedBox(height: 24),
-                Container(height: 48, width: double.infinity, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8))),
               ],
             ),
           ),
@@ -62,5 +70,355 @@ class ProfileShrimmerPage extends StatelessWidget {
       ),
     );
   }
-}
 
+  Widget _buildProfileHeader(BuildContext context, ColorScheme colors) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                colors.primary.withAlpha((255 * 0.15).round()),
+                colors.tertiary.withAlpha((255 * 0.1).round()),
+              ],
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: colors.primary.withAlpha((255 * 0.15).round()),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Positioned(
+                right: -4,
+                bottom: -4,
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: colors.surface,
+                      width: 2,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileInfoSection(BuildContext context, ColorScheme colors) {
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: colors.outline.withAlpha((255 * 0.08).round()),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colors.shadow.withAlpha((255 * 0.04).round()),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    colors.primaryContainer.withAlpha((255 * 0.8).round()),
+                    colors.tertiaryContainer.withAlpha((255 * 0.6).round()),
+                  ],
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          height: 20,
+                          width: 160,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          height: 14,
+                          width: 120,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  _buildInfoFieldShimmer(colors),
+                  const SizedBox(height: 12),
+                  _buildInfoFieldShimmer(colors),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoFieldShimmer(ColorScheme colors) {
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHigh.withAlpha((255 * 0.6).round()),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colors.outline.withAlpha((255 * 0.1).round()),
+        ),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        title: Container(
+          height: 16,
+          width: 80,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        subtitle: Container(
+          height: 18,
+          width: 120,
+          margin: const EdgeInsets.only(top: 4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAchievementsSection(BuildContext context, ColorScheme colors) {
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(
+          color: colors.outline.withAlpha((255 * 0.08).round()),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colors.shadow.withAlpha((255 * 0.04).round()),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    colors.primary.withAlpha((255 * 0.12).round()),
+                    colors.secondary.withAlpha((255 * 0.08).round()),
+                    colors.tertiary.withAlpha((255 * 0.06).round()),
+                  ],
+                  stops: const [0.0, 0.6, 1.0],
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          height: 20,
+                          width: 120,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          height: 14,
+                          width: 140,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    width: 60,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            _buildAchievementsGrid(colors),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAchievementsGrid(ColorScheme colors) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: 4,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: 1.4,
+        ),
+        itemBuilder: (context, index) {
+          return Container(
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerHigh.withAlpha((255 * 0.8).round()),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: colors.outline.withAlpha((255 * 0.15).round()),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: colors.shadow.withAlpha((255 * 0.05).round()),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    height: 16,
+                    width: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    height: 12,
+                    width: 100,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildLogoutSection(BuildContext context, ColorScheme colors) {
+    return Container(
+      height: 52,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+    );
+  }
+}
