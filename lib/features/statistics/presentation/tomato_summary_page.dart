@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:ketchapp_flutter/models/tomato_session_stats.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ketchapp_flutter/services/api_service.dart';
 
 class TimerSummaryPage extends StatefulWidget {
   static const String routeName = '/timer-summary';
@@ -19,6 +20,7 @@ class TimerSummaryPage extends StatefulWidget {
   final Color? subjectColor;
   final List<dynamic>? tomatoes;
 
+  final String? id;
   const TimerSummaryPage({
     Key? key,
     // For session summary
@@ -31,6 +33,7 @@ class TimerSummaryPage extends StatefulWidget {
     this.subjectIcon,
     this.subjectColor,
     this.tomatoes,
+    this.id,
   }) : super(key: key);
 
   // Named constructor for session summary
@@ -74,6 +77,9 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
 
+  late Future<String?> _subjectFuture;
+  late Future<List<dynamic>> _tomatoesFuture;
+
   bool get _isSessionSummary => widget.sessionSummary != null;
   bool get _isSubjectStatistics => widget.subjectName != null || (!_isSessionSummary);
 
@@ -83,6 +89,38 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
     _initializeAnimations();
     _fadeAnimationController.forward();
     _scaleAnimationController.forward();
+    // Carica il subject dal tomatoId se presente
+    if (widget.id != null) {
+      _subjectFuture = _fetchSubjectFromTomatoId(widget.id!);
+      _tomatoesFuture = _fetchTomatoesChain(widget.id!);
+    } else {
+      _subjectFuture = Future.value(null);
+      _tomatoesFuture = Future.value([]);
+    }
+  }
+
+  Future<String?> _fetchSubjectFromTomatoId(String id) async {
+    try {
+      final tomatoId = int.tryParse(id);
+      if (tomatoId == null) return null;
+      final api = ApiService();
+      final tomato = await api.getTomatoById(tomatoId);
+      return tomato.subject;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<List<dynamic>> _fetchTomatoesChain(String id) async {
+    final api = ApiService();
+    final List<dynamic> tomatoes = [];
+    int? currentId = int.tryParse(id);
+    while (currentId != null) {
+      final tomato = await api.getTomatoById(currentId);
+      tomatoes.add(tomato);
+      currentId = tomato.nextTomatoId;
+    }
+    return tomatoes;
   }
 
   void _initializeAnimations() {
@@ -233,65 +271,73 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
   }
 
   Widget _buildSliverAppBar(BuildContext context, String subjectName, IconData iconData, Color color, ColorScheme colors, TextTheme textTheme) {
-    return SliverAppBar(
-      expandedHeight: 200,
-      pinned: true,
-      backgroundColor: colors.surface,
-      surfaceTintColor: Colors.transparent,
-      leading: Container(
-        margin: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: colors.surfaceContainerHigh.withValues(alpha: 0.8),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: colors.onSurface),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      flexibleSpace: FlexibleSpaceBar(
-        title: Text(
-          subjectName,
-          style: textTheme.titleLarge?.copyWith(
-            color: colors.onSurface,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        centerTitle: true,
-        background: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                color.withValues(alpha: 0.2),
-                colors.surface,
-              ],
+    return FutureBuilder<String?>(
+      future: _subjectFuture,
+      builder: (context, snapshot) {
+        final displaySubject = snapshot.connectionState == ConnectionState.done && snapshot.data != null
+            ? snapshot.data!
+            : subjectName;
+        return SliverAppBar(
+          expandedHeight: 200,
+          pinned: true,
+          backgroundColor: colors.surface,
+          surfaceTintColor: Colors.transparent,
+          leading: Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerHigh.withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: Icon(Icons.arrow_back_rounded, color: colors.onSurface),
+              onPressed: () => Navigator.pop(context),
             ),
           ),
-          child: Center(
-            child: Container(
-              padding: const EdgeInsets.all(32),
+          flexibleSpace: FlexibleSpaceBar(
+            title: Text(
+              displaySubject,
+              style: textTheme.titleLarge?.copyWith(
+                color: colors.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            centerTitle: true,
+            background: Container(
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.2),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    color.withValues(alpha: 0.2),
+                    colors.surface,
+                  ],
+                ),
               ),
-              child: Icon(
-                iconData,
-                size: 64,
-                color: color,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.2),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    iconData,
+                    size: 64,
+                    color: color,
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -784,84 +830,95 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
   }
 
   Widget _buildSubjectTomatoesSection(BuildContext context, List<dynamic> tomatoes, ColorScheme colors, TextTheme textTheme) {
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: colors.outline.withValues(alpha: 0.08),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    colors.tertiaryContainer.withValues(alpha: 0.8),
-                    colors.secondaryContainer.withValues(alpha: 0.6),
-                  ],
-                ),
+    return FutureBuilder<List<dynamic>>(
+      future: _tomatoesFuture,
+      builder: (context, snapshot) {
+        final tomatoesList = snapshot.data ?? [];
+        return Container(
+          decoration: BoxDecoration(
+            color: colors.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: colors.outline.withValues(alpha: 0.08),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: colors.shadow.withValues(alpha: 0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: colors.tertiary.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(
-                      Icons.access_time_rounded,
-                      color: colors.tertiary,
-                      size: 28,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pomodoro Sessions',
-                          style: textTheme.headlineSmall?.copyWith(
-                            color: colors.onTertiaryContainer,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: -0.25,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${tomatoes.length} sessions completed',
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colors.onTertiaryContainer.withValues(alpha: 0.8),
-                          ),
-                        ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        colors.tertiaryContainer.withValues(alpha: 0.8),
+                        colors.secondaryContainer.withValues(alpha: 0.6),
                       ],
                     ),
                   ),
-                ],
-              ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: colors.tertiary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(
+                          Icons.access_time_rounded,
+                          color: colors.tertiary,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Pomodoro Sessions',
+                              style: textTheme.headlineSmall?.copyWith(
+                                color: colors.onTertiaryContainer,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: -0.25,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${tomatoesList.length} sessions completed',
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colors.onTertiaryContainer.withValues(alpha: 0.8),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (snapshot.connectionState != ConnectionState.done)
+                  const Padding(
+                    padding: EdgeInsets.all(32),
+                    child: CircularProgressIndicator(),
+                  )
+                else if (tomatoesList.isEmpty)
+                  _buildEmptyTomatoesState(context, colors, textTheme)
+                else
+                  _buildTomatoesList(context, tomatoesList, colors, textTheme),
+              ],
             ),
-            if (tomatoes.isEmpty)
-              _buildEmptyTomatoesState(context, colors, textTheme)
-            else
-              _buildTomatoesList(context, tomatoes, colors, textTheme),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -956,10 +1013,9 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
         separatorBuilder: (context, index) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final tomato = tomatoes[index];
-          final startTime = DateTime.parse(tomato['startTime']);
-          final duration = tomato['duration'] as int;
-          final isCompleted = tomato['isCompleted'] as bool;
-
+          final startTime = tomato.startAt;
+          final duration = tomato.endAt.difference(tomato.startAt).inSeconds;
+          final isCompleted = tomato.nextTomatoId != null || index == tomatoes.length - 1;
           return _buildTomatoItem(
             context,
             startTime,
