@@ -73,6 +73,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           localPreviewFile: null,
         ));
       }
+
+      add(LoadAchievements());
     } else {
       emit(const ProfileError('Utente non trovato.'));
     }

@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
 import 'package:ketchapp_flutter/services/api_service.dart';
+import 'package:ketchapp_flutter/models/achievement.dart';
 import 'achievement_event.dart';
 import 'achievement_state.dart';
 
@@ -21,8 +22,10 @@ class AchievementBloc extends Bloc<AchievementEvent, AchievementState> {
     if (authState is Authenticated) {
       emit(AchievementLoading());
       try {
-        final achievements = await _apiService.getAchievements(authState.userUuid);
-        print(achievements);
+        final achievementsData = await _apiService.getAchievements(authState.userUuid);
+        print(achievementsData);
+        // Converti List<dynamic> in List<Achievement>
+        final achievements = achievementsData.map((json) => Achievement.fromJson(json)).toList();
         emit(AchievementLoaded(achievements));
       } catch (e) {
         emit(AchievementError(e.toString()));
@@ -32,4 +35,3 @@ class AchievementBloc extends Bloc<AchievementEvent, AchievementState> {
     }
   }
 }
-

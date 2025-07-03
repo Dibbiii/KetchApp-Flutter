@@ -69,3 +69,12 @@ class _ScheduleTimerTicked extends TimerEvent {
   @override
   List<Object> get props => [remainingTime];
 }
+
+class ToggleWhiteNoise extends TimerEvent {
+  final bool isEnabled;
+
+  const ToggleWhiteNoise({required this.isEnabled});
+
+  @override
+  List<Object> get props => [isEnabled];
+}

@@ -53,6 +53,7 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     on<NavigateToSummary>(_onNavigateToSummary);
     on<CheckScheduledTime>(_onCheckScheduledTime);
     on<_ScheduleTimerTicked>(_onScheduleTimerTicked);
+    on<ToggleWhiteNoise>(_onToggleWhiteNoise);
   }
 
   @override
@@ -181,19 +182,19 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
       final tomato = await _apiService.getTomatoById(_tomatoId);
 
       if (tomato.nextTomatoId == null) {
-        emit(const SessionComplete());
+        emit(SessionComplete(isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
         return;
       }
 
       final hasBreakEnd = _hasActivity(activities, ActivityAction.END, ActivityType.BREAK);
 
       if (hasBreakEnd) {
-        emit(WaitingNextTomato(nextTomatoId: tomato.nextTomatoId!));
+        emit(WaitingNextTomato(nextTomatoId: tomato.nextTomatoId!, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
       } else {
         await _handleOngoingBreak(activities, tomato.nextTomatoId!, emit);
       }
     } catch (e) {
-      emit(const TimerError(message: 'Failed to handle timer end'));
+      emit(TimerError(message: 'Failed to handle timer end', isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
     }
   }
 
@@ -214,9 +215,9 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
         lastActivity.action == _actionStringCache[ActivityAction.PAUSE];
 
     if (isBreakPaused) {
-      emit(BreakTimerPaused(remainingDuration, nextTomatoId: nextTomatoId));
+      emit(BreakTimerPaused(remainingDuration, nextTomatoId: nextTomatoId, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
     } else {
-      emit(BreakTimerInProgress(remainingDuration, nextTomatoId: nextTomatoId));
+      emit(BreakTimerInProgress(remainingDuration, nextTomatoId: nextTomatoId, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
       _startTimer(remainingDuration);
     }
   }
@@ -233,19 +234,19 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
 
     if (lastActivity.type == _typeStringCache[ActivityType.TIMER]) {
       if (lastActivity.action == _actionStringCache[ActivityAction.PAUSE]) {
-        emit(TomatoTimerPaused(remainingDuration));
+        emit(TomatoTimerPaused(remainingDuration, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
       } else if (_isStartOrResumeAction(lastActivity.action)) {
         if (remainingDuration > 0) {
-          emit(TomatoTimerInProgress(remainingDuration));
+          emit(TomatoTimerInProgress(remainingDuration, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
           _startTimer(remainingDuration);
         } else {
-          emit(const TomatoTimerReady());
+          emit(TomatoTimerReady(isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
         }
       } else {
-        emit(const TomatoTimerReady());
+        emit(TomatoTimerReady(isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
       }
     } else {
-      emit(const TomatoTimerReady());
+      emit(TomatoTimerReady(isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
     }
   }
 
@@ -265,10 +266,10 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
       final elapsedDuration = _calculateElapsedDuration(activities, ActivityType.TIMER);
       final remainingDuration = _getRemainingDuration(_tomatoDuration, elapsedDuration);
 
-      emit(TomatoTimerInProgress(remainingDuration));
+      emit(TomatoTimerInProgress(remainingDuration, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
       _startTimer(remainingDuration);
     } catch (e) {
-      emit(const TimerError(message: 'Failed to start timer'));
+      emit(TimerError(message: 'Failed to start timer', isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
     }
   }
 
@@ -289,9 +290,9 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
 
       switch (currentState) {
         case TomatoTimerInProgress():
-          emit(TomatoTimerPaused(currentState.duration));
+          emit(TomatoTimerPaused(currentState.duration, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
         case BreakTimerInProgress():
-          emit(BreakTimerPaused(currentState.duration, nextTomatoId: currentState.nextTomatoId));
+          emit(BreakTimerPaused(currentState.duration, nextTomatoId: currentState.nextTomatoId, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
       }
     } catch (e) {
       // Restart timer on API failure to maintain user experience
@@ -314,20 +315,20 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
 
       switch (currentState) {
         case TomatoTimerPaused():
-          emit(TomatoTimerInProgress(currentState.duration));
+          emit(TomatoTimerInProgress(currentState.duration, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
         case BreakTimerPaused():
-          emit(BreakTimerInProgress(currentState.duration, nextTomatoId: currentState.nextTomatoId));
+          emit(BreakTimerInProgress(currentState.duration, nextTomatoId: currentState.nextTomatoId, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
       }
 
       _startTimer(currentState.duration);
     } catch (e) {
-      emit(const TimerError(message: 'Failed to resume timer'));
+      emit(TimerError(message: 'Failed to resume timer', isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
     }
   }
 
   void _onFinished(TimerFinished event, Emitter<TimerState> emit) {
     _timer?.cancel();
-    emit(const SessionComplete());
+    emit(SessionComplete(isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
   }
 
   Future<void> _onNextTransition(NextTransition event, Emitter<TimerState> emit) async {
@@ -346,7 +347,7 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
           break;
       }
     } catch (e) {
-      emit(const TimerError(message: 'Failed to transition'));
+      emit(TimerError(message: 'Failed to transition', isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
     }
   }
 
@@ -362,11 +363,11 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
 
     if (tomato.nextTomatoId != null) {
       await _apiService.createActivity(_userUUID, _tomatoId, ActivityAction.START, ActivityType.BREAK);
-      emit(BreakTimerInProgress(_breakDuration, nextTomatoId: tomato.nextTomatoId!));
+      emit(BreakTimerInProgress(_breakDuration, nextTomatoId: tomato.nextTomatoId!, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
       _startTimer(_breakDuration);
     } else {
       // Fine della sessione - naviga al riepilogo
-      emit(NavigatingToSummary(completedTomatoIds: List.unmodifiable(_completedTomatoIds)));
+      emit(NavigatingToSummary(completedTomatoIds: List.unmodifiable(_completedTomatoIds), isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
     }
   }
 
@@ -378,7 +379,7 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
       case BreakTimerInProgress():
         await _switchToNextTomato(currentState.nextTomatoId, emit, autoStart: true);
       case BreakTimerPaused():
-        emit(WaitingNextTomato(nextTomatoId: currentState.nextTomatoId));
+        emit(WaitingNextTomato(nextTomatoId: currentState.nextTomatoId, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
         add(const NextTransition());
       default:
         break;
@@ -419,6 +420,7 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
         nextTomatoId: nextTomatoId,
         scheduledStartTime: scheduledStartTime,
         remainingWaitTime: waitTime,
+        isWhiteNoiseEnabled: state.isWhiteNoiseEnabled,
       ));
 
       // Avvia un timer per aggiornare il countdown
@@ -431,15 +433,15 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
 
     if (autoStart) {
       // Auto-switch with notification
-      emit(TomatoSwitched(newTomatoId: _tomatoId));
+      emit(TomatoSwitched(newTomatoId: _tomatoId, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
       await Future.delayed(_transitionDelay);
 
       await _apiService.createActivity(_userUUID, _tomatoId, ActivityAction.START, ActivityType.TIMER);
-      emit(TomatoTimerInProgress(_tomatoDuration));
+      emit(TomatoTimerInProgress(_tomatoDuration, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
       _startTimer(_tomatoDuration);
     } else {
       // Manual switch - mostra che è pronto per iniziare
-      emit(TomatoTimerReady());
+      emit(TomatoTimerReady(isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
     }
   }
 
@@ -460,13 +462,14 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
           // È ora di iniziare il pomodoro!
           timer.cancel();
           print('🎯 È ora di iniziare il pomodoro ${currentState.nextTomatoId}!');
-          emit(TomatoTimerReady());
+          emit(TomatoTimerReady(isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
         } else {
           // Aggiorna il countdown
           emit(WaitingForScheduledTime(
             nextTomatoId: currentState.nextTomatoId,
             scheduledStartTime: currentState.scheduledStartTime,
             remainingWaitTime: newWaitTime,
+            isWhiteNoiseEnabled: state.isWhiteNoiseEnabled,
           ));
         }
       } else {
@@ -497,9 +500,9 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
       final currentState = state;
       switch (currentState) {
         case TomatoTimerInProgress():
-          emit(TomatoTimerInProgress(duration));
+          emit(TomatoTimerInProgress(duration, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
         case BreakTimerInProgress():
-          emit(BreakTimerInProgress(duration, nextTomatoId: currentState.nextTomatoId));
+          emit(BreakTimerInProgress(duration, nextTomatoId: currentState.nextTomatoId, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
         default:
           break;
       }
@@ -515,16 +518,16 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     final currentState = state;
     switch (currentState) {
       case TomatoTimerInProgress():
-        emit(TomatoTimerInProgress(_skipToEndDuration));
+        emit(TomatoTimerInProgress(_skipToEndDuration, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
         _startTimer(_skipToEndDuration);
       case BreakTimerInProgress():
-        emit(BreakTimerInProgress(_skipToEndDuration, nextTomatoId: currentState.nextTomatoId));
+        emit(BreakTimerInProgress(_skipToEndDuration, nextTomatoId: currentState.nextTomatoId, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
         _startTimer(_skipToEndDuration);
       case TomatoTimerPaused():
-        emit(TomatoTimerInProgress(_skipToEndDuration));
+        emit(TomatoTimerInProgress(_skipToEndDuration, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
         _startTimer(_skipToEndDuration);
       case BreakTimerPaused():
-        emit(BreakTimerInProgress(_skipToEndDuration, nextTomatoId: currentState.nextTomatoId));
+        emit(BreakTimerInProgress(_skipToEndDuration, nextTomatoId: currentState.nextTomatoId, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
         _startTimer(_skipToEndDuration);
       default:
         break;
@@ -542,9 +545,9 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
       }
 
       // Invia gli ID dei pomodori completati alla schermata di riepilogo
-      emit(NavigatingToSummary(completedTomatoIds: List.unmodifiable(_completedTomatoIds)));
+      emit(NavigatingToSummary(completedTomatoIds: List.unmodifiable(_completedTomatoIds), isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
     } catch (e) {
-      emit(const TimerError(message: 'Failed to navigate to summary'));
+      emit(TimerError(message: 'Failed to navigate to summary', isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
     }
   }
 
@@ -563,14 +566,15 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
           nextTomatoId: _tomatoId,
           scheduledStartTime: scheduledStartTime,
           remainingWaitTime: waitTime,
+          isWhiteNoiseEnabled: state.isWhiteNoiseEnabled,
         ));
         _startScheduleTimer(waitTime, emit);
       } else {
         // Il pomodoro può iniziare ora
-        emit(const TomatoTimerReady());
+        emit(TomatoTimerReady(isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
       }
     } catch (e) {
-      emit(const TimerError(message: 'Failed to check scheduled time'));
+      emit(TimerError(message: 'Failed to check scheduled time', isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
     }
   }
 
@@ -582,10 +586,42 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
           nextTomatoId: currentState.nextTomatoId,
           scheduledStartTime: currentState.scheduledStartTime,
           remainingWaitTime: event.remainingTime,
+          isWhiteNoiseEnabled: state.isWhiteNoiseEnabled,
         ));
       } else {
-        emit(const TomatoTimerReady());
+        emit(TomatoTimerReady(isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
       }
+    }
+  }
+
+  void _onToggleWhiteNoise(ToggleWhiteNoise event, Emitter<TimerState> emit) {
+    final currentState = state;
+    if (currentState is WaitingFirstTomato) {
+      emit(currentState.copyWith(isWhiteNoiseEnabled: event.isEnabled));
+    } else if (currentState is TomatoTimerReady) {
+      emit(currentState.copyWith(isWhiteNoiseEnabled: event.isEnabled));
+    } else if (currentState is TomatoTimerInProgress) {
+      emit(currentState.copyWith(isWhiteNoiseEnabled: event.isEnabled));
+    } else if (currentState is TomatoTimerPaused) {
+      emit(currentState.copyWith(isWhiteNoiseEnabled: event.isEnabled));
+    } else if (currentState is BreakTimerInProgress) {
+      emit(currentState.copyWith(isWhiteNoiseEnabled: event.isEnabled));
+    } else if (currentState is BreakTimerPaused) {
+      emit(currentState.copyWith(isWhiteNoiseEnabled: event.isEnabled));
+    } else if (currentState is WaitingNextTomato) {
+      emit(currentState.copyWith(isWhiteNoiseEnabled: event.isEnabled));
+    } else if (currentState is WaitingForScheduledTime) {
+      emit(currentState.copyWith(isWhiteNoiseEnabled: event.isEnabled));
+    } else if (currentState is TomatoScheduled) {
+      emit(currentState.copyWith(isWhiteNoiseEnabled: event.isEnabled));
+    } else if (currentState is TimerError) {
+      emit(currentState.copyWith(isWhiteNoiseEnabled: event.isEnabled));
+    } else if (currentState is SessionComplete) {
+      emit(currentState.copyWith(isWhiteNoiseEnabled: event.isEnabled));
+    } else if (currentState is TomatoSwitched) {
+      emit(currentState.copyWith(isWhiteNoiseEnabled: event.isEnabled));
+    } else if (currentState is NavigatingToSummary) {
+      emit(currentState.copyWith(isWhiteNoiseEnabled: event.isEnabled));
     }
   }
 }

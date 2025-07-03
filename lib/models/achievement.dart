@@ -13,13 +13,12 @@ class Achievement {
 
   factory Achievement.fromJson(Map<String, dynamic> json) {
     return Achievement(
-      title: json['title'],
-      description: json['description'],
+      title: json['title']?.toString() ?? 'Unknown Achievement',
+      description: json['description']?.toString() ?? 'No description available',
       collectedDate: json['collected_date'] != null
           ? DateTime.parse(json['collected_date'])
           : null,
-      iconUrl: json['icon_url'],
+      iconUrl: json['icon_url']?.toString() ?? '',
     );
   }
 }
-
