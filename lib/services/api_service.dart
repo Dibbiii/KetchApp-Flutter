@@ -159,22 +159,22 @@ class ApiService {
     return activitiesJson.map((json) => Activity.fromJson(json)).toList();
   }
 
-  Future<List<Achievement>> getAchievements(String userUuid) async {
-    final response = await http.get(Uri.parse('$_baseUrl/users/$userUuid/achievements'));
-    final decodedJson = await _processResponse(response);
-    return (decodedJson as List).map((e) => Achievement.fromJson(e)).toList();
-  }
-
-  Future<List<Achievement>> getAllAchievements() async {
-    final response = await http.get(Uri.parse('$_baseUrl/achievements'));
-    final decodedJson = await _processResponse(response);
-    return (decodedJson as List).map((e) => Achievement.fromJson(e)).toList();
-  }
-
   Future<List<Achievement>> getUserAchievements(String userUuid) async {
     final response = await http.get(Uri.parse('$_baseUrl/users/$userUuid/achievements'));
     final decodedJson = await _processResponse(response);
     return (decodedJson as List).map((e) => Achievement.fromJson(e)).toList();
+  }
+
+  // Metodo per ottenere tutti gli achievements disponibili
+  Future<List<dynamic>> getAllAchievements() async {
+    final response = await fetchData('achievements');
+    return response as List<dynamic>;
+  }
+
+  // Metodo per ottenere gli achievements completati da un utente
+  Future<List<dynamic>> getAchievements(String userUuid) async {
+    final response = await fetchData('users/$userUuid/achievements');
+    return response as List<dynamic>;
   }
 
   Future<Tomato> getTomatoById(int tomatoId) async {

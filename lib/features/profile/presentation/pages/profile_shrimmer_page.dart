@@ -344,67 +344,94 @@ class ProfileShrimmerPage extends StatelessWidget {
   Widget _buildAchievementsGrid(ColorScheme colors) {
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: 4,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          childAspectRatio: 1.4,
-        ),
-        itemBuilder: (context, index) {
-          return Container(
-            decoration: BoxDecoration(
-              color: colors.surfaceContainerHigh.withAlpha((255 * 0.8).round()),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: colors.outline.withAlpha((255 * 0.15).round()),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: colors.shadow.withAlpha((255 * 0.05).round()),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Calcola lo spazio disponibile per ogni card
+          final availableWidth = constraints.maxWidth;
+          final cardWidth = (availableWidth - 16) / 2; // 16 è lo spazio tra le card
+
+          // Calcola l'altezza minima necessaria per il contenuto
+          const iconSize = 28.0;
+          const padding = 6.0;
+          const spacingAfterIcon = 4.0;
+          const firstTextHeight = 10.0;
+          const spacingBetweenTexts = 2.0;
+          const secondTextHeight = 8.0;
+
+          final minContentHeight = iconSize + spacingAfterIcon + firstTextHeight + spacingBetweenTexts + secondTextHeight;
+          final minCardHeight = minContentHeight + (padding * 2);
+
+          // Usa un aspect ratio dinamico basato sulle dimensioni calcolate
+          final aspectRatio = cardWidth / minCardHeight;
+
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 4,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: aspectRatio.clamp(1.2, 2.5), // Limita l'aspect ratio
+            ),
+            itemBuilder: (context, index) {
+              return Container(
+                decoration: BoxDecoration(
+                  color: colors.surfaceContainerHigh.withAlpha((255 * 0.8).round()),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: colors.outline.withAlpha((255 * 0.15).round()),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.shadow.withAlpha((255 * 0.05).round()),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
+                child: Padding(
+                  padding: const EdgeInsets.all(6), // Padding ridotto e fisso
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 28, // Icona più piccola
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      const SizedBox(height: 4), // Spazio ridotto
+                      Flexible(
+                        child: Container(
+                          height: 10, // Altezza ridotta
+                          width: cardWidth * 0.7, // Larghezza proporzionale
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 2), // Spazio molto ridotto
+                      Flexible(
+                        child: Container(
+                          height: 8, // Altezza ancora più ridotta
+                          width: cardWidth * 0.8, // Larghezza proporzionale
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 12),
-                  Container(
-                    height: 16,
-                    width: 80,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Container(
-                    height: 12,
-                    width: 100,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           );
         },
       ),

@@ -44,9 +44,6 @@ class _ProfilePageState extends State<ProfilePage>
         _scaleAnimationController.forward();
       }
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProfileBloc>().add(LoadAchievements());
-    });
   }
 
   void _initializeAnimations() {
@@ -387,24 +384,20 @@ class _ProfilePageState extends State<ProfilePage>
           child: CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
-                  child: Column(
-                    children: [
-                      _buildProfileHeader(context, state, colors, textTheme),
-                      const SizedBox(height: 40),
-                      _buildProfileInfoSection(context, state, colors, textTheme),
-                      const SizedBox(height: 32),
-                      _buildAchievementsSection(context, state, colors, textTheme),
-                      const SizedBox(height: 32),
-                      _buildLogoutSection(context, colors, textTheme), // Aggiungi sezione logout
-                    ],
-                  ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    _buildProfileHeader(context, state, colors, textTheme),
+                    const SizedBox(height: 24),
+                    _buildProfileInfoSection(context, state, colors, textTheme),
+                    const SizedBox(height: 24),
+                    _buildAchievementsSection(context, state, colors, textTheme),
+                    const SizedBox(height: 24),
+                    _buildLogoutSection(context, colors, textTheme),
+                    const SizedBox(height: 32), // Bottom spacing
+                  ]),
                 ),
-              ),
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 32),
               ),
             ],
           ),
@@ -716,7 +709,6 @@ class _ProfilePageState extends State<ProfilePage>
   Widget _buildAchievementsSection(BuildContext context, ProfileLoaded state, ColorScheme colors, TextTheme textTheme) {
     final completedCount = state.completedAchievementTitles.length;
     final totalCount = state.allAchievements.length;
-    final progressPercentage = totalCount > 0 ? (completedCount / totalCount) : 0.0;
 
     return Container(
       decoration: BoxDecoration(
@@ -859,11 +851,11 @@ class _ProfilePageState extends State<ProfilePage>
   Widget _buildAchievementsGrid(ProfileLoaded state, ColorScheme colors, TextTheme textTheme) {
     if (state.achievementsLoading) {
       return Container(
-        padding: const EdgeInsets.all(40),
+        padding: const EdgeInsets.all(32),
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: colors.primaryContainer.withAlpha((255 * 0.3).round()),
                 shape: BoxShape.circle,
@@ -889,11 +881,11 @@ class _ProfilePageState extends State<ProfilePage>
 
     if (state.achievementsError != null) {
       return Container(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(24),
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: colors.errorContainer.withAlpha((255 * 0.3).round()),
                 shape: BoxShape.circle,
@@ -901,21 +893,21 @@ class _ProfilePageState extends State<ProfilePage>
               child: Icon(
                 Icons.error_outline_rounded,
                 color: colors.error,
-                size: 32,
+                size: 24,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
               'Unable to load achievements',
-              style: textTheme.titleMedium?.copyWith(
+              style: textTheme.titleSmall?.copyWith(
                 color: colors.onSurface,
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               state.achievementsError!,
-              style: textTheme.bodyMedium?.copyWith(
+              style: textTheme.bodySmall?.copyWith(
                 color: colors.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
@@ -926,138 +918,177 @@ class _ProfilePageState extends State<ProfilePage>
     }
 
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: state.allAchievements.length,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
+          crossAxisCount: 2, // Fisso a 2 colonne
           mainAxisSpacing: 16,
           crossAxisSpacing: 16,
-          childAspectRatio: 1.4,
+          childAspectRatio: 1.1, // Ratio più quadrato per cards più equilibrate
         ),
         itemBuilder: (context, index) {
           final achievement = state.allAchievements[index];
-          final isCompleted = state.completedAchievementTitles.contains(achievement.title);
 
-          return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isCompleted
-                    ? [
-                        colors.primaryContainer.withAlpha((255 * 0.9).round()),
-                        colors.secondaryContainer.withAlpha((255 * 0.7).round()),
-                      ]
-                    : [
-                        colors.surfaceContainerHigh.withAlpha((255 * 0.8).round()),
-                        colors.surfaceContainer.withAlpha((255 * 0.6).round()),
-                      ],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isCompleted
-                    ? colors.primary.withAlpha((255 * 0.4).round())
-                    : colors.outline.withAlpha((255 * 0.15).round()),
-                width: isCompleted ? 2 : 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: isCompleted
-                      ? colors.primary.withAlpha((255 * 0.1).round())
-                      : colors.shadow.withAlpha((255 * 0.05).round()),
-                  blurRadius: isCompleted ? 8 : 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      gradient: isCompleted
-                          ? LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                colors.primary.withAlpha((255 * 0.2).round()),
-                                colors.secondary.withAlpha((255 * 0.15).round()),
-                              ],
-                            )
-                          : null,
-                      color: isCompleted ? null : colors.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: isCompleted
-                          ? [
-                              BoxShadow(
-                                color: colors.primary.withAlpha((255 * 0.2).round()),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: Icon(
-                      isCompleted ? Icons.emoji_events_rounded : Icons.emoji_events_outlined,
-                      color: isCompleted ? colors.primary : colors.onSurfaceVariant,
-                      size: 28,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    achievement.title,
-                    style: textTheme.titleSmall?.copyWith(
-                      color: isCompleted ? colors.onPrimaryContainer : colors.onSurfaceVariant,
-                      fontWeight: isCompleted ? FontWeight.w700 : FontWeight.w600,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    achievement.description,
-                    style: textTheme.bodySmall?.copyWith(
-                      color: isCompleted
-                          ? colors.onPrimaryContainer.withAlpha((255 * 0.8).round())
-                          : colors.onSurfaceVariant.withAlpha((255 * 0.9).round()),
-                      fontWeight: FontWeight.w500,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (isCompleted) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: colors.primary.withAlpha((255 * 0.15).round()),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        "Completed",
-                        style: textTheme.labelSmall?.copyWith(
-                          color: colors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          );
+          // Accedi al campo 'completed' come chiave del Map invece che come getter
+          final isCompleted = achievement['completed'] == true;
+
+          return _buildAchievementCard(achievement, isCompleted, colors, textTheme);
         },
       ),
     );
   }
+
+  Widget _buildAchievementCard(dynamic achievement, bool isCompleted, ColorScheme colors, TextTheme textTheme) {
+    final description = achievement['description'] ?? 'No description';
+    final iconUrl = achievement['icon'] ?? ''; // URL dell'icona dal database
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isCompleted
+              ? [
+                  colors.primaryContainer.withAlpha((255 * 0.9).round()),
+                  colors.secondaryContainer.withAlpha((255 * 0.7).round()),
+                ]
+              : [
+                  colors.surfaceContainerHigh.withAlpha((255 * 0.8).round()),
+                  colors.surfaceContainer.withAlpha((255 * 0.6).round()),
+                ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isCompleted
+              ? colors.primary.withAlpha((255 * 0.4).round())
+              : colors.outline.withAlpha((255 * 0.15).round()),
+          width: isCompleted ? 2 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isCompleted
+                ? colors.primary.withAlpha((255 * 0.15).round())
+                : colors.shadow.withAlpha((255 * 0.05).round()),
+            blurRadius: isCompleted ? 8 : 4,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: isCompleted
+                        ? LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              colors.primary.withAlpha((255 * 0.2).round()),
+                              colors.secondary.withAlpha((255 * 0.15).round()),
+                            ],
+                          )
+                        : null,
+                    color: isCompleted ? null : colors.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: isCompleted
+                        ? [
+                            BoxShadow(
+                              color: colors.primary.withAlpha((255 * 0.2).round()),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Image.network(
+                    iconUrl, // Usa sempre l'URL dalle API
+                    width: 32,
+                    height: 32,
+                    fit: BoxFit.contain,
+                    color: isCompleted ? colors.primary : colors.onSurfaceVariant,
+                    colorBlendMode: BlendMode.srcIn,
+                    errorBuilder: (context, error, stackTrace) {
+                      // Solo in caso di errore estremo, usa l'icona Flutter
+                      return Icon(
+                        Icons.emoji_events,
+                        size: 32,
+                        color: isCompleted ? colors.primary : colors.onSurfaceVariant,
+                      );
+                    },
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return SizedBox(
+                        width: 32,
+                        height: 32,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: isCompleted ? colors.primary : colors.onSurfaceVariant,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  description,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: isCompleted ? colors.onPrimaryContainer : colors.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                    height: 1.2,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          if (isCompleted)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      colors.primary,
+                      colors.secondary,
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.primary.withAlpha((255 * 0.3).round()),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.check_rounded,
+                  color: colors.onPrimary,
+                  size: 16,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
 
   Widget _buildLogoutSection(BuildContext context, ColorScheme colors, TextTheme textTheme) {
     return FilledButton.icon(
