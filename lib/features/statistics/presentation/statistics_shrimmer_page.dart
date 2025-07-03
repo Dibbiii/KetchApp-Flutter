@@ -6,124 +6,36 @@ class StatisticsShrimmerPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return SafeArea(
-      child: Scaffold(
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 24),
-              // Big number shimmer
-              Align(
-                alignment: Alignment.center,
-                child: Shimmer.fromColors(
-                  baseColor: Colors.grey[300]!,
-                  highlightColor: Colors.grey[100]!,
-                  child: Container(
-                    width: 80,
-                    height: 36,
-                    color: Colors.white,
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Scaffold(
+      backgroundColor: colors.surface,
+      body: Shimmer.fromColors(
+        baseColor: colors.surfaceContainerHigh,
+        highlightColor: colors.surfaceContainerHighest,
+        child: SafeArea(
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
+                  child: Column(
+                    children: [
+                      _buildStatsHeaderShimmer(),
+                      const SizedBox(height: 40),
+                      _buildWeekNavigatorShimmer(),
+                      const SizedBox(height: 24),
+                      _buildHistogramSectionShimmer(),
+                      const SizedBox(height: 32),
+                      _buildSubjectsSectionShimmer(),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
-              // Date shimmer
-              Align(
-                alignment: Alignment.center,
-                child: Shimmer.fromColors(
-                  baseColor: Colors.grey[300]!,
-                  highlightColor: Colors.grey[100]!,
-                  child: Container(
-                    width: 100,
-                    height: 18,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Row shimmer (arrows + date)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Shimmer.fromColors(
-                    baseColor: Colors.grey[300]!,
-                    highlightColor: Colors.grey[100]!,
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                  Shimmer.fromColors(
-                    baseColor: Colors.grey[300]!,
-                    highlightColor: Colors.grey[100]!,
-                    child: Container(
-                      width: 100,
-                      height: 24,
-                      color: Colors.white,
-                    ),
-                  ),
-                  Shimmer.fromColors(
-                    baseColor: Colors.grey[300]!,
-                    highlightColor: Colors.grey[100]!,
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // Histogram shimmer
-              Shimmer.fromColors(
-                baseColor: Colors.grey[300]!,
-                highlightColor: Colors.grey[100]!,
-                child: Container(
-                  height: 80,
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Section title shimmer
-              Shimmer.fromColors(
-                baseColor: Colors.grey[300]!,
-                highlightColor: Colors.grey[100]!,
-                child: Container(
-                  width: 180,
-                  height: 20,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: ListView.separated(
-                  itemCount: 4,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) => Shimmer.fromColors(
-                    baseColor: Colors.grey[300]!,
-                    highlightColor: Colors.grey[100]!,
-                    child: Container(
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ),
-                ),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 32),
               ),
             ],
           ),
@@ -131,5 +43,98 @@ class StatisticsShrimmerPage extends StatelessWidget {
       ),
     );
   }
-}
 
+  Widget _buildStatsHeaderShimmer() {
+    return Column(
+      children: [
+        Container(
+          width: 128,
+          height: 128,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(height: 24),
+        Container(
+          width: 220,
+          height: 48,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: 180,
+          height: 36,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWeekNavigatorShimmer() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHistogramSectionShimmer() {
+    return Container(
+      height: 300,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+      ),
+    );
+  }
+
+  Widget _buildSubjectsSectionShimmer() {
+    return Container(
+      height: 350,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+      ),
+    );
+  }
+}

@@ -218,7 +218,7 @@ class _ProfilePageState extends State<ProfilePage>
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                colors.primary.withOpacity(0.05),
+                colors.primary.withAlpha((255 * 0.05).round()),
                 colors.surface,
               ],
             ),
@@ -280,11 +280,11 @@ class _ProfilePageState extends State<ProfilePage>
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: colors.primaryContainer.withOpacity(0.8),
+              color: colors.primaryContainer.withAlpha((255 * 0.8).round()),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: colors.primary.withOpacity(0.1),
+                  color: colors.primary.withAlpha((255 * 0.1).round()),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -293,7 +293,7 @@ class _ProfilePageState extends State<ProfilePage>
             child: CircularProgressIndicator(
               strokeWidth: 3,
               color: colors.primary,
-              backgroundColor: colors.primary.withOpacity(0.1),
+              backgroundColor: colors.primary.withAlpha((255 * 0.1).round()),
             ),
           ),
           const SizedBox(height: 24),
@@ -318,11 +318,11 @@ class _ProfilePageState extends State<ProfilePage>
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: colors.errorContainer.withOpacity(0.8),
+                color: colors.errorContainer.withAlpha((255 * 0.8).round()),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: colors.error.withOpacity(0.1),
+                    color: colors.error.withAlpha((255 * 0.1).round()),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -423,48 +423,20 @@ class _ProfilePageState extends State<ProfilePage>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                colors.primary.withOpacity(0.15),
-                colors.tertiary.withOpacity(0.1),
+                colors.primary.withAlpha((255 * 0.15).round()),
+                colors.tertiary.withAlpha((255 * 0.1).round()),
               ],
             ),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: colors.primary.withOpacity(0.15),
+                color: colors.primary.withAlpha((255 * 0.15).round()),
                 blurRadius: 24,
                 offset: const Offset(0, 8),
               ),
             ],
           ),
           child: _buildProfileAvatar(state, colors),
-        ),
-        const SizedBox(height: 24),
-        Text(
-          _username ?? 'Unknown User',
-          style: textTheme.displaySmall?.copyWith(
-            color: colors.onSurface,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.5,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: colors.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: colors.outline.withOpacity(0.1),
-            ),
-          ),
-          child: Text(
-            "Your focus journey profile",
-            style: textTheme.bodyLarge?.copyWith(
-              color: colors.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
         ),
       ],
     );
@@ -492,7 +464,7 @@ class _ProfilePageState extends State<ProfilePage>
               return Icon(
                 Icons.account_circle_rounded,
                 size: 72,
-                color: colors.onSurfaceVariant.withOpacity(0.6),
+                color: colors.onSurfaceVariant.withAlpha((255 * 0.6).round()),
               );
             },
           ),
@@ -502,7 +474,7 @@ class _ProfilePageState extends State<ProfilePage>
       avatarContent = Icon(
         Icons.account_circle_rounded,
         size: 72,
-        color: colors.onSurfaceVariant.withOpacity(0.6),
+        color: colors.onSurfaceVariant.withAlpha((255 * 0.6).round()),
       );
     }
 
@@ -514,7 +486,7 @@ class _ProfilePageState extends State<ProfilePage>
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: colors.surface.withOpacity(0.8),
+              color: colors.surface.withAlpha((255 * 0.8).round()),
               shape: BoxShape.circle,
             ),
             child: CircularProgressIndicator(
@@ -603,11 +575,11 @@ class _ProfilePageState extends State<ProfilePage>
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: colors.outline.withOpacity(0.08),
+          color: colors.outline.withAlpha((255 * 0.08).round()),
         ),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withOpacity(0.04),
+            color: colors.shadow.withAlpha((255 * 0.04).round()),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -618,49 +590,49 @@ class _ProfilePageState extends State<ProfilePage>
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    colors.primaryContainer.withOpacity(0.8),
-                    colors.tertiaryContainer.withOpacity(0.6),
+                    colors.primaryContainer.withAlpha((255 * 0.8).round()),
+                    colors.tertiaryContainer.withAlpha((255 * 0.6).round()),
                   ],
                 ),
               ),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: colors.primary.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(16),
+                      color: colors.primary.withAlpha((255 * 0.15).round()),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       Icons.person_outline_rounded,
                       color: colors.primary,
-                      size: 28,
+                      size: 20,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Personal Information",
-                          style: textTheme.headlineSmall?.copyWith(
+                          "Personal Informations",
+                          style: textTheme.titleLarge?.copyWith(
                             color: colors.onPrimaryContainer,
                             fontWeight: FontWeight.w600,
                             letterSpacing: -0.25,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
                           "Your account details",
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colors.onPrimaryContainer.withOpacity(0.8),
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colors.onPrimaryContainer.withAlpha((255 * 0.8).round()),
                           ),
                         ),
                       ],
@@ -670,7 +642,7 @@ class _ProfilePageState extends State<ProfilePage>
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
                   _buildInfoField(
@@ -680,7 +652,7 @@ class _ProfilePageState extends State<ProfilePage>
                     colors,
                     textTheme,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   _buildInfoField(
                     'Email',
                     state.email ?? 'N/A',
@@ -700,18 +672,18 @@ class _ProfilePageState extends State<ProfilePage>
   Widget _buildInfoField(String label, String value, IconData icon, ColorScheme colors, TextTheme textTheme) {
     return Container(
       decoration: BoxDecoration(
-        color: colors.surfaceContainerHigh.withOpacity(0.6),
+        color: colors.surfaceContainerHigh.withAlpha((255 * 0.6).round()),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: colors.outline.withOpacity(0.1),
+          color: colors.outline.withAlpha((255 * 0.1).round()),
         ),
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: colors.primaryContainer.withOpacity(0.8),
+            color: colors.primaryContainer.withAlpha((255 * 0.8).round()),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
@@ -742,86 +714,136 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _buildAchievementsSection(BuildContext context, ProfileLoaded state, ColorScheme colors, TextTheme textTheme) {
+    final completedCount = state.completedAchievementTitles.length;
+    final totalCount = state.allAchievements.length;
+    final progressPercentage = totalCount > 0 ? (completedCount / totalCount) : 0.0;
+
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(32),
         border: Border.all(
-          color: colors.outline.withOpacity(0.08),
+          color: colors.outline.withAlpha((255 * 0.08).round()),
         ),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withOpacity(0.04),
+            color: colors.shadow.withAlpha((255 * 0.04).round()),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(32),
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    colors.secondaryContainer.withOpacity(0.8),
-                    colors.tertiaryContainer.withOpacity(0.6),
+                    colors.primary.withAlpha((255 * 0.12).round()),
+                    colors.secondary.withAlpha((255 * 0.08).round()),
+                    colors.tertiary.withAlpha((255 * 0.06).round()),
                   ],
+                  stops: const [0.0, 0.6, 1.0],
                 ),
               ),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: colors.secondary.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(16),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          colors.primary.withAlpha((255 * 0.2).round()),
+                          colors.secondary.withAlpha((255 * 0.15).round()),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors.primary.withAlpha((255 * 0.15).round()),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
                     child: Icon(
-                      Icons.emoji_events_outlined,
-                      color: colors.secondary,
-                      size: 28,
+                      Icons.emoji_events_rounded,
+                      color: colors.primary,
+                      size: 20,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           "Achievements",
-                          style: textTheme.headlineSmall?.copyWith(
-                            color: colors.onSecondaryContainer,
+                          style: textTheme.titleLarge?.copyWith(
+                            color: colors.onSurface,
                             fontWeight: FontWeight.w600,
                             letterSpacing: -0.25,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
                           "Your focus milestones",
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colors.onSecondaryContainer.withOpacity(0.8),
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
                           ),
                         ),
                       ],
                     ),
                   ),
+                  const SizedBox(width: 10),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: colors.secondary.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${state.completedAchievementTitles.length}/${state.allAchievements.length}',
-                      style: textTheme.labelLarge?.copyWith(
-                        color: colors.secondary,
-                        fontWeight: FontWeight.w700,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          colors.primaryContainer,
+                          colors.secondaryContainer.withAlpha((255 * 0.8).round()),
+                        ],
                       ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: colors.primary.withAlpha((255 * 0.2).round()),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors.primary.withAlpha((255 * 0.1).round()),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '$completedCount',
+                          style: textTheme.titleMedium?.copyWith(
+                            color: colors.primary,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        Text(
+                          '/$totalCount',
+                          style: textTheme.titleMedium?.copyWith(
+                            color: colors.onPrimaryContainer.withAlpha((255 * 0.8).round()),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -837,12 +859,30 @@ class _ProfilePageState extends State<ProfilePage>
   Widget _buildAchievementsGrid(ProfileLoaded state, ColorScheme colors, TextTheme textTheme) {
     if (state.achievementsLoading) {
       return Container(
-        padding: const EdgeInsets.all(32),
-        child: Center(
-          child: CircularProgressIndicator(
-            strokeWidth: 3,
-            color: colors.primary,
-          ),
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colors.primaryContainer.withAlpha((255 * 0.3).round()),
+                shape: BoxShape.circle,
+              ),
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                color: colors.primary,
+                backgroundColor: colors.primary.withAlpha((255 * 0.2).round()),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Loading achievements...',
+              style: textTheme.bodyMedium?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -852,10 +892,17 @@ class _ProfilePageState extends State<ProfilePage>
         padding: const EdgeInsets.all(32),
         child: Column(
           children: [
-            Icon(
-              Icons.error_outline_rounded,
-              color: colors.error,
-              size: 32,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colors.errorContainer.withAlpha((255 * 0.3).round()),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.error_outline_rounded,
+                color: colors.error,
+                size: 32,
+              ),
             ),
             const SizedBox(height: 16),
             Text(
@@ -879,16 +926,16 @@ class _ProfilePageState extends State<ProfilePage>
     }
 
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: state.allAchievements.length,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.5,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: 1.4,
         ),
         itemBuilder: (context, index) {
           final achievement = state.allAchievements[index];
@@ -896,55 +943,113 @@ class _ProfilePageState extends State<ProfilePage>
 
           return Container(
             decoration: BoxDecoration(
-              color: colors.surfaceContainerHigh.withOpacity(0.6),
-              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isCompleted
+                    ? [
+                        colors.primaryContainer.withAlpha((255 * 0.9).round()),
+                        colors.secondaryContainer.withAlpha((255 * 0.7).round()),
+                      ]
+                    : [
+                        colors.surfaceContainerHigh.withAlpha((255 * 0.8).round()),
+                        colors.surfaceContainer.withAlpha((255 * 0.6).round()),
+                      ],
+              ),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: isCompleted
-                    ? colors.primary.withOpacity(0.3)
-                    : colors.outline.withOpacity(0.1),
-                width: isCompleted ? 1.5 : 1,
+                    ? colors.primary.withAlpha((255 * 0.4).round())
+                    : colors.outline.withAlpha((255 * 0.15).round()),
+                width: isCompleted ? 2 : 1,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: isCompleted
+                      ? colors.primary.withAlpha((255 * 0.1).round())
+                      : colors.shadow.withAlpha((255 * 0.05).round()),
+                  blurRadius: isCompleted ? 8 : 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isCompleted
-                          ? colors.primaryContainer
-                          : colors.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(12),
+                      gradient: isCompleted
+                          ? LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                colors.primary.withAlpha((255 * 0.2).round()),
+                                colors.secondary.withAlpha((255 * 0.15).round()),
+                              ],
+                            )
+                          : null,
+                      color: isCompleted ? null : colors.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: isCompleted
+                          ? [
+                              BoxShadow(
+                                color: colors.primary.withAlpha((255 * 0.2).round()),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
                     ),
                     child: Icon(
                       isCompleted ? Icons.emoji_events_rounded : Icons.emoji_events_outlined,
                       color: isCompleted ? colors.primary : colors.onSurfaceVariant,
-                      size: 24,
+                      size: 28,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Text(
                     achievement.title,
-                    style: textTheme.labelLarge?.copyWith(
-                      color: isCompleted ? colors.onSurface : colors.onSurfaceVariant,
-                      fontWeight: isCompleted ? FontWeight.w600 : FontWeight.w500,
+                    style: textTheme.titleSmall?.copyWith(
+                      color: isCompleted ? colors.onPrimaryContainer : colors.onSurfaceVariant,
+                      fontWeight: isCompleted ? FontWeight.w700 : FontWeight.w600,
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
                     achievement.description,
                     style: textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
+                      color: isCompleted
+                          ? colors.onPrimaryContainer.withAlpha((255 * 0.8).round())
+                          : colors.onSurfaceVariant.withAlpha((255 * 0.9).round()),
+                      fontWeight: FontWeight.w500,
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (isCompleted) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: colors.primary.withAlpha((255 * 0.15).round()),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        "Completed",
+                        style: textTheme.labelSmall?.copyWith(
+                          color: colors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -955,148 +1060,24 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _buildLogoutSection(BuildContext context, ColorScheme colors, TextTheme textTheme) {
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: colors.outline.withOpacity(0.08),
+    return FilledButton.icon(
+      icon: const Icon(Icons.logout_rounded),
+      label: const Text('Logout'),
+      onPressed: () {
+        context.read<AuthBloc>().add(AuthLogoutRequested());
+        context.go('/');
+      },
+      style: FilledButton.styleFrom(
+        backgroundColor: colors.error,
+        foregroundColor: colors.onError,
+        minimumSize: const Size.fromHeight(52),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.0),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withOpacity(0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    colors.errorContainer.withOpacity(0.8),
-                    colors.tertiaryContainer.withOpacity(0.6),
-                  ],
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: colors.error.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(
-                      Icons.logout,
-                      color: colors.error,
-                      size: 28,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Logout",
-                          style: textTheme.headlineSmall?.copyWith(
-                            color: colors.onErrorContainer,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: -0.25,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Exit your account",
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colors.onErrorContainer.withOpacity(0.8),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  Text(
-                    "Are you sure you want to logout?",
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colors.onSurface,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: FilledButton.tonal(
-                          onPressed: () {
-                            // Annulla il logout
-                            Navigator.of(context).pop();
-                          },
-                          style: FilledButton.styleFrom(
-                            backgroundColor: colors.primaryContainer,
-                            foregroundColor: colors.onPrimaryContainer,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: Text(
-                            "Cancel",
-                            style: textTheme.labelLarge?.copyWith(
-                              color: colors.onPrimaryContainer,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: FilledButton(
-                          onPressed: () {
-                            // Esegui il logout
-                            context.read<AuthBloc>().add(AuthLogoutRequested());
-                          },
-                          style: FilledButton.styleFrom(
-                            backgroundColor: colors.error,
-                            foregroundColor: colors.onError,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: Text(
-                            "Logout",
-                            style: textTheme.labelLarge?.copyWith(
-                              color: colors.onError,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
+        textStyle: textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
   }
 }
-
