@@ -841,7 +841,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                 label: const Text('Add Subject'),
                 style: TextButton.styleFrom(
                   foregroundColor: colors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -1311,7 +1311,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                 label: const Text('Add Custom Event'),
                 style: TextButton.styleFrom(
                   foregroundColor: colors.tertiary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),

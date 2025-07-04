@@ -19,6 +19,11 @@ class _PlanCreationLoadingPageState extends State<PlanCreationLoadingPage> {
   void initState() {
     super.initState();
     _createPlanAndNavigate();
+    Future.delayed(const Duration(seconds: 30), () {
+      if (mounted) {
+        context.go('/home?refresh=true');
+      }
+    });
   }
 
   Future<void> _createPlanAndNavigate() async {

@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:ketchapp_flutter/models/tomato_session_stats.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ketchapp_flutter/services/api_service.dart';
+import 'package:ketchapp_flutter/services/session_stats_service.dart';
 
 class TimerSummaryPage extends StatefulWidget {
   static const String routeName = '/timer-summary';
 
   // Constructor for session summary (from timer)
-  final SessionSummary? sessionSummary;
+  final dynamic sessionSummary;
   final VoidCallback? onGoHome;
   final VoidCallback? onPlanAgain;
 
@@ -22,7 +22,7 @@ class TimerSummaryPage extends StatefulWidget {
 
   final String? id;
   const TimerSummaryPage({
-    Key? key,
+    super.key,
     // For session summary
     this.sessionSummary,
     this.onGoHome,
@@ -34,12 +34,12 @@ class TimerSummaryPage extends StatefulWidget {
     this.subjectColor,
     this.tomatoes,
     this.id,
-  }) : super(key: key);
+  });
 
   // Named constructor for session summary
   const TimerSummaryPage.sessionSummary({
     Key? key,
-    required SessionSummary sessionSummary,
+    required dynamic sessionSummary,
     required VoidCallback onGoHome,
     required VoidCallback onPlanAgain,
   }) : this(
@@ -77,8 +77,8 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
 
-  late Future<String?> _subjectFuture;
-  late Future<List<dynamic>> _tomatoesFuture;
+  late Future<String?> _subjectFuture = Future.value(null);
+  late Future<Map<String, dynamic>> _tomatoStatsFuture;
 
   bool get _isSessionSummary => widget.sessionSummary != null;
   bool get _isSubjectStatistics => widget.subjectName != null || (!_isSessionSummary);
@@ -89,13 +89,21 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
     _initializeAnimations();
     _fadeAnimationController.forward();
     _scaleAnimationController.forward();
-    // Carica il subject dal tomatoId se presente
+    // Usa il nuovo service per aggregare i dati dei pomodori
     if (widget.id != null) {
+      final sessionStatsService = SessionStatsService(ApiService());
+      _tomatoStatsFuture = sessionStatsService.getTomatoChainSummary(int.parse(widget.id!));
       _subjectFuture = _fetchSubjectFromTomatoId(widget.id!);
-      _tomatoesFuture = _fetchTomatoesChain(widget.id!);
     } else {
-      _subjectFuture = Future.value(null);
-      _tomatoesFuture = Future.value([]);
+      _tomatoStatsFuture = Future.value({
+        'subject': widget.subjectName,
+        'tomatoIds': [],
+        'tomatoes': [],
+        'totalDuration': Duration.zero,
+        'totalPauses': 0,
+        'efficiency': 0.0,
+      });
+      _subjectFuture = Future.value(widget.subjectName);
     }
   }
 
@@ -109,18 +117,6 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
     } catch (e) {
       return null;
     }
-  }
-
-  Future<List<dynamic>> _fetchTomatoesChain(String id) async {
-    final api = ApiService();
-    final List<dynamic> tomatoes = [];
-    int? currentId = int.tryParse(id);
-    while (currentId != null) {
-      final tomato = await api.getTomatoById(currentId);
-      tomatoes.add(tomato);
-      currentId = tomato.nextTomatoId;
-    }
-    return tomatoes;
   }
 
   void _initializeAnimations() {
@@ -197,7 +193,7 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
                 (_isSessionSummary
                     ? colors.primary
                     : (widget.subjectColor ?? routeArgs?['color'] ?? colors.primary))
-                    .withValues(alpha: 0.1),
+                    .withOpacity(0.1),
                 colors.surface,
               ],
             ),
@@ -285,7 +281,7 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
           leading: Container(
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: colors.surfaceContainerHigh.withValues(alpha: 0.8),
+              color: colors.surfaceContainerHigh.withOpacity(0.8),
               borderRadius: BorderRadius.circular(12),
             ),
             child: IconButton(
@@ -308,7 +304,7 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    color.withValues(alpha: 0.2),
+                    color.withOpacity(0.2),
                     colors.surface,
                   ],
                 ),
@@ -317,11 +313,11 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
                 child: Container(
                   padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.15),
+                    color: color.withOpacity(0.15),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: color.withValues(alpha: 0.2),
+                        color: color.withOpacity(0.2),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -351,11 +347,11 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: colors.outline.withValues(alpha: 0.08),
+          color: colors.outline.withOpacity(0.08),
         ),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.04),
+            color: colors.shadow.withOpacity(0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -367,8 +363,8 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: isCompleted
-                  ? colors.primaryContainer.withValues(alpha: 0.8)
-                  : colors.errorContainer.withValues(alpha: 0.8),
+                  ? colors.primaryContainer.withOpacity(0.8)
+                  : colors.errorContainer.withOpacity(0.8),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(
@@ -414,11 +410,11 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: colors.outline.withValues(alpha: 0.08),
+          color: colors.outline.withOpacity(0.08),
         ),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.04),
+            color: colors.shadow.withOpacity(0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -434,7 +430,7 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: colors.primaryContainer.withValues(alpha: 0.8),
+                    color: colors.primaryContainer.withOpacity(0.8),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Icon(
@@ -491,10 +487,10 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colors.surfaceContainerHigh.withValues(alpha: 0.6),
+        color: colors.surfaceContainerHigh.withOpacity(0.6),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: colors.outline.withValues(alpha: 0.1),
+          color: colors.outline.withOpacity(0.1),
         ),
       ),
       child: Column(
@@ -503,7 +499,7 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.15),
+              color: accentColor.withOpacity(0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -534,86 +530,21 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
   }
 
   Widget _buildSessionTomatoList(BuildContext context, ColorScheme colors, TextTheme textTheme) {
-    final tomatoes = widget.sessionSummary!.tomatoStats;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: colors.outline.withValues(alpha: 0.08),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    colors.tertiaryContainer.withValues(alpha: 0.8),
-                    colors.secondaryContainer.withValues(alpha: 0.6),
-                  ],
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: colors.tertiary.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(
-                      Icons.access_time_rounded,
-                      color: colors.tertiary,
-                      size: 28,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pomodoro Sessions',
-                          style: textTheme.headlineSmall?.copyWith(
-                            color: colors.onTertiaryContainer,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: -0.25,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${tomatoes.length} sessions completed',
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colors.onTertiaryContainer.withValues(alpha: 0.8),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (tomatoes.isEmpty)
-              _buildEmptyTomatoesState(context, colors, textTheme)
-            else
-              _buildSessionTomatoesList(context, tomatoes, colors, textTheme),
-          ],
-        ),
-      ),
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _tomatoStatsFuture,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Padding(
+            padding: EdgeInsets.all(32),
+            child: CircularProgressIndicator(),
+          );
+        }
+        final tomatoes = snapshot.data!['tomatoes'] as List<dynamic>;
+        if (tomatoes.isEmpty) {
+          return _buildEmptyTomatoesState(context, colors, textTheme);
+        }
+        return _buildSessionTomatoesList(context, tomatoes, colors, textTheme);
+      },
     );
   }
 
@@ -655,7 +586,7 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
     );
   }
 
-  Widget _buildSessionTomatoesList(BuildContext context, List<TomatoStats> tomatoes, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildSessionTomatoesList(BuildContext context, List<dynamic> tomatoes, ColorScheme colors, TextTheme textTheme) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: ListView.separated(
@@ -665,7 +596,6 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
         separatorBuilder: (context, index) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final tomato = tomatoes[index];
-
           return _buildSessionTomatoItem(
             context,
             tomato,
@@ -678,7 +608,18 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
     );
   }
 
-  Widget _buildSessionTomatoItem(BuildContext context, TomatoStats tomato, int sessionNumber, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildSessionTomatoItem(BuildContext context, dynamic tomato, int sessionNumber, ColorScheme colors, TextTheme textTheme) {
+    final startTime = tomato['startAt'] is DateTime
+        ? tomato['startAt']
+        : null;
+    final endTime = tomato['endAt'] is DateTime
+        ? tomato['endAt']
+        : null;
+    final duration = (endTime != null && startTime != null)
+        ? endTime.difference(startTime).inSeconds
+        : 0;
+    final isCompleted = tomato['nextTomatoId'] != null;
+    // final tomatoId = tomato['id'] ?? 'N/A'; // Not used
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceContainerHigh.withValues(alpha: 0.6),
@@ -692,14 +633,14 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: tomato.isCompleted
+            color: isCompleted
                 ? colors.primaryContainer.withValues(alpha: 0.8)
                 : colors.errorContainer.withValues(alpha: 0.8),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
-            tomato.isCompleted ? Icons.check_circle_rounded : Icons.cancel_rounded,
-            color: tomato.isCompleted ? colors.primary : colors.error,
+            isCompleted ? Icons.check_circle_rounded : Icons.cancel_rounded,
+            color: isCompleted ? colors.primary : colors.error,
             size: 20,
           ),
         ),
@@ -714,15 +655,16 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-            Text(
-              DateFormat('HH:mm - dd/MM/yyyy').format(tomato.startTime),
-              style: textTheme.bodyMedium?.copyWith(
-                color: colors.onSurfaceVariant,
+            if (startTime != null)
+              Text(
+                DateFormat('HH:mm - dd/MM/yyyy').format(startTime),
+                style: textTheme.bodyMedium?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
               ),
-            ),
             const SizedBox(height: 2),
             Text(
-              '${tomato.actualDuration.inMinutes} minutes',
+              '${(duration / 60).round()} minutes',
               style: textTheme.bodySmall?.copyWith(
                 color: colors.onSurfaceVariant.withValues(alpha: 0.8),
                 fontWeight: FontWeight.w500,
@@ -733,21 +675,36 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: tomato.isCompleted
+            color: isCompleted
                 ? colors.primaryContainer.withValues(alpha: 0.5)
                 : colors.errorContainer.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
-            tomato.isCompleted ? 'Completed' : 'Interrupted',
+            isCompleted ? 'Completed' : 'Interrupted',
             style: textTheme.labelSmall?.copyWith(
-              color: tomato.isCompleted ? colors.primary : colors.error,
+              color: isCompleted ? colors.primary : colors.error,
               fontWeight: FontWeight.w600,
             ),
           ),
         ),
+        onTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Dettaglio sessione di prova')),
+          );
+        },
       ),
     );
+  }
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds.remainder(60);
+    if (minutes > 0) {
+      return '${minutes}m ${seconds}s';
+    } else {
+      return '${seconds}s';
+    }
   }
 
   Widget _buildSubjectStatsOverview(BuildContext context, int totalSeconds, int tomatoCount, ColorScheme colors, TextTheme textTheme) {
@@ -756,11 +713,11 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: colors.outline.withValues(alpha: 0.08),
+          color: colors.outline.withOpacity(0.08),
         ),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.04),
+            color: colors.shadow.withOpacity(0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -776,7 +733,7 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: colors.primaryContainer.withValues(alpha: 0.8),
+                    color: colors.primaryContainer.withOpacity(0.8),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Icon(
@@ -830,96 +787,44 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
   }
 
   Widget _buildSubjectTomatoesSection(BuildContext context, List<dynamic> tomatoes, ColorScheme colors, TextTheme textTheme) {
-    return FutureBuilder<List<dynamic>>(
-      future: _tomatoesFuture,
-      builder: (context, snapshot) {
-        final tomatoesList = snapshot.data ?? [];
-        return Container(
-          decoration: BoxDecoration(
-            color: colors.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: colors.outline.withValues(alpha: 0.08),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: colors.shadow.withValues(alpha: 0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
+    // Usa il service per aggregare i dati dei pomodori anche qui
+    if (widget.id != null) {
+      return FutureBuilder<Map<String, dynamic>>(
+        future: _tomatoStatsFuture,
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Padding(
+              padding: EdgeInsets.all(32),
+              child: CircularProgressIndicator(),
+            );
+          }
+          final tomatoesList = snapshot.data!['tomatoes'] as List<dynamic>;
+          if (tomatoesList.isEmpty) {
+            return _buildEmptyTomatoesState(context, colors, textTheme);
+          }
+          return _buildTomatoesList(context, tomatoesList, colors, textTheme);
+        },
+      );
+    } else {
+      // fallback per compatibilità vecchia
+      return Container(
+        decoration: BoxDecoration(
+          color: colors.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: colors.outline.withOpacity(0.08),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        colors.tertiaryContainer.withValues(alpha: 0.8),
-                        colors.secondaryContainer.withValues(alpha: 0.6),
-                      ],
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: colors.tertiary.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Icon(
-                          Icons.access_time_rounded,
-                          color: colors.tertiary,
-                          size: 28,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Pomodoro Sessions',
-                              style: textTheme.headlineSmall?.copyWith(
-                                color: colors.onTertiaryContainer,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: -0.25,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${tomatoesList.length} sessions completed',
-                              style: textTheme.bodyMedium?.copyWith(
-                                color: colors.onTertiaryContainer.withValues(alpha: 0.8),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (snapshot.connectionState != ConnectionState.done)
-                  const Padding(
-                    padding: EdgeInsets.all(32),
-                    child: CircularProgressIndicator(),
-                  )
-                else if (tomatoesList.isEmpty)
-                  _buildEmptyTomatoesState(context, colors, textTheme)
-                else
-                  _buildTomatoesList(context, tomatoesList, colors, textTheme),
-              ],
+          boxShadow: [
+            BoxShadow(
+              color: colors.shadow.withOpacity(0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
-          ),
-        );
-      },
-    );
+          ],
+        ),
+        child: _buildTomatoesList(context, tomatoes, colors, textTheme),
+      );
+    }
   }
 
   Widget _buildActionButtons(BuildContext context, ColorScheme colors, TextTheme textTheme) {
@@ -931,7 +836,7 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
               color: colors.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: colors.outline.withValues(alpha: 0.2),
+                color: colors.outline.withOpacity(0.2),
               ),
             ),
             child: TextButton.icon(
@@ -957,13 +862,13 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
                 end: Alignment.bottomRight,
                 colors: [
                   colors.primary,
-                  colors.primary.withValues(alpha: 0.8),
+                  colors.primary.withOpacity(0.8),
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: colors.primary.withValues(alpha: 0.3),
+                  color: colors.primary.withOpacity(0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -1013,15 +918,9 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
         separatorBuilder: (context, index) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final tomato = tomatoes[index];
-          final startTime = tomato.startAt;
-          final duration = tomato.endAt.difference(tomato.startAt).inSeconds;
-          final isCompleted = tomato.nextTomatoId != null || index == tomatoes.length - 1;
           return _buildTomatoItem(
             context,
-            startTime,
-            duration,
-            isCompleted,
-            index + 1,
+            tomato, // pass the full tomato object
             colors,
             textTheme,
           );
@@ -1030,7 +929,18 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
     );
   }
 
-  Widget _buildTomatoItem(BuildContext context, DateTime startTime, int duration, bool isCompleted, int sessionNumber, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildTomatoItem(BuildContext context, dynamic tomato, ColorScheme colors, TextTheme textTheme) {
+    final startTime = tomato['startAt'] is DateTime
+        ? tomato['startAt']
+        : null;
+    final endTime = tomato['endAt'] is DateTime
+        ? tomato['endAt']
+        : null;
+    final duration = (endTime != null && startTime != null)
+        ? endTime.difference(startTime).inSeconds
+        : 0;
+    final isCompleted = tomato['nextTomatoId'] != null;
+    final tomatoId = tomato['id'] ?? 'N/A';
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceContainerHigh.withValues(alpha: 0.6),
@@ -1056,7 +966,7 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
           ),
         ),
         title: Text(
-          'Session $sessionNumber',
+          'ID: $tomatoId',
           style: textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
             color: colors.onSurface,
@@ -1066,12 +976,13 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-            Text(
-              DateFormat('HH:mm - dd/MM/yyyy').format(startTime),
-              style: textTheme.bodyMedium?.copyWith(
-                color: colors.onSurfaceVariant,
+            if (startTime != null)
+              Text(
+                DateFormat('HH:mm - dd/MM/yyyy').format(startTime),
+                style: textTheme.bodyMedium?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
               ),
-            ),
             const SizedBox(height: 2),
             Text(
               '${(duration / 60).round()} minutes',
@@ -1098,6 +1009,11 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
             ),
           ),
         ),
+        onTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Dettaglio sessione di prova')),
+          );
+        },
       ),
     );
   }

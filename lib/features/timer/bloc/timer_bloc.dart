@@ -401,7 +401,7 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     // Update tomato durations
     final newTomato = await _apiService.getTomatoById(_tomatoId);
     _tomatoDuration = newTomato.endAt.difference(newTomato.startAt).inSeconds;
-    _breakDuration = newTomato.pauseEnd?.difference(newTomato.endAt).inSeconds ?? 0;
+    _breakDuration = newTomato.pauseEndAt?.difference(newTomato.endAt).inSeconds ?? 0;
 
     // 🕐 NUOVO: Controlla se il pomodoro deve iniziare ora o è programmato per dopo
     final scheduledStartTime = newTomato.startAt;

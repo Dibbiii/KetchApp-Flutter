@@ -7,7 +7,7 @@ class Tomato {
   final String userUUID;
   final DateTime startAt;
   final DateTime endAt;
-  final DateTime? pauseEnd;
+  final DateTime? pauseEndAt;
   final int? nextTomatoId;
   List<Activity> activities;
 
@@ -18,7 +18,7 @@ class Tomato {
     required this.userUUID,
     required this.startAt,
     required this.endAt,
-    this.pauseEnd,
+    this.pauseEndAt,
     this.nextTomatoId,
     this.activities = const [],
   });
@@ -31,7 +31,7 @@ class Tomato {
       'userUUID': userUUID,
       'start_at': startAt.toIso8601String(),
       'end_at': endAt.toIso8601String(),
-      'pause_end': pauseEnd?.toIso8601String(),
+      'pause_end': pauseEndAt?.toIso8601String(),
       'next_tomato_id': nextTomatoId,
     };
   }
@@ -44,7 +44,7 @@ class Tomato {
       userUUID: json['userUUID'],
       startAt: DateTime.parse(json['startAt']),
       endAt: DateTime.parse(json['endAt']),
-      pauseEnd:
+      pauseEndAt:
       json['pauseEnd'] != null ? DateTime.parse(json['pauseEnd']) : null,
       nextTomatoId: json['nextTomatoId'],
     );

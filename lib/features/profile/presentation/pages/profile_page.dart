@@ -30,6 +30,8 @@ class _ProfilePageState extends State<ProfilePage>
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
 
+  final ScrollController _achievementsScrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -75,6 +77,7 @@ class _ProfilePageState extends State<ProfilePage>
 
   @override
   void dispose() {
+    _achievementsScrollController.dispose();
     _fadeAnimationController.dispose();
     _scaleAnimationController.dispose();
     super.dispose();
@@ -841,7 +844,35 @@ class _ProfilePageState extends State<ProfilePage>
                 ],
               ),
             ),
-            _buildAchievementsGrid(state, colors, textTheme),
+            SizedBox(
+              height: 5 * 80.0, // Circa 5 card (altezza stimata 80)
+              child: Stack(
+                children: [
+                  _buildAchievementsGrid(
+                    state,
+                    colors,
+                    textTheme,
+                  ),
+                  // Scrollbar overlay
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 2),
+                          child: Scrollbar(
+                            thumbVisibility: true,
+                            thickness: 5,
+                            radius: const Radius.circular(8),
+                            child: Container(), // Dummy child, just for the overlay effect
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -916,34 +947,37 @@ class _ProfilePageState extends State<ProfilePage>
         ),
       );
     }
-
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: state.allAchievements.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2, // Fisso a 2 colonne
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          childAspectRatio: 1.1, // Ratio più quadrato per cards più equilibrate
+      child: Scrollbar(
+        controller: _achievementsScrollController,
+        thumbVisibility: true,
+        thickness: 5,
+        radius: const Radius.circular(8),
+        child: GridView.builder(
+          controller: _achievementsScrollController,
+          shrinkWrap: false,
+          physics: const BouncingScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1.2, // Adjust as needed for card shape
+          ),
+          itemCount: state.allAchievements.length,
+          itemBuilder: (context, index) {
+            final achievement = state.allAchievements[index];
+            final isCompleted = achievement['completed'] == true;
+            return _buildAchievementCard(achievement, isCompleted, colors, textTheme);
+          },
         ),
-        itemBuilder: (context, index) {
-          final achievement = state.allAchievements[index];
-
-          // Accedi al campo 'completed' come chiave del Map invece che come getter
-          final isCompleted = achievement['completed'] == true;
-
-          return _buildAchievementCard(achievement, isCompleted, colors, textTheme);
-        },
       ),
     );
   }
 
   Widget _buildAchievementCard(dynamic achievement, bool isCompleted, ColorScheme colors, TextTheme textTheme) {
     final description = achievement['description'] ?? 'No description';
-    final iconUrl = achievement['icon'] ?? ''; // URL dell'icona dal database
+    final iconUrl = achievement['icon'] ?? '';
 
     return Container(
       decoration: BoxDecoration(
@@ -977,114 +1011,119 @@ class _ProfilePageState extends State<ProfilePage>
           ),
         ],
       ),
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    gradient: isCompleted
-                        ? LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              colors.primary.withAlpha((255 * 0.2).round()),
-                              colors.secondary.withAlpha((255 * 0.15).round()),
-                            ],
-                          )
-                        : null,
-                    color: isCompleted ? null : colors.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: isCompleted
-                        ? [
-                            BoxShadow(
-                              color: colors.primary.withAlpha((255 * 0.2).round()),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: Image.network(
-                    iconUrl, // Usa sempre l'URL dalle API
-                    width: 32,
-                    height: 32,
-                    fit: BoxFit.contain,
-                    color: isCompleted ? colors.primary : colors.onSurfaceVariant,
-                    colorBlendMode: BlendMode.srcIn,
-                    errorBuilder: (context, error, stackTrace) {
-                      // Solo in caso di errore estremo, usa l'icona Flutter
-                      return Icon(
-                        Icons.emoji_events,
-                        size: 32,
-                        color: isCompleted ? colors.primary : colors.onSurfaceVariant,
-                      );
-                    },
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return SizedBox(
-                        width: 32,
-                        height: 32,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: isCompleted ? colors.primary : colors.onSurfaceVariant,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                gradient: isCompleted
+                    ? LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          colors.primary.withAlpha((255 * 0.2).round()),
+                          colors.secondary.withAlpha((255 * 0.15).round()),
+                        ],
+                      )
+                    : null,
+                color: isCompleted ? null : colors.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: isCompleted
+                    ? [
+                        BoxShadow(
+                          color: colors.primary.withAlpha((255 * 0.2).round()),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
                         ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  description,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: isCompleted ? colors.onPrimaryContainer : colors.onSurfaceVariant,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 11,
-                    height: 1.2,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          if (isCompleted)
-            Positioned(
-              top: 8,
-              right: 8,
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      colors.primary,
-                      colors.secondary,
-                    ],
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.primary.withAlpha((255 * 0.3).round()),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+                      ]
+                    : null,
+              ),
+              child: Image.network(
+                iconUrl,
+                width: 36,
+                height: 36,
+                fit: BoxFit.contain,
+                color: isCompleted ? colors.primary : colors.onSurfaceVariant,
+                colorBlendMode: BlendMode.srcIn,
+                errorBuilder: (context, error, stackTrace) {
+                  return Icon(
+                    Icons.emoji_events,
+                    size: 36,
+                    color: isCompleted ? colors.primary : colors.onSurfaceVariant,
+                  );
+                },
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return SizedBox(
+                    width: 36,
+                    height: 36,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: isCompleted ? colors.primary : colors.onSurfaceVariant,
                     ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.check_rounded,
-                  color: colors.onPrimary,
-                  size: 16,
-                ),
+                  );
+                },
               ),
             ),
-        ],
+            const SizedBox(width: 18),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    description,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: isCompleted ? colors.onPrimaryContainer : colors.onSurfaceVariant,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      height: 1.2,
+                    ),
+                    textAlign: TextAlign.left,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            if (isCompleted)
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        colors.primary,
+                        colors.secondary,
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: colors.primary.withAlpha((255 * 0.3).round()),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                    border: Border.all(
+                      color: colors.secondary,
+                      width: 2.5,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.emoji_events_rounded,
+                    color: colors.onPrimary,
+                    size: 20,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

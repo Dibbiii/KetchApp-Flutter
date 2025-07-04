@@ -67,7 +67,25 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
 
           List<dynamic> subjectStatsForDay = [];
           if (dayData != null && dayData['subjects'] is List) {
-            subjectStatsForDay = dayData['subjects'] as List<dynamic>;
+            // Group tomatoes by subject for the selected day
+            final tomatoes = (dayData['tomatoes'] ?? dayData['sessions'] ?? []) as List<dynamic>;
+            final Map<String, List<int>> subjectTomatoes = {};
+            for (final tomato in tomatoes) {
+              final subject = tomato['subject'] ?? tomato['subjectName'] ?? tomato['name'];
+              final id = tomato['id'];
+              if (subject != null && id != null) {
+                subjectTomatoes.putIfAbsent(subject, () => []).add(id);
+              }
+            }
+            // Attach tomatoes to each subject
+            subjectStatsForDay = (dayData['subjects'] as List<dynamic>).map((subject) {
+              final subjectMap = Map<String, dynamic>.from(subject as Map);
+              final subjectName = subjectMap['name'] ?? subjectMap['subject'] ?? subjectMap['subjectName'];
+              return {
+                ...subjectMap,
+                'tomatoes': subjectTomatoes[subjectName] ?? [],
+              };
+            }).toList();
           }
 
           // Data for the whole week
@@ -174,7 +192,25 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
 
       List<dynamic> subjectStatsForDay = [];
       if (dayData != null && dayData['subjects'] is List) {
-        subjectStatsForDay = dayData['subjects'] as List<dynamic>;
+        // Group tomatoes by subject for the selected day
+        final tomatoes = (dayData['tomatoes'] ?? dayData['sessions'] ?? []) as List<dynamic>;
+        final Map<String, List<int>> subjectTomatoes = {};
+        for (final tomato in tomatoes) {
+          final subject = tomato['subject'] ?? tomato['subjectName'] ?? tomato['name'];
+          final id = tomato['id'];
+          if (subject != null && id != null) {
+            subjectTomatoes.putIfAbsent(subject, () => []).add(id);
+          }
+        }
+        // Attach tomatoes to each subject
+        subjectStatsForDay = (dayData['subjects'] as List<dynamic>).map((subject) {
+          final subjectMap = Map<String, dynamic>.from(subject as Map);
+          final subjectName = subjectMap['name'] ?? subjectMap['subject'] ?? subjectMap['subjectName'];
+          return {
+            ...subjectMap,
+            'tomatoes': subjectTomatoes[subjectName] ?? [],
+          };
+        }).toList();
       }
 
       emit(state.copyWith(
@@ -203,4 +239,3 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
     }
   }
 }
-
