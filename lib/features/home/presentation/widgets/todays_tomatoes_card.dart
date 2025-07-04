@@ -74,7 +74,15 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
       listener: (context, state) {
         if (state is Authenticated) {
           setState(() {
-            _tomatoesFuture = ApiService().getTodaysTomatoes(state.userUuid);
+            _tomatoesFuture = ApiService()
+                .getTodaysTomatoes(state.userUuid)
+                .then((tomatoes) {
+              final uniqueSubjects = <String, Tomato>{};
+              for (final tomato in tomatoes) {
+                uniqueSubjects[tomato.subject] = tomato;
+              }
+              return uniqueSubjects.values.toList();
+            });
           });
         }
       },
@@ -228,246 +236,99 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
   }
 
   Widget _buildTomatoesList(BuildContext context, List<Tomato> tomatoes) {
-    final now = DateTime.now().toUtc();
-    tomatoes.sort((a, b) => a.startAt.compareTo(b.startAt));
-
-    final nextTomato = tomatoes.isNotEmpty ? tomatoes.first : null;
-    if (nextTomato == null) return _buildEmptyState(context);
-
-    final otherTomatoes = tomatoes.where((t) => t.id != nextTomato.id).toList();
-    final otherUpcoming = otherTomatoes.where((t) => now.isBefore(t.startAt)).toList();
-    final otherDelayed = otherTomatoes.where((t) => now.isAfter(t.startAt)).toList();
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildNextTomatoCard(context, nextTomato, now),
-          if (otherDelayed.isNotEmpty) ...[
-            const SizedBox(height: 24),
-            _buildSectionHeader(context, 'Delayed', Icons.warning_amber_rounded, true),
-            const SizedBox(height: 12),
-            ...otherDelayed.map((tomato) => _buildTomatoListItem(context, tomato, true)),
-          ],
-          if (otherUpcoming.isNotEmpty) ...[
-            const SizedBox(height: 24),
-            _buildSectionHeader(context, 'Upcoming', Icons.schedule_outlined, false),
-            const SizedBox(height: 12),
-            ...otherUpcoming.map((tomato) => _buildTomatoListItem(context, tomato, false)),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNextTomatoCard(BuildContext context, Tomato nextTomato, DateTime now) {
+    final uniqueSubjects = <String, Tomato>{};
+    for (final tomato in tomatoes) {
+      uniqueSubjects[tomato.subject] = tomato;
+    }
+    final filteredTomatoes = uniqueSubjects.values.toList();
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final isDelayed = now.isAfter(nextTomato.startAt);
 
-    return AnimatedBuilder(
-      animation: _pulseAnimation,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: isDelayed ? 1.0 : _pulseAnimation.value,
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDelayed ? [
-                  colors.errorContainer.withOpacity(0.8),
-                  colors.errorContainer.withOpacity(0.6),
-                ] : [
-                  colors.primaryContainer.withOpacity(0.9),
-                  colors.tertiaryContainer.withOpacity(0.7),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: (isDelayed ? colors.error : colors.primary).withOpacity(0.15),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                ),
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: filteredTomatoes.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 18),
+      itemBuilder: (context, index) {
+        final tomato = filteredTomatoes[index];
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeInOut,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                colors.surfaceContainerHighest.withOpacity(0.92),
+                colors.surfaceContainerHigh.withOpacity(0.7),
               ],
             ),
-            child: Material(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(24),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(24),
-                onTap: () => _showStartDialog(context, nextTomato, now),
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  isDelayed ? Icons.warning_amber_rounded : Icons.play_circle_filled,
-                                  size: 16,
-                                  color: isDelayed ? colors.error : colors.primary,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  isDelayed ? 'DELAYED' : 'NEXT UP',
-                                  style: textTheme.labelMedium?.copyWith(
-                                    color: isDelayed ? colors.error : colors.primary,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Spacer(),
-                          Icon(
-                            Icons.touch_app_outlined,
-                            color: colors.onSurfaceVariant.withOpacity(0.6),
-                            size: 20,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        nextTomato.subject,
-                        style: textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: colors.onSurface,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: colors.surface.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.access_time_rounded,
-                              size: 20,
-                              color: colors.primary,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Scheduled: ${DateFormat('HH:mm').format(nextTomato.startAt.toLocal())}',
-                              style: textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: colors.onSurface,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+            boxShadow: [
+              BoxShadow(
+                color: colors.primary.withOpacity(0.10),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+            border: Border.all(
+              color: colors.primary.withOpacity(0.13),
+              width: 1.4,
+            ),
+          ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+            leading: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: colors.primaryContainer.withOpacity(0.8),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: colors.primary.withOpacity(0.12),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                ),
+                ],
+              ),
+              child: const Icon(Icons.book_rounded, color: Colors.red, size: 30),
+            ),
+            title: Text(
+              tomato.subject,
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colors.onSurface,
+                letterSpacing: -0.5,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Row(
+                children: [
+                  Icon(Icons.access_time_rounded, size: 18, color: colors.primary),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Start: ${TimeOfDay.fromDateTime(tomato.startAt.toLocal()).format(context)}',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colors.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
-          )
+            trailing: Icon(Icons.arrow_forward_ios_rounded, color: colors.primary, size: 20),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(28),
+            ),
+            onTap: () {
+              context.go('/timer/${tomato.id}');
+            },
+          ),
         );
       },
-    );
-  }
-
-  Widget _buildSectionHeader(BuildContext context, String title, IconData icon, bool isDelayed) {
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: (isDelayed ? colors.errorContainer : colors.primaryContainer).withOpacity(0.8),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            icon,
-            color: isDelayed ? colors.error : colors.primary,
-            size: 20,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Text(
-          title,
-          style: textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: colors.onSurface,
-            letterSpacing: -0.25,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTomatoListItem(BuildContext context, Tomato tomato, bool isDelayed) {
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerHigh.withOpacity(0.6),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: colors.outline.withOpacity(0.1),
-        ),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: (isDelayed ? colors.errorContainer : colors.primaryContainer).withOpacity(0.8),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            isDelayed ? Icons.warning_amber_rounded : Icons.schedule_outlined,
-            color: isDelayed ? colors.error : colors.primary,
-            size: 20,
-          ),
-        ),
-        title: Text(
-          tomato.subject,
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: colors.onSurface,
-          ),
-        ),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: colors.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            DateFormat('HH:mm').format(tomato.startAt.toLocal()),
-            style: textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: colors.onSurfaceVariant,
-            ),
-          ),
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-      ),
     );
   }
 

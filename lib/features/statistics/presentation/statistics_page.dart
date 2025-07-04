@@ -817,13 +817,12 @@ class _StatisticsPageState extends State<StatisticsPage>
           ),
         ),
         onTap: () {
-          context.push('/timer-summary', extra: {
-            'name': subjectName,
-            'totalSeconds': totalSeconds,
-            'icon': Icons.book_rounded,
-            'color': colors.primary,
-            'tomatoes': stat['tomatoes'] ?? [],
-          });
+          final tomatoes = stat['tomatoes'] ?? [];
+          final firstTomatoId = tomatoes.isNotEmpty ? tomatoes.first : null;
+          print('Tapped subject, firstTomatoId: ' + firstTomatoId.toString());
+          if (firstTomatoId != null) {
+            context.push('/timer-summary/[3m$firstTomatoId[23m');
+          }
         },
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),

@@ -11,7 +11,7 @@ import 'package:ketchapp_flutter/models/activity.dart';
 import 'package:ketchapp_flutter/models/activity_type.dart';
 
 class ApiService {
-  final String _baseUrl = "http://192.168.43.22:8081/api";
+  final String _baseUrl = "http://10.170.57.143:8081/api";
 
   Future<dynamic> _processResponse(http.Response response) {
     final body = response.body;
@@ -196,5 +196,16 @@ class ApiService {
       print('Error creating activity: $e');
       rethrow;
     }
+  }
+
+  Future<List<Tomato>> getTomatoChain(int firstTomatoId) async {
+    final List<Tomato> chain = [];
+    int? currentId = firstTomatoId;
+    while (currentId != null) {
+      final tomato = await getTomatoById(currentId);
+      chain.add(tomato);
+      currentId = tomato.nextTomatoId;
+    }
+    return chain;
   }
 }

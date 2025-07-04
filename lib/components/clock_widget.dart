@@ -96,7 +96,7 @@ class _MaterialClockState extends State<MaterialClock> with SingleTickerProvider
     super.dispose();
   }
 
-  void _updateHourHand(Offset localPosition) {
+  void _updateHourHand(Offset localPosition, {bool animate = false}) {
     final center = Offset(widget.clockSize / 2, widget.clockSize / 2);
     final dx = localPosition.dx - center.dx;
     final dy = localPosition.dy - center.dy;
@@ -126,8 +126,12 @@ class _MaterialClockState extends State<MaterialClock> with SingleTickerProvider
     setState(() {
       _hourAngle = angle;
       _selectedHours = double.parse('$hoursPart.${minutesPart.toString().padLeft(2, '0')}');
-      _handAnimation = Tween<double>(begin: _handAnimation.value, end: _hourAngle).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
-      _controller.forward(from: 0);
+      if (animate) {
+        _handAnimation = Tween<double>(begin: _handAnimation.value, end: _hourAngle).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+        _controller.forward(from: 0);
+      } else {
+        _handAnimation = AlwaysStoppedAnimation(_hourAngle);
+      }
     });
     widget.onTimeChanged(_selectedHours);
   }
@@ -140,8 +144,8 @@ class _MaterialClockState extends State<MaterialClock> with SingleTickerProvider
     angle = angle + pi / 2;
     if (angle < 0) angle += 2 * pi;
 
-     _lastAngle = angle;
-     _updateHourHand(localPosition);
+    _lastAngle = angle;
+    _updateHourHand(localPosition, animate: false);
   }
 
   @override
@@ -196,7 +200,11 @@ class _MaterialClockState extends State<MaterialClock> with SingleTickerProvider
             onPanUpdate: (details) {
               RenderBox box = context.findRenderObject() as RenderBox;
               Offset local = box.globalToLocal(details.globalPosition);
-              _updateHourHand(local);
+              _updateHourHand(local, animate: false);
+            },
+            onPanEnd: (details) {
+              // Optionally animate to the final position if you want a snap effect
+              // _updateHourHand(lastPosition, animate: true);
             },
             child: AnimatedBuilder(
               animation: _handAnimation,

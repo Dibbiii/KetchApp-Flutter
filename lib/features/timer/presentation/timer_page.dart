@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:ketchapp_flutter/models/tomato.dart';
 import 'package:ketchapp_flutter/services/api_service.dart';
@@ -10,38 +13,35 @@ import 'package:ketchapp_flutter/services/session_stats_service.dart';
 import 'package:provider/provider.dart';
 import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
 
-import '../../statistics/presentation/tomato_summary_page.dart';
 import '../bloc/timer_bloc.dart';
 import 'tomato_activity_details_page.dart';
-import 'package:ketchapp_flutter/models/tomato_session_stats.dart';
 
 class TimerPage extends StatelessWidget {
-  const TimerPage({super.key});
+  final int? tomatoId;
+
+  const TimerPage({super.key, required this.tomatoId});
 
   @override
   Widget build(BuildContext context) {
     final apiService = Provider.of<ApiService>(context, listen: false);
-    final authState = context.watch<AuthBloc>().state;
-
-    if (authState is Authenticated) {
-      return FutureBuilder<List<Tomato>>(
-        future: apiService.getTodaysTomatoes(authState.userUuid),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return _buildLoadingState(context);
-          } else if (snapshot.hasError) {
-            return _buildErrorState(context, snapshot.error.toString());
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return _buildEmptyState(context);
-          } else {
-            final tomatoes = snapshot.data!..sort((a, b) => a.id.compareTo(b.id));
-            return TimerView(tomatoes: tomatoes);
-          }
-        },
-      );
-    } else {
-      return _buildLoadingState(context);
+    if (tomatoId == null) {
+      return _buildErrorState(context, 'No tomatoId provided');
     }
+    return FutureBuilder<List<Tomato>>(
+      future: apiService.getTomatoChain(tomatoId!),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return _buildLoadingState(context);
+        } else if (snapshot.hasError) {
+          return _buildErrorState(context, snapshot.error.toString());
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return _buildEmptyState(context);
+        } else {
+          final tomatoes = snapshot.data!;
+          return TimerView(tomatoes: tomatoes);
+        }
+      },
+    );
   }
 
   Widget _buildLoadingState(BuildContext context) {
@@ -104,7 +104,10 @@ class TimerPage extends StatelessWidget {
               ),
               const SizedBox(height: 48),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 24,
+                ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -272,7 +275,10 @@ class TimerPage extends StatelessWidget {
                     style: FilledButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -405,7 +411,10 @@ class TimerPage extends StatelessWidget {
                     style: FilledButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -423,19 +432,28 @@ class TimerPage extends StatelessWidget {
 
 class TimerView extends StatefulWidget {
   final List<Tomato> tomatoes;
+
   const TimerView({super.key, required this.tomatoes});
 
   @override
   State<TimerView> createState() => _TimerViewState();
 }
 
-class _TimerViewState extends State<TimerView>
-    with TickerProviderStateMixin {
+class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
   int _currentTomatoIndex = 0;
   late AnimationController _pulseController;
   late AnimationController _fadeController;
   late Animation<double> _pulseAnimation;
   late Animation<double> _fadeAnimation;
+  TimerBloc? _timerBloc;
+  bool _whiteNoiseEnabled = false;
+  AudioPlayer? _audioPlayer;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _timerBloc = context.read<TimerBloc?>();
+  }
 
   @override
   void initState() {
@@ -453,29 +471,26 @@ class _TimerViewState extends State<TimerView>
       vsync: this,
     );
 
-    _pulseAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.05,
-    ).animate(CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOut,
-    ));
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOutCubic,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeOutCubic),
+    );
 
     _fadeController.forward();
   }
 
   @override
   void dispose() {
+    // Put timer in pause when leaving the page
+    if (_timerBloc != null) {
+      _timerBloc!.add(const TimerPaused());
+    }
     _pulseController.dispose();
     _fadeController.dispose();
+    _audioPlayer?.dispose();
     super.dispose();
   }
 
@@ -487,127 +502,74 @@ class _TimerViewState extends State<TimerView>
 
   // New function to navigate to tomato activity details
   void _onTomatoClicked(BuildContext context, Tomato tomato) async {
-    final tomatoStats = _convertTomatoToStats(tomato);
     final apiService = Provider.of<ApiService>(context, listen: false);
-
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => TomatoActivityDetailsPage(
-          tomatoStats: tomatoStats,
-          apiService: apiService,
-        ),
+        builder:
+            (context) => TomatoActivityDetailsPage(
+              tomato: tomato,
+              apiService: apiService,
+            ),
       ),
     );
   }
 
-  // Helper function to convert Tomato to TomatoStats
-  TomatoStats _convertTomatoToStats(Tomato tomato) {
-    final plannedDuration = tomato.endAt.difference(tomato.startAt);
-    final actualDuration = plannedDuration; // You might want to calculate this based on actual completion
-    final pausedTime = tomato.pauseEnd != null
-        ? tomato.pauseEnd!.difference(tomato.endAt)
-        : Duration.zero;
-
-    return TomatoStats(
-      tomatoId: tomato.id,
-      tomatoName: tomato.subject,
-      plannedDuration: plannedDuration,
-      actualDuration: actualDuration,
-      totalPausedTime: pausedTime,
-      pauseCount: tomato.pauseEnd != null ? 1 : 0,
-      startTime: tomato.startAt,
-      endTime: tomato.endAt,
-      isCompleted: true, // You might want to determine this based on tomato status
-      wasOvertime: false, // You might want to calculate this
-    );
-  }
-
-  String formatTimer(int seconds) {
-    final m = (seconds ~/ 60).toString().padLeft(2, '0');
-    final s = (seconds % 60).toString().padLeft(2, '0');
-    return '$m:$s';
-  }
-
-  int _getPomodoroDuration() {
-    final currentTomato = widget.tomatoes[_currentTomatoIndex];
-    final duration = currentTomato.endAt.difference(currentTomato.startAt).inSeconds;
-    return duration > 0 ? duration : 0;
-  }
-
-  int _getBreakDuration() {
-    final currentTomato = widget.tomatoes[_currentTomatoIndex];
-    if (currentTomato.pauseEnd != null) {
-      final duration = currentTomato.pauseEnd!.difference(currentTomato.endAt).inSeconds;
-      return duration > 0 ? duration : 0;
-    }
-    return 0;
-  }
-
-  int _getBreakDurationForTomato(Tomato tomato) {
-    if (tomato.pauseEnd != null) {
-      final duration = tomato.pauseEnd!.difference(tomato.endAt).inSeconds;
-      return duration > 0 ? duration : 0;
-    }
-    return 0;
-  }
-
-  Future<void> _navigateToSummary(BuildContext context, List<int> completedTomatoIds) async {
+  Future<void> _navigateToSummary(
+    BuildContext context,
+    List<int> completedTomatoIds,
+  ) async {
     try {
       final apiService = Provider.of<ApiService>(context, listen: false);
       final sessionStatsService = SessionStatsService(apiService);
-      final sessionSummary = await sessionStatsService.calculateSessionStats(completedTomatoIds);
-
-      if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => Dialog.fullscreen(
-            child: TimerSummaryPage(
-              sessionSummary: sessionSummary,
-              onGoHome: () {
-                Navigator.of(context).pop();
-                try {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                } catch (e) {
-                  Navigator.of(context).maybePop();
-                }
-              },
-              onPlanAgain: () {
-                Navigator.of(context).pop();
-                try {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                } catch (e) {
-                  Navigator.of(context).maybePop();
-                }
-              },
-            ),
-          ),
-        );
-      }
+      final sessionSummary = await sessionStatsService.calculateSessionStats(
+        completedTomatoIds,
+      );
     } catch (e) {
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Sessione Completata'),
-            content: const Text('La sessione è stata completata con successo!'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  try {
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                  } catch (e) {
-                    Navigator.of(context).maybePop();
-                  }
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      }
+      // Optionally handle error
     }
+  }
+
+  Future<void> _toggleWhiteNoise(bool enable) async {
+    if (enable) {
+      _audioPlayer ??= AudioPlayer();
+      await _audioPlayer!.setReleaseMode(ReleaseMode.loop);
+      if (kIsWeb) {
+        // Use a .wav file for web compatibility and loop manually
+        await _audioPlayer!.play(AssetSource('audio/music_web.wav'));
+        _audioPlayer!.onPlayerComplete.listen((event) async {
+          if (_whiteNoiseEnabled) {
+            await _audioPlayer!.seek(Duration.zero);
+            await _audioPlayer!.resume();
+          }
+        });
+      } else {
+        await _audioPlayer!.play(AssetSource('audio/music.mp3'));
+      }
+    } else {
+      await _audioPlayer?.stop();
+    }
+  }
+
+  // --- Pomodoro and Break Duration Helpers ---
+  int _getPomodoroDuration() {
+    // Default Pomodoro duration: 25 minutes
+    return 25 * 60;
+  }
+
+  int _getBreakDuration() {
+    // Default break duration: 5 minutes
+    return 5 * 60;
+  }
+
+  int _getBreakDurationForTomato(Tomato tomato) {
+    // You can customize this logic per tomato if needed
+    return _getBreakDuration();
+  }
+
+  String formatTimer(int seconds) {
+    final minutes = seconds ~/ 60;
+    final secs = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -628,13 +590,18 @@ class _TimerViewState extends State<TimerView>
             userUUID: authState.userUuid,
             tomatoId: widget.tomatoes[_currentTomatoIndex].id,
           );
-          bloc.add(TimerLoaded(
-            tomatoDuration: pomodoroDurationSeconds,
-            breakDuration: breakDurationInSeconds,
-          ));
+          bloc.add(
+            TimerLoaded(
+              tomatoDuration: pomodoroDurationSeconds,
+              breakDuration: breakDurationInSeconds,
+            ),
+          );
           return bloc;
         }
-        throw Exception('User not authenticated');
+        // Show an error widget if not authenticated
+        throw FlutterError(
+          'User not authenticated. Please log in to continue.',
+        );
       },
       child: BlocListener<TimerBloc, TimerState>(
         listener: _handleTimerStateChanges,
@@ -662,9 +629,14 @@ class _TimerViewState extends State<TimerView>
                   children: [
                     _buildHeader(context, currentTomato, colors, theme),
                     const SizedBox(height: 24),
-                    _buildTomatoTimeline(colors, theme),
                     Expanded(
-                      child: _buildTimerSection(context, pomodoroDurationSeconds, breakDurationInSeconds, colors, theme),
+                      child: _buildTimerSection(
+                        context,
+                        pomodoroDurationSeconds,
+                        breakDurationInSeconds,
+                        colors,
+                        theme,
+                      ),
                     ),
                   ],
                 ),
@@ -694,11 +666,10 @@ class _TimerViewState extends State<TimerView>
       case NavigatingToSummary:
         _handleNavigationToSummary(context, state as NavigatingToSummary);
         break;
-      case SessionComplete:
-        _handleSessionComplete();
-        break;
       case BreakTimerInProgress:
-        print('🟢 Break timer started with ${state.duration} seconds and nextTomatoId: ${(state as BreakTimerInProgress).nextTomatoId}');
+        print(
+          '🟢 Break timer started with ${state.duration} seconds and nextTomatoId: ${(state as BreakTimerInProgress).nextTomatoId}',
+        );
         break;
       case TimerError:
         print('❌ Timer error: ${(state as dynamic).message}');
@@ -707,43 +678,49 @@ class _TimerViewState extends State<TimerView>
   }
 
   void _handleNextTomato(WaitingNextTomato state) {
-    final nextIndex = widget.tomatoes
-        .indexWhere((tomato) => tomato.id == state.nextTomatoId);
+    final nextIndex = widget.tomatoes.indexWhere(
+      (tomato) => tomato.id == state.nextTomatoId,
+    );
     if (nextIndex != -1) {
       _onTomatoSelected(nextIndex);
     }
   }
 
   void _handleTomatoSwitch(TomatoSwitched state) {
-    final nextIndex = widget.tomatoes
-        .indexWhere((tomato) => tomato.id == state.newTomatoId);
+    final nextIndex = widget.tomatoes.indexWhere(
+      (tomato) => tomato.id == state.newTomatoId,
+    );
     if (nextIndex != -1) {
       _onTomatoSelected(nextIndex);
     }
   }
 
   void _handleScheduledWait(WaitingForScheduledTime state) {
-    final nextIndex = widget.tomatoes
-        .indexWhere((tomato) => tomato.id == state.nextTomatoId);
+    final nextIndex = widget.tomatoes.indexWhere(
+      (tomato) => tomato.id == state.nextTomatoId,
+    );
     if (nextIndex != -1) {
       _onTomatoSelected(nextIndex);
     }
   }
 
-  void _handleNavigationToSummary(BuildContext context, NavigatingToSummary state) {
-    _navigateToSummary(context, state.completedTomatoIds);
+  void _handleNavigationToSummary(
+    BuildContext context,
+    NavigatingToSummary state,
+  ) {
+    // Naviga direttamente alla pagina di riepilogo usando il primo tomatoId completato
+    if (state.completedTomatoIds.isNotEmpty) {
+      final firstTomatoId = state.completedTomatoIds.first;
+      GoRouter.of(context).go('/timer-summary/$firstTomatoId');
+    }
   }
 
-  void _handleSessionComplete() {
-    final completedTomatoIds = widget.tomatoes
-        .take(_currentTomatoIndex + 1)
-        .map((tomato) => tomato.id)
-        .toList();
-
-    _navigateToSummary(context, completedTomatoIds);
-  }
-
-  Widget _buildHeader(BuildContext context, Tomato currentTomato, ColorScheme colors, ThemeData theme) {
+  Widget _buildHeader(
+    BuildContext context,
+    Tomato currentTomato,
+    ColorScheme colors,
+    ThemeData theme,
+  ) {
     return Container(
       margin: const EdgeInsets.all(20),
       padding: const EdgeInsets.all(20),
@@ -812,7 +789,10 @@ class _TimerViewState extends State<TimerView>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: colors.primaryContainer.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(10),
@@ -842,44 +822,20 @@ class _TimerViewState extends State<TimerView>
                   ],
                 ),
               ),
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      colors.surfaceContainerHighest.withValues(alpha: 0.8),
-                      colors.surfaceContainer.withValues(alpha: 0.6),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.shadow.withValues(alpha: 0.1),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: Icon(
-                    Icons.close_rounded,
-                    color: colors.onSurface.withValues(alpha: 0.8),
-                    size: 20,
-                  ),
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    padding: const EdgeInsets.all(8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+          // Unificata la timeline qui
+          _ModernTomatoTimeline(
+            tomatoes: widget.tomatoes,
+            currentTomatoIndex: _currentTomatoIndex,
+            onTomatoSelected: _onTomatoSelected,
+            onTomatoClicked: _onTomatoClicked,
+            getBreakDurationForTomato: _getBreakDurationForTomato,
+          ),
+          const SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -891,9 +847,7 @@ class _TimerViewState extends State<TimerView>
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: colors.primary.withValues(alpha: 0.1),
-              ),
+              border: Border.all(color: colors.primary.withValues(alpha: 0.1)),
               boxShadow: [
                 BoxShadow(
                   color: colors.primary.withValues(alpha: 0.1),
@@ -902,32 +856,55 @@ class _TimerViewState extends State<TimerView>
                 ),
               ],
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
               children: [
-                _buildStatChip(
-                  'Durata',
-                  '${_getPomodoroDuration() ~/ 60} min',
-                  Icons.timer_rounded,
-                  colors.primary,
-                  colors,
-                  theme,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildStatChip(
+                      'Durata',
+                      '${_getPomodoroDuration() ~/ 60} min',
+                      Icons.timer_rounded,
+                      colors.primary,
+                      colors,
+                      theme,
+                    ),
+                    _buildStatChip(
+                      'Pausa',
+                      '${_getBreakDuration() ~/ 60} min',
+                      Icons.local_cafe_rounded,
+                      colors.tertiary,
+                      colors,
+                      theme,
+                    ),
+                    _buildStatChip(
+                      'Totale',
+                      '${widget.tomatoes.length}',
+                      Icons.spa_rounded,
+                      colors.secondary,
+                      colors,
+                      theme,
+                    ),
+                  ],
                 ),
-                _buildStatChip(
-                  'Pausa',
-                  '${_getBreakDuration() ~/ 60} min',
-                  Icons.local_cafe_rounded,
-                  colors.tertiary,
-                  colors,
-                  theme,
-                ),
-                _buildStatChip(
-                  'Totale',
-                  '${widget.tomatoes.length}',
-                  Icons.spa_rounded,
-                  colors.secondary,
-                  colors,
-                  theme,
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.surround_sound, color: colors.primary, size: 20),
+                    const SizedBox(width: 8),
+                    Text('Rumore bianco', style: theme.textTheme.bodyMedium),
+                    const SizedBox(width: 8),
+                    Switch(
+                      value: _whiteNoiseEnabled,
+                      onChanged: (val) async {
+                        setState(() {
+                          _whiteNoiseEnabled = val;
+                        });
+                        await _toggleWhiteNoise(val);
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -937,7 +914,14 @@ class _TimerViewState extends State<TimerView>
     );
   }
 
-  Widget _buildStatChip(String label, String value, IconData icon, Color iconColor, ColorScheme colors, ThemeData theme) {
+  Widget _buildStatChip(
+    String label,
+    String value,
+    IconData icon,
+    Color iconColor,
+    ColorScheme colors,
+    ThemeData theme,
+  ) {
     return Column(
       children: [
         Container(
@@ -946,11 +930,7 @@ class _TimerViewState extends State<TimerView>
             color: iconColor.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(
-            icon,
-            color: iconColor,
-            size: 20,
-          ),
+          child: Icon(icon, color: iconColor, size: 20),
         ),
         const SizedBox(height: 8),
         Text(
@@ -970,27 +950,25 @@ class _TimerViewState extends State<TimerView>
     );
   }
 
-  Widget _buildTomatoTimeline(ColorScheme colors, ThemeData theme) {
-    return Container(
-      height: 112, // Increased height to accommodate the larger tomato items
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      child: _ModernTomatoTimeline(
-        tomatoes: widget.tomatoes,
-        currentTomatoIndex: _currentTomatoIndex,
-        onTomatoSelected: _onTomatoSelected,
-        onTomatoClicked: _onTomatoClicked, // Add navigation callback
-        getBreakDurationForTomato: _getBreakDurationForTomato,
-      ),
-    );
-  }
-
-  Widget _buildTimerSection(BuildContext context, int pomodoroDurationSeconds, int breakDurationInSeconds, ColorScheme colors, ThemeData theme) {
+  Widget _buildTimerSection(
+    BuildContext context,
+    int pomodoroDurationSeconds,
+    int breakDurationInSeconds,
+    ColorScheme colors,
+    ThemeData theme,
+  ) {
     return Container(
       margin: const EdgeInsets.all(24),
       child: Column(
         children: [
           Expanded(
-            child: _buildTimerDisplay(context, pomodoroDurationSeconds, breakDurationInSeconds, colors, theme),
+            child: _buildTimerDisplay(
+              context,
+              pomodoroDurationSeconds,
+              breakDurationInSeconds,
+              colors,
+              theme,
+            ),
           ),
           const SizedBox(height: 32),
           _buildTimerControls(context, colors, theme),
@@ -999,13 +977,24 @@ class _TimerViewState extends State<TimerView>
     );
   }
 
-  Widget _buildTimerDisplay(BuildContext context, int pomodoroDurationSeconds, int breakDurationInSeconds, ColorScheme colors, ThemeData theme) {
+  Widget _buildTimerDisplay(
+    BuildContext context,
+    int pomodoroDurationSeconds,
+    int breakDurationInSeconds,
+    ColorScheme colors,
+    ThemeData theme,
+  ) {
     return BlocBuilder<TimerBloc, TimerState>(
       builder: (context, state) {
-        final isBreak = state is BreakTimerInProgress || state is BreakTimerPaused;
-        final totalDuration = isBreak ? breakDurationInSeconds : pomodoroDurationSeconds;
+        final isBreak =
+            state is BreakTimerInProgress || state is BreakTimerPaused;
+        final totalDuration =
+            isBreak ? breakDurationInSeconds : pomodoroDurationSeconds;
         final duration = state.duration;
-        final progress = totalDuration > 0 ? (totalDuration - duration) / totalDuration : 0.0;
+        final progress =
+            totalDuration > 0
+                ? (totalDuration - duration) / totalDuration
+                : 0.0;
 
         if (state is TomatoTimerInProgress || state is BreakTimerInProgress) {
           _pulseController.repeat(reverse: true);
@@ -1020,24 +1009,30 @@ class _TimerViewState extends State<TimerView>
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: isBreak ? [
-                  colors.tertiaryContainer.withValues(alpha: 0.9),
-                  colors.tertiaryContainer.withValues(alpha: 0.7),
-                  colors.surfaceContainerHigh.withValues(alpha: 0.5),
-                ] : [
-                  colors.primaryContainer.withValues(alpha: 0.9),
-                  colors.primaryContainer.withValues(alpha: 0.7),
-                  colors.surfaceContainerHigh.withValues(alpha: 0.5),
-                ],
+                colors:
+                    isBreak
+                        ? [
+                          colors.tertiaryContainer.withValues(alpha: 0.9),
+                          colors.tertiaryContainer.withValues(alpha: 0.7),
+                          colors.surfaceContainerHigh.withValues(alpha: 0.5),
+                        ]
+                        : [
+                          colors.primaryContainer.withValues(alpha: 0.9),
+                          colors.primaryContainer.withValues(alpha: 0.7),
+                          colors.surfaceContainerHigh.withValues(alpha: 0.5),
+                        ],
               ),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: (isBreak ? colors.tertiary : colors.primary).withValues(alpha: 0.2),
+                color: (isBreak ? colors.tertiary : colors.primary).withValues(
+                  alpha: 0.2,
+                ),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: (isBreak ? colors.tertiary : colors.primary).withValues(alpha: 0.12),
+                  color: (isBreak ? colors.tertiary : colors.primary)
+                      .withValues(alpha: 0.12),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
                   spreadRadius: -1,
@@ -1055,7 +1050,10 @@ class _TimerViewState extends State<TimerView>
               children: [
                 if (isBreak) ...[
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 1,
+                    ), // ancora più compatto
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
@@ -1063,7 +1061,7 @@ class _TimerViewState extends State<TimerView>
                           colors.tertiary.withValues(alpha: 0.15),
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(6), // più compatto
                       border: Border.all(
                         color: colors.tertiary.withValues(alpha: 0.3),
                         width: 1,
@@ -1074,33 +1072,35 @@ class _TimerViewState extends State<TimerView>
                       children: [
                         Icon(
                           Icons.local_cafe_rounded,
-                          size: 10,
+                          size: 9, // più piccolo
                           color: colors.tertiary,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 3),
                         Text(
                           'Pausa ${breakDurationInSeconds ~/ 60}min',
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: colors.onTertiaryContainer,
                             fontWeight: FontWeight.w600,
-                            fontSize: 9,
+                            fontSize: 8, // più piccolo
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6), // meno spazio
                 ],
                 AnimatedBuilder(
                   animation: _pulseAnimation,
                   builder: (context, child) {
                     return Transform.scale(
-                      scale: state is TomatoTimerInProgress || state is BreakTimerInProgress
-                          ? _pulseAnimation.value
-                          : 1.0,
+                      scale:
+                          state is TomatoTimerInProgress ||
+                                  state is BreakTimerInProgress
+                              ? _pulseAnimation.value
+                              : 1.0,
                       child: Container(
-                        width: 160,
-                        height: 160,
+                        width: 130, // più piccolo
+                        height: 130, // più piccolo
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: LinearGradient(
@@ -1108,19 +1108,24 @@ class _TimerViewState extends State<TimerView>
                             end: Alignment.bottomRight,
                             colors: [
                               colors.surface.withValues(alpha: 0.95),
-                              colors.surfaceContainerHigh.withValues(alpha: 0.8),
+                              colors.surfaceContainerHigh.withValues(
+                                alpha: 0.8,
+                              ),
                             ],
                           ),
                           boxShadow: [
                             BoxShadow(
                               color: colors.shadow.withValues(alpha: 0.08),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
+                              blurRadius: 10, // più compatto
+                              offset: const Offset(0, 3),
                               spreadRadius: -2,
                             ),
                             BoxShadow(
-                              color: (isBreak ? colors.tertiary : colors.primary).withValues(alpha: 0.05),
-                              blurRadius: 6,
+                              color: (isBreak
+                                      ? colors.tertiary
+                                      : colors.primary)
+                                  .withValues(alpha: 0.05),
+                              blurRadius: 5, // più compatto
                               offset: const Offset(0, 2),
                               spreadRadius: -1,
                             ),
@@ -1130,12 +1135,14 @@ class _TimerViewState extends State<TimerView>
                           alignment: Alignment.center,
                           children: [
                             SizedBox(
-                              width: 140,
-                              height: 140,
+                              width: 110, // più piccolo
+                              height: 110, // più piccolo
                               child: CircularProgressIndicator(
                                 value: progress,
-                                strokeWidth: 6,
-                                backgroundColor: colors.outlineVariant.withValues(alpha: 0.2),
+                                strokeWidth: 5,
+                                // più sottile
+                                backgroundColor: colors.outlineVariant
+                                    .withValues(alpha: 0.2),
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                   isBreak ? colors.tertiary : colors.primary,
                                 ),
@@ -1148,54 +1155,77 @@ class _TimerViewState extends State<TimerView>
                               children: [
                                 if (isBreak) ...[
                                   Container(
-                                    padding: const EdgeInsets.all(4),
+                                    padding: const EdgeInsets.all(3),
+                                    // più compatto
                                     decoration: BoxDecoration(
                                       gradient: LinearGradient(
                                         colors: [
-                                          colors.tertiary.withValues(alpha: 0.15),
-                                          colors.tertiary.withValues(alpha: 0.1),
+                                          colors.tertiary.withValues(
+                                            alpha: 0.15,
+                                          ),
+                                          colors.tertiary.withValues(
+                                            alpha: 0.1,
+                                          ),
                                         ],
                                       ),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
                                       Icons.local_cafe_rounded,
-                                      size: 14,
+                                      size: 12, // più piccolo
                                       color: colors.tertiary,
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
+                                  const SizedBox(height: 1),
                                 ],
                                 ConstrainedBox(
-                                  constraints: const BoxConstraints(maxWidth: 100),
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 80,
+                                  ), // più stretto
                                   child: FittedBox(
                                     fit: BoxFit.scaleDown,
                                     child: Text(
                                       formatTimer(duration),
-                                      style: theme.textTheme.displaySmall?.copyWith(
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.w300,
-                                        color: isBreak ? colors.tertiary : colors.primary,
-                                        letterSpacing: -1.0,
-                                        height: 1.0,
-                                      ),
+                                      style: theme.textTheme.displaySmall
+                                          ?.copyWith(
+                                            fontSize: 22,
+                                            // più piccolo
+                                            fontWeight: FontWeight.w300,
+                                            color:
+                                                isBreak
+                                                    ? colors.tertiary
+                                                    : colors.primary,
+                                            letterSpacing: -1.0,
+                                            height: 1.0,
+                                          ),
                                       textAlign: TextAlign.center,
                                     ),
                                   ),
                                 ),
                                 const SizedBox(height: 1),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 5,
+                                    vertical: 1,
+                                  ),
+                                  // più compatto
                                   decoration: BoxDecoration(
-                                    color: (isBreak ? colors.tertiaryContainer : colors.primaryContainer).withValues(alpha: 0.3),
-                                    borderRadius: BorderRadius.circular(4),
+                                    color: (isBreak
+                                            ? colors.tertiaryContainer
+                                            : colors.primaryContainer)
+                                        .withValues(alpha: 0.3),
+                                    borderRadius: BorderRadius.circular(
+                                      3,
+                                    ), // più compatto
                                   ),
                                   child: Text(
                                     'rimanenti',
                                     style: theme.textTheme.labelSmall?.copyWith(
-                                      color: colors.onSurface.withValues(alpha: 0.8),
+                                      color: colors.onSurface.withValues(
+                                        alpha: 0.8,
+                                      ),
                                       fontWeight: FontWeight.w500,
-                                      fontSize: 8,
+                                      fontSize: 7, // più piccolo
                                     ),
                                   ),
                                 ),
@@ -1215,7 +1245,11 @@ class _TimerViewState extends State<TimerView>
     );
   }
 
-  Widget _buildTimerControls(BuildContext context, ColorScheme colors, ThemeData theme) {
+  Widget _buildTimerControls(
+    BuildContext context,
+    ColorScheme colors,
+    ThemeData theme,
+  ) {
     return BlocBuilder<TimerBloc, TimerState>(
       builder: (context, state) {
         final bloc = context.read<TimerBloc>();
@@ -1231,11 +1265,19 @@ class _TimerViewState extends State<TimerView>
     );
   }
 
-  Widget _buildPrimaryControl(BuildContext context, TimerState state, TimerBloc bloc, ColorScheme colors, ThemeData theme) {
+  Widget _buildPrimaryControl(
+    BuildContext context,
+    TimerState state,
+    TimerBloc bloc,
+    ColorScheme colors,
+    ThemeData theme,
+  ) {
     // Debug: stampiamo il tipo di stato ricevuto
     print('🎯 Current state in _buildPrimaryControl: ${state.runtimeType}');
 
-    if (state is WaitingFirstTomato || state is WaitingNextTomato || state is TomatoTimerReady) {
+    if (state is WaitingFirstTomato ||
+        state is WaitingNextTomato ||
+        state is TomatoTimerReady) {
       print('🎯 Showing start button');
       return Container(
         width: double.infinity,
@@ -1754,7 +1796,12 @@ class _TimerViewState extends State<TimerView>
     return const SizedBox.shrink();
   }
 
-  Widget _buildSecondaryInfo(BuildContext context, TimerState state, ColorScheme colors, ThemeData theme) {
+  Widget _buildSecondaryInfo(
+    BuildContext context,
+    TimerState state,
+    ColorScheme colors,
+    ThemeData theme,
+  ) {
     if (state is WaitingForScheduledTime) {
       final waitTime = state.remainingWaitTime;
       final formattedWaitTime = _formatDuration(waitTime);
@@ -1889,9 +1936,7 @@ class _ModernTomatoTimeline extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surfaceContainerHigh.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colors.outline.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: colors.outline.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
             color: colors.shadow.withValues(alpha: 0.1),
@@ -1902,13 +1947,14 @@ class _ModernTomatoTimeline extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          itemCount: tomatoes.length,
-          itemBuilder: (context, index) => _buildTomatoItem(
-            context,
-            tomatoes[index],
-            index,
+        child: SizedBox(
+          height: 70, // Ensures ListView has a fixed height
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: tomatoes.length,
+            itemBuilder:
+                (context, index) =>
+                    _buildTomatoItem(context, tomatoes[index], index),
           ),
         ),
       ),
@@ -1946,13 +1992,16 @@ class _ModernTomatoTimeline extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: _getTomatoColor(colors, isCompleted, isCurrent),
                   shape: BoxShape.circle,
-                  boxShadow: isCurrent ? [
-                    BoxShadow(
-                      color: colors.primary.withValues(alpha: 0.4),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    ),
-                  ] : null,
+                  boxShadow:
+                      isCurrent
+                          ? [
+                            BoxShadow(
+                              color: colors.primary.withValues(alpha: 0.4),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
+                            ),
+                          ]
+                          : null,
                 ),
                 child: _buildTomatoIcon(colors, isCompleted, isCurrent),
               ),
@@ -1962,9 +2011,10 @@ class _ModernTomatoTimeline extends StatelessWidget {
                   DateFormat('HH:mm').format(tomato.startAt),
                   style: theme.textTheme.labelSmall?.copyWith(
                     fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
-                    color: isCurrent
-                        ? colors.primary
-                        : colors.onSurface.withValues(alpha: 0.7),
+                    color:
+                        isCurrent
+                            ? colors.primary
+                            : colors.onSurface.withValues(alpha: 0.7),
                     fontSize: 9, // Smaller font
                   ),
                   textAlign: TextAlign.center,
@@ -1976,7 +2026,10 @@ class _ModernTomatoTimeline extends StatelessWidget {
                 const SizedBox(height: 1),
                 Flexible(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0.5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 2,
+                      vertical: 0.5,
+                    ),
                     decoration: BoxDecoration(
                       color: colors.tertiaryContainer.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(3),
@@ -2010,7 +2063,11 @@ class _ModernTomatoTimeline extends StatelessWidget {
     }
   }
 
-  Widget _buildTomatoIcon(ColorScheme colors, bool isCompleted, bool isCurrent) {
+  Widget _buildTomatoIcon(
+    ColorScheme colors,
+    bool isCompleted,
+    bool isCurrent,
+  ) {
     if (isCompleted) {
       return Icon(
         Icons.check_rounded,
@@ -2021,9 +2078,10 @@ class _ModernTomatoTimeline extends StatelessWidget {
       return Icon(
         Icons.schedule_rounded,
         size: isCurrent ? 24 : 20,
-        color: isCurrent
-            ? colors.onPrimary
-            : colors.onSurface.withValues(alpha: 0.6),
+        color:
+            isCurrent
+                ? colors.onPrimary
+                : colors.onSurface.withValues(alpha: 0.6),
       );
     }
   }

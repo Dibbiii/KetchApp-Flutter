@@ -79,9 +79,10 @@ final GoRouter router = GoRouter(
       },
     ),
     GoRoute(
-      path: '/timer',
+      path: '/timer/:tomatoID',
       builder: (context, state) {
-        return TimerPage();
+        final tomatoID = int.tryParse(state.pathParameters['tomatoID'] ?? '');
+        return TimerPage(tomatoId: tomatoID);
       },
     ),
     ShellRoute(
