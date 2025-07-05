@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -19,12 +18,12 @@ class ShowBottomSheet extends StatefulWidget {
 
 class _ShowBottomSheetState extends State<ShowBottomSheet>
     with TickerProviderStateMixin {
-  int selectedType = 0; // 0: Event, 1: Task, 2: Birthday
+  int selectedType = 0;
   final List<TextEditingController> _subjectControllers = [];
   final List<FocusNode> _subjectFocusNodes = [];
   final Map<int, double> _subjectDurations = {};
 
-  // Add fixed calendar events for Lunch, Dinner, and Sleep to the UI as editable events
+
   final List<TextEditingController> _calendarControllers = [
     TextEditingController(text: 'Lunch'),
     TextEditingController(text: 'Dinner'),
@@ -41,18 +40,18 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
   double _dialogBreakSelectedHours = 0.0;
   double _dialogSessionSelectedHours = 0.0;
 
-  // Store calendar times by index
+
   final Map<int, Map<String, String>> _calendarTimes = {
-    0: {'start_at': '12:30', 'end_at': '13:30'}, // Lunch
-    1: {'start_at': '19:30', 'end_at': '20:30'}, // Dinner
-    2: {'start_at': '23:30', 'end_at': '07:30'}, // Sleep
+    0: {'start_at': '12:30', 'end_at': '13:30'},
+    1: {'start_at': '19:30', 'end_at': '20:30'},
+    2: {'start_at': '23:30', 'end_at': '07:30'},
   };
   bool _syncWithGoogleCalendar = false;
 
-  // Keep track of which calendars are from Google Calendar
+
   final Set<int> _googleCalendarEvents = {};
 
-  // Calendar service for fetching Google Calendar events
+
   final CalendarService _calendarService = CalendarService();
 
 
@@ -71,7 +70,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
     _breakTimeController = TextEditingController(text: 'Add break time');
     _addSubject();
 
-    // Start animations
+
     _fadeAnimationController.forward();
     _slideAnimationController.forward();
   }
@@ -105,7 +104,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
 
   @override
   void dispose() {
-    // Remove _titleController disposal since we're removing the title section
+
     for (var controller in _subjectControllers) {
       controller.dispose();
     }
@@ -132,7 +131,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
     setState(() {
       _subjectControllers.add(newController);
       _subjectFocusNodes.add(newFocusNode);
-      _subjectDurations[_subjectControllers.length - 1] = 1.0; // Default 1 hour
+      _subjectDurations[_subjectControllers.length - 1] = 1.0;
     });
   }
 
@@ -407,13 +406,13 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
   String formatTime(TimeOfDay time) {
     final now = DateTime.now();
     final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
-    final format = DateFormat.Hm(); // 'HH:mm'
+    final format = DateFormat.Hm();
     return format.format(dt);
   }
 
   Future<void> _createPlan() async {
     if (!_formKey.currentState!.validate()) {
-      // Show error if form is not valid
+
       return;
     }
     final authState = context.read<AuthBloc>().state;
@@ -470,7 +469,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
       );
 
       if (mounted) {
-        Navigator.of(context).pop(); // Close the bottom sheet
+        Navigator.of(context).pop();
         context.push('/plan-creation-loading', extra: plan);
       }
     } catch (e) {
@@ -482,60 +481,9 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
     }
   }
 
-  void _fetchGoogleCalendarEvents() {
-    setState(() {
-      // _isLoadingCalendarEvents = true;
-    });
-    _calendarService
-        .getEvents()
-        .then((events) {
-          setState(() {
-            // _isLoadingCalendarEvents = false;
-            // Clear existing events
-            for (var idx in _googleCalendarEvents) {
-              if (idx < _calendarControllers.length) {
-                _calendarControllers[idx].dispose();
-                _calendarFocusNodes[idx].dispose();
-              }
-            }
-            _calendarControllers.clear();
-            _calendarFocusNodes.clear();
-            _googleCalendarEvents.clear();
-
-            // Add new events
-            for (var event in events) {
-              final startTime = event.start?.dateTime?.toLocal();
-              final endTime = event.end?.dateTime?.toLocal();
-
-              if (startTime != null && endTime != null) {
-                final controller = TextEditingController(
-                  text: event.summary ?? 'No title',
-                );
-                _calendarControllers.add(controller);
-                _calendarFocusNodes.add(FocusNode());
-                _calendarTimes[_calendarControllers.length - 1] = {
-                  'start_at': DateFormat('HH:mm').format(startTime),
-                  'end_at': DateFormat('HH:mm').format(endTime),
-                  'date': DateFormat('E, d MMM', 'it_IT').format(startTime),
-                };
-                _googleCalendarEvents.add(_calendarControllers.length - 1);
-              }
-            }
-          });
-        })
-        .catchError((error) {
-          setState(() {
-            // _isLoadingCalendarEvents = false;
-          });
-          // Handle error (e.g., show a snackbar)
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to fetch events: $error')),
-          );
-        });
-  }
 
   void _clearGoogleCalendarEvents() {
-    // Remove only Google events
+
     final List<int> googleEventIndices = _googleCalendarEvents.toList()..sort();
     for (int i = googleEventIndices.length - 1; i >= 0; i--) {
       final idx = googleEventIndices[i];
@@ -565,7 +513,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
     if (!mounted) return;
 
     try {
-      // Show loading indicator
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -586,16 +534,16 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
         ),
       );
 
-      // Clear existing Google Calendar events first
+
       _clearGoogleCalendarEvents();
 
-      // Fetch events from Google Calendar
+
       final events = await _calendarService.getEvents();
 
       if (!mounted) return;
 
       setState(() {
-        // Add new Google Calendar events
+
         for (var event in events) {
           final startTime = event.start?.dateTime?.toLocal();
           final endTime = event.end?.dateTime?.toLocal();
@@ -647,7 +595,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
           ),
         );
 
-        // Turn off the sync toggle if it failed
+
         setState(() {
           _syncWithGoogleCalendar = false;
         });
@@ -715,7 +663,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
       ),
       child: Column(
         children: [
-          // Removed all clippers (drag handle and close button at the top)
+
           Row(
             children: [
               Container(
@@ -1326,9 +1274,9 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
 
   Widget _buildCalendarItem(BuildContext context, int index, ColorScheme colors, TextTheme textTheme) {
     final isGoogleEvent = _googleCalendarEvents.contains(index);
-    final isFixedEvent = index < 3; // 0: Lunch, 1: Dinner, 2: Sleep
+    final isFixedEvent = index < 3;
 
-    // Define icon, color, and label for fixed events
+
     IconData? fixedIcon;
     Color? fixedColor;
     String? fixedLabel;
@@ -1422,11 +1370,9 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                               tooltip: 'Rimuovi',
                               onPressed: () {
                                 setState(() {
-                                  // Rimuovi l'evento fisso dalla UI
                                   _calendarControllers.removeAt(index);
                                   _calendarFocusNodes.removeAt(index);
                                   _calendarTimes.remove(index);
-                                  // Shift down gli altri eventi fissi se necessario
                                   for (int i = index + 1; i < 3; i++) {
                                     if (_calendarTimes.containsKey(i)) {
                                       _calendarTimes[i - 1] = _calendarTimes[i]!;
@@ -1505,7 +1451,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                     child: TextFormField(
                       controller: _calendarControllers[index],
                       focusNode: _calendarFocusNodes[index],
-                      enabled: !isGoogleEvent && !isFixedEvent, // Fixed events are not editable
+                      enabled: !isGoogleEvent && !isFixedEvent,
                       autovalidateMode: AutovalidateMode.onUserInteraction,
                       validator: (value) {
                         if (!isFixedEvent && !isGoogleEvent && (value == null || value.trim().isEmpty)) {
@@ -1546,11 +1492,10 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // Show trash for all events (fixed, custom, google)
                   IconButton(
                     onPressed: () => _removecalendarAt(index),
                     icon: const Icon(Icons.remove_circle_outline_rounded),
-                    iconSize: 18, // Match subject delete button
+                    iconSize: 18,
                     color: colors.error,
                     padding: const EdgeInsets.all(4),
                     constraints: const BoxConstraints(),
@@ -1572,35 +1517,8 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
   }
 
 
-  void _removeSubject(int index) {
-    setState(() {
-      _subjectControllers[index].dispose();
-      _subjectFocusNodes[index].dispose();
-      _subjectControllers.removeAt(index);
-      _subjectFocusNodes.removeAt(index);
-      _subjectDurations.remove(index);
 
-      // Reindex the remaining durations
-      final newDurations = <int, double>{};
-      for (int i = 0; i < _subjectControllers.length; i++) {
-        if (i < index) {
-          newDurations[i] = _subjectDurations[i] ?? 1.0;
-        } else {
-          newDurations[i] = _subjectDurations[i + 1] ?? 1.0;
-        }
-      }
-      _subjectDurations.clear();
-      _subjectDurations.addAll(newDurations);
-    });
-  }
 
-  void _showSessionTimeDialog(BuildContext context) {
-    // Implementation for session time dialog
-  }
-
-  void _showBreakTimeDialog(BuildContext context) {
-    // Implementation for break time dialog
-  }
 
   void _editCalendarTime(BuildContext context, int index) {
     final currentTimes = _calendarTimes[index] ?? {'start_at': '12:00', 'end_at': '13:00'};

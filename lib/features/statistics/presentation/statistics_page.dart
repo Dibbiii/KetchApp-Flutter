@@ -2,17 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:ketchapp_flutter/features/statistics/presentation/statistics_shrimmer_page.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ketchapp_flutter/features/statistics/bloc/statistics_bloc.dart';
 import 'package:ketchapp_flutter/features/statistics/presentation/widgets/weekly_histogram_widget.dart';
-import 'package:ketchapp_flutter/features/statistics/presentation/widgets/subject_stat_item_widget.dart';
-import 'package:ketchapp_flutter/features/statistics/presentation/tomato_summary_page.dart';
-import 'package:go_router/go_router.dart';
 
 class StatisticsPage extends StatefulWidget {
-  const StatisticsPage({Key? key}) : super(key: key);
+  const StatisticsPage({super.key});
 
   @override
   State<StatisticsPage> createState() => _StatisticsPageState();
@@ -28,7 +24,6 @@ class _StatisticsPageState extends State<StatisticsPage>
   late final AnimationController _scaleAnimationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _slideAnimation;
 
   List<dynamic> statistics = [];
 
@@ -80,13 +75,6 @@ class _StatisticsPageState extends State<StatisticsPage>
       curve: Curves.easeOutBack,
     ));
 
-    _slideAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
   }
 
   @override
@@ -489,7 +477,7 @@ class _StatisticsPageState extends State<StatisticsPage>
                 tooltip: 'Previous week',
               ),
             ),
-            const SizedBox(width: 16), // Spazio tra freccia sinistra e giorno
+            const SizedBox(width: 16),
             Expanded(
               child: TextButton(
                 onPressed: () => statisticsBloc.add(StatisticsTodayRequested()),
@@ -510,7 +498,7 @@ class _StatisticsPageState extends State<StatisticsPage>
                 ),
               ),
             ),
-            const SizedBox(width: 16), // Spazio tra giorno e freccia destra
+            const SizedBox(width: 16),
             Container(
               decoration: BoxDecoration(
                 color: colors.surfaceContainerHigh,
@@ -552,7 +540,7 @@ class _StatisticsPageState extends State<StatisticsPage>
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(16), // Ridotto da 24 a 16
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -566,7 +554,7 @@ class _StatisticsPageState extends State<StatisticsPage>
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10), // Ridotto da 12 a 10
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: colors.primary.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(16),
@@ -577,7 +565,7 @@ class _StatisticsPageState extends State<StatisticsPage>
                       size: 28,
                     ),
                   ),
-                  const SizedBox(width: 12), // Ridotto da 16 a 12
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -590,7 +578,7 @@ class _StatisticsPageState extends State<StatisticsPage>
                             letterSpacing: -0.25,
                           ),
                         ),
-                        const SizedBox(height: 2), // Ridotto da 4 a 2
+                        const SizedBox(height: 2),
                         Text(
                           "Your focus patterns this week",
                           style: textTheme.bodyMedium?.copyWith(
@@ -640,7 +628,7 @@ class _StatisticsPageState extends State<StatisticsPage>
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(16), // Ridotto da 24 a 16
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -654,7 +642,7 @@ class _StatisticsPageState extends State<StatisticsPage>
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10), // Ridotto da 12 a 10
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: colors.secondary.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(16),
@@ -665,7 +653,7 @@ class _StatisticsPageState extends State<StatisticsPage>
                       size: 28,
                     ),
                   ),
-                  const SizedBox(width: 12), // Ridotto da 16 a 12
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -678,7 +666,7 @@ class _StatisticsPageState extends State<StatisticsPage>
                             letterSpacing: -0.25,
                           ),
                         ),
-                        const SizedBox(height: 2), // Ridotto da 4 a 2
+                        const SizedBox(height: 2),
                         Text(
                           "Detailed study time per subject",
                           style: textTheme.bodyMedium?.copyWith(
@@ -817,12 +805,6 @@ class _StatisticsPageState extends State<StatisticsPage>
           ),
         ),
         onTap: () {
-          final tomatoes = stat['tomatoes'] ?? [];
-          final firstTomatoId = tomatoes.isNotEmpty ? tomatoes.first : null;
-          print('Tapped subject, firstTomatoId: ' + firstTomatoId.toString());
-          if (firstTomatoId != null) {
-            context.push('/timer-summary/[3m$firstTomatoId[23m');
-          }
         },
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),

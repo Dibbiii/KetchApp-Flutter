@@ -13,8 +13,7 @@ class HomeInitial extends HomeState {}
 class HomeLoading extends HomeState {}
 
 class HomeLoaded extends HomeState {
-  // Use the Session model instead of Map
-  final List<Session> sessions; // Changed type
+  final List<Session> sessions;
 
   const HomeLoaded({required this.sessions});
 

@@ -22,10 +22,10 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
   int _tomatoDuration = 0;
   int _breakDuration = 0;
 
-  // Tracciamento dei pomodori completati nella sessione
+
   final List<int> _completedTomatoIds = [];
 
-  // Cache for activity strings to avoid repeated conversions
+
   static final Map<ActivityAction, String> _actionStringCache = {
     for (final action in ActivityAction.values) action: action.toShortString(),
   };
@@ -62,7 +62,7 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     return super.close();
   }
 
-  /// Starts a countdown timer with the specified duration
+
   void _startTimer(int duration) {
     _timer?.cancel();
     _timer = Timer.periodic(_timerInterval, (timer) {
@@ -81,7 +81,7 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     });
   }
 
-  /// Calculates elapsed duration from a list of activities with improved performance
+
   Duration _calculateElapsedDuration(
     List<dynamic> activities,
     ActivityType type,
@@ -94,7 +94,6 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     DateTime? lastStartTime;
     var totalElapsed = Duration.zero;
 
-    // Process only relevant activities
     final relevantActivities = activities
         .where((activity) => activity.type == typeString)
         .toList();
@@ -110,7 +109,7 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
       }
     }
 
-    // Add current running time if still active
+
     if (lastStartTime != null) {
       totalElapsed += DateTime.now().toUtc().difference(lastStartTime);
     }
@@ -118,13 +117,13 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     return totalElapsed;
   }
 
-  /// Checks if an action is START or RESUME with cached strings
+
   bool _isStartOrResumeAction(String action) {
     return action == _actionStringCache[ActivityAction.START] ||
            action == _actionStringCache[ActivityAction.RESUME];
   }
 
-  /// Checks if there's an activity with the specified action and type
+
   bool _hasActivity(
     List<dynamic> activities,
     ActivityAction action,
@@ -137,13 +136,13 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
         a.action == actionString && a.type == typeString);
   }
 
-  /// Gets the remaining duration from total duration and elapsed time
+
   int _getRemainingDuration(int totalDuration, Duration elapsedDuration) {
     final remaining = totalDuration - elapsedDuration.inSeconds;
     return remaining.clamp(0, totalDuration);
   }
 
-  /// Sorts activities by creation time - extracted for reuse
+
   void _sortActivitiesByTime(List<dynamic> activities) {
     activities.sort((a, b) =>
         (a.createdAt as DateTime).compareTo(b.createdAt as DateTime));
@@ -156,13 +155,13 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     try {
       final activities = await _apiService.getTomatoActivities(_tomatoId);
 
-      // Check if timer has ended
+
       if (_hasActivity(activities, ActivityAction.END, ActivityType.TIMER)) {
         await _handleTimerEndedState(activities, emit);
         return;
       }
 
-      // Handle empty activities
+
       if (activities.isEmpty) {
         emit(const TomatoTimerReady());
         return;
@@ -254,7 +253,7 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     try {
       var activities = await _apiService.getTomatoActivities(_tomatoId);
 
-      // Create START activity if it doesn't exist
+
       if (!_hasActivity(activities, ActivityAction.START, ActivityType.TIMER)) {
         await _apiService.createActivity(
             _userUUID, _tomatoId, ActivityAction.START, ActivityType.TIMER);
@@ -295,7 +294,6 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
           emit(BreakTimerPaused(currentState.duration, nextTomatoId: currentState.nextTomatoId, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
       }
     } catch (e) {
-      // Restart timer on API failure to maintain user experience
       _startTimer(currentState.duration);
     }
   }
@@ -343,7 +341,6 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
         case WaitingNextTomato():
           await _handleWaitingToTomatoTransition(emit);
         default:
-          // No valid transition from current state
           break;
       }
     } catch (e) {
@@ -354,7 +351,6 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
   Future<void> _handleTomatoToBreakTransition(Emitter<TimerState> emit) async {
     await _apiService.createActivity(_userUUID, _tomatoId, ActivityAction.END, ActivityType.TIMER);
 
-    // Aggiungi il pomodoro corrente alla lista dei completati
     if (!_completedTomatoIds.contains(_tomatoId)) {
       _completedTomatoIds.add(_tomatoId);
     }
@@ -366,7 +362,7 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
       emit(BreakTimerInProgress(_breakDuration, nextTomatoId: tomato.nextTomatoId!, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
       _startTimer(_breakDuration);
     } else {
-      // Fine della sessione - naviga al riepilogo
+
       emit(NavigatingToSummary(completedTomatoIds: List.unmodifiable(_completedTomatoIds), isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
     }
   }
@@ -398,23 +394,17 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
   }) async {
     _tomatoId = nextTomatoId;
 
-    // Update tomato durations
     final newTomato = await _apiService.getTomatoById(_tomatoId);
     _tomatoDuration = newTomato.endAt.difference(newTomato.startAt).inSeconds;
     _breakDuration = newTomato.pauseEndAt?.difference(newTomato.endAt).inSeconds ?? 0;
 
-    // 🕐 NUOVO: Controlla se il pomodoro deve iniziare ora o è programmato per dopo
+
     final scheduledStartTime = newTomato.startAt;
     final currentTime = DateTime.now().toUtc();
 
-    print('🕐 Controllo orario pomodoro $nextTomatoId:');
-    print('   Programmato per: $scheduledStartTime');
-    print('   Ora corrente: $currentTime');
 
     if (scheduledStartTime.isAfter(currentTime)) {
-      // Il pomodoro è programmato per il futuro - dobbiamo aspettare
       final waitTime = scheduledStartTime.difference(currentTime);
-      print('⏰ Il prossimo pomodoro inizierà tra ${_formatDuration(waitTime)}');
 
       emit(WaitingForScheduledTime(
         nextTomatoId: nextTomatoId,
@@ -423,16 +413,11 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
         isWhiteNoiseEnabled: state.isWhiteNoiseEnabled,
       ));
 
-      // Avvia un timer per aggiornare il countdown
       _startScheduleTimer(waitTime, emit);
       return;
     }
 
-    // Il pomodoro può iniziare ora
-    print('✅ Il pomodoro può iniziare ora');
-
     if (autoStart) {
-      // Auto-switch with notification
       emit(TomatoSwitched(newTomatoId: _tomatoId, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
       await Future.delayed(_transitionDelay);
 
@@ -440,12 +425,10 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
       emit(TomatoTimerInProgress(_tomatoDuration, isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
       _startTimer(_tomatoDuration);
     } else {
-      // Manual switch - mostra che è pronto per iniziare
       emit(TomatoTimerReady(isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
     }
   }
 
-  /// Avvia un timer per il countdown dell'attesa
   void _startScheduleTimer(Duration waitTime, Emitter<TimerState> emit) {
     _timer?.cancel();
     _timer = Timer.periodic(_timerInterval, (timer) {
@@ -459,12 +442,9 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
         final newWaitTime = currentState.scheduledStartTime.difference(DateTime.now().toUtc());
 
         if (newWaitTime.inSeconds <= 0) {
-          // È ora di iniziare il pomodoro!
           timer.cancel();
-          print('🎯 È ora di iniziare il pomodoro ${currentState.nextTomatoId}!');
           emit(TomatoTimerReady(isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
         } else {
-          // Aggiorna il countdown
           emit(WaitingForScheduledTime(
             nextTomatoId: currentState.nextTomatoId,
             scheduledStartTime: currentState.scheduledStartTime,
@@ -478,20 +458,6 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     });
   }
 
-  /// Helper per formattare la durata in modo leggibile
-  String _formatDuration(Duration duration) {
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60);
-    final seconds = duration.inSeconds.remainder(60);
-
-    if (hours > 0) {
-      return '${hours}h ${minutes}m ${seconds}s';
-    } else if (minutes > 0) {
-      return '${minutes}m ${seconds}s';
-    } else {
-      return '${seconds}s';
-    }
-  }
 
   void _onTicked(_TimerTicked event, Emitter<TimerState> emit) {
     final duration = event.duration;
@@ -537,14 +503,14 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
   Future<void> _onNavigateToSummary(NavigateToSummary event, Emitter<TimerState> emit) async {
     _timer?.cancel();
 
-    // Logica per il tracciamento dei pomodori completati
+
     try {
-      // Aggiungi l'ID del pomodoro corrente se non è già tracciato
+
       if (!_completedTomatoIds.contains(_tomatoId)) {
         _completedTomatoIds.add(_tomatoId);
       }
 
-      // Invia gli ID dei pomodori completati alla schermata di riepilogo
+
       emit(NavigatingToSummary(completedTomatoIds: List.unmodifiable(_completedTomatoIds), isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
     } catch (e) {
       emit(TimerError(message: 'Failed to navigate to summary', isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
@@ -555,12 +521,10 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     try {
       final tomato = await _apiService.getTomatoById(_tomatoId);
 
-      // Controlla se il pomodoro è programmato per ora
       final scheduledStartTime = tomato.startAt;
       final currentTime = DateTime.now().toUtc();
 
       if (scheduledStartTime.isAfter(currentTime)) {
-        // Il pomodoro è programmato per il futuro
         final waitTime = scheduledStartTime.difference(currentTime);
         emit(WaitingForScheduledTime(
           nextTomatoId: _tomatoId,
@@ -570,7 +534,6 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
         ));
         _startScheduleTimer(waitTime, emit);
       } else {
-        // Il pomodoro può iniziare ora
         emit(TomatoTimerReady(isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
       }
     } catch (e) {

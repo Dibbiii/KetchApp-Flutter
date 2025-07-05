@@ -18,7 +18,6 @@ PageViewModel buildPageThreeViewModel({
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Background glow effect
             Container(
               width: 240,
               height: 240,
@@ -34,7 +33,6 @@ PageViewModel buildPageThreeViewModel({
                 ),
               ),
             ),
-            // Main image container
             Container(
               width: 200,
               height: 200,
@@ -60,7 +58,6 @@ PageViewModel buildPageThreeViewModel({
                 ),
               ),
             ),
-            // Decorative floating elements
             Positioned(
               top: 15,
               left: 40,

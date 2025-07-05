@@ -39,19 +39,16 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     final user = _firebaseAuth.currentUser;
     String? username;
     if (user != null) {
-      // Get userUuid from AuthBloc
       String? userUuid;
       final authState = _authBloc.state;
       if (authState is Authenticated) {
         userUuid = authState.userUuid;
       }
-      // Fetch username from API
       if (userUuid != null) {
         try {
           final userData = await _apiService.fetchData('users/$userUuid');
           username = userData['username'] as String?;
         } catch (e) {
-          // Optionally handle error, fallback to null
         }
       }
       if (state is ProfileLoaded) {
@@ -133,7 +130,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           clearLocalPreviewFile: true,
         ));
         emit(const ProfileUpdateSuccess('Immagine del profilo aggiornata.'));
-        // Dopo il successo, ricarica il profilo per tornare a ProfileLoaded
         add(LoadProfile());
       } on FirebaseException catch (e) {
         emit(ProfileError('Errore Firebase durante il caricamento: ${e.message}'));
@@ -161,8 +157,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
             final String filePath = 'profile_pictures/${user.uid}/profile.jpg';
             final ref = _firebaseStorage.ref().child(filePath);
             await ref.delete();
-          } on FirebaseException catch (storageError) {
-            print('Avviso: Errore durante l\'eliminazione dell\'immagine da Storage: ${storageError.message}');
+          } on FirebaseException {
           }
         }
         await user.updatePhotoURL(null);
@@ -172,7 +167,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           clearLocalPreviewFile: true,
         ));
         emit(const ProfileUpdateSuccess('Immagine del profilo eliminata.'));
-        // Dopo il successo, ricarica il profilo per tornare a ProfileLoaded
         add(LoadProfile());
       } on FirebaseException catch (e) {
         emit(ProfileError('Errore Firebase durante l\'eliminazione: ${e.message}'));

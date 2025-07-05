@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -15,8 +16,6 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   late AnimationController _fadeAnimationController;
   late AnimationController _scaleAnimationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
@@ -33,22 +32,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeAnimationController,
-      curve: Curves.easeOutCubic,
-    ));
-
-    _scaleAnimation = Tween<double>(
-      begin: 0.95,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _scaleAnimationController,
-      curve: Curves.easeOutBack,
-    ));
   }
 
   @override
@@ -219,7 +202,7 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Enhanced logo with shadow and animation
+
                         Container(
                           margin: const EdgeInsets.only(bottom: 48),
                           decoration: BoxDecoration(
@@ -247,7 +230,7 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                           ),
                         ),
 
-                        // Enhanced typography
+
                         Text(
                           'Welcome Back',
                           style: textTheme.headlineLarge?.copyWith(
@@ -268,7 +251,7 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                         ),
                         const SizedBox(height: 48),
 
-                        // Enhanced input fields with Material 3 design
+
                         Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
@@ -404,7 +387,7 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                         ),
                         const SizedBox(height: 32),
 
-                        // Enhanced sign in button
+
                         SizedBox(
                           width: double.infinity,
                           child: FilledButton(
@@ -438,7 +421,7 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
 
                         const SizedBox(height: 24),
 
-                        // Divider with "or" text
+
                         Row(
                           children: [
                             Expanded(child: Divider(color: colors.outline)),
@@ -457,7 +440,7 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
 
                         const SizedBox(height: 24),
 
-                        // Enhanced Google sign in button
+
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton.icon(
@@ -488,7 +471,7 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
 
                         const SizedBox(height: 32),
 
-                        // Enhanced sign up prompt
+
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(

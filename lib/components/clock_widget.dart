@@ -1,10 +1,9 @@
-// import 'dart:async'; // Removed unused import
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
 String formatDurationFromHmm(double hmmHours, {String defaultText = "No time set"}) {
-  if (hmmHours < 0) hmmHours = 0; // Ensure non-negative
+  if (hmmHours < 0) hmmHours = 0;
   int hours = hmmHours.floor();
   int minutes = ((hmmHours - hours) * 100).round();
 
@@ -65,7 +64,7 @@ class MaterialClock extends StatefulWidget {
 
 class _MaterialClockState extends State<MaterialClock> with SingleTickerProviderStateMixin {
   double _hourAngle = 0.0;
-  double _selectedHours = 0.0; // Stores H.MM format
+  double _selectedHours = 0.0;
   double _lastAngle = 0.0;
   int _turns = 0;
   late AnimationController _controller;
@@ -77,7 +76,6 @@ class _MaterialClockState extends State<MaterialClock> with SingleTickerProvider
     _selectedHours = widget.initialSelectedHours;
     if (_selectedHours < 0) _selectedHours = 0;
 
-    // Converto H.MM a frazioni di ore
     int h = _selectedHours.floor();
     int m = ((_selectedHours - h) * 100).round();
     double totalFractionalHours = h + (m / 60.0);
@@ -159,7 +157,6 @@ class _MaterialClockState extends State<MaterialClock> with SingleTickerProvider
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Glassmorphism background
           Container(
             width: widget.clockSize + 32,
             height: widget.clockSize + 32,
@@ -190,7 +187,6 @@ class _MaterialClockState extends State<MaterialClock> with SingleTickerProvider
               ),
             ),
           ),
-          // Clock face and hand
           GestureDetector(
             onPanStart: (details) {
               RenderBox box = context.findRenderObject() as RenderBox;
@@ -203,8 +199,6 @@ class _MaterialClockState extends State<MaterialClock> with SingleTickerProvider
               _updateHourHand(local, animate: false);
             },
             onPanEnd: (details) {
-              // Optionally animate to the final position if you want a snap effect
-              // _updateHourHand(lastPosition, animate: true);
             },
             child: AnimatedBuilder(
               animation: _handAnimation,
@@ -219,7 +213,6 @@ class _MaterialClockState extends State<MaterialClock> with SingleTickerProvider
               },
             ),
           ),
-          // Digital time display
           Positioned(
             top: widget.clockSize / 2 - 32,
             child: Container(
@@ -265,7 +258,6 @@ class _ClockPainter extends CustomPainter {
     final center = size.center(Offset.zero);
     final radius = size.width / 2;
 
-    // 1. Draw clock face with gradient
     final faceRect = Rect.fromCircle(center: center, radius: radius);
     final facePaint = Paint()
       ..shader = LinearGradient(
@@ -275,14 +267,12 @@ class _ClockPainter extends CustomPainter {
       ).createShader(faceRect);
     canvas.drawCircle(center, radius, facePaint);
 
-    // 2. Draw clock outline
     final outlinePaint = Paint()
       ..color = colors.primary.withOpacity(0.18)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5;
     canvas.drawCircle(center, radius, outlinePaint);
 
-    // 3. Draw tick marks
     final tickPaint = Paint()..strokeCap = StrokeCap.round;
     const double tickPadding = 12.0;
     final double innerRadius = radius - tickPadding;
@@ -304,7 +294,6 @@ class _ClockPainter extends CustomPainter {
       canvas.drawLine(startPoint, endPoint, tickPaint);
     }
 
-    // 4. Draw hour hand with glow
     final handLength = radius * 0.82;
     final handEnd = Offset(
       center.dx + handLength * sin(hourAngle),
@@ -317,7 +306,6 @@ class _ClockPainter extends CustomPainter {
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, 2.5);
     canvas.drawLine(center, handEnd, handPaint);
 
-    // 5. Draw the thumb at the end of the hand (with glow)
     final thumbPaint = Paint()
       ..color = colors.primary
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4.0);
@@ -325,7 +313,6 @@ class _ClockPainter extends CustomPainter {
     final thumbInnerPaint = Paint()..color = colors.surface;
     canvas.drawCircle(handEnd, 6, thumbInnerPaint);
 
-    // 6. Draw center pivot
     final centerDotPaint = Paint()..color = colors.primary;
     canvas.drawCircle(center, 7, centerDotPaint);
     final centerDotInnerPaint = Paint()..color = colors.surface;

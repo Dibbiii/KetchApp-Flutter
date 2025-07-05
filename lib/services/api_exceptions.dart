@@ -38,19 +38,16 @@ class ConflictException extends ApiException {
       : super(message, 409);
 }
 
-class UserAlreadyExistsException extends ConflictException { // Usata in _processResponse per 409 generico
-  UserAlreadyExistsException([String message = 'L\'utente esiste già.'])
-      : super(message);
+class UserAlreadyExistsException extends ConflictException {
+  UserAlreadyExistsException([super.message = 'L\'utente esiste già.']);
 }
 
-class UsernameAlreadyExistsException extends ConflictException { // Usata specificamente in postData
-  UsernameAlreadyExistsException([String message = 'Questo username è già in uso.'])
-      : super(message);
+class UsernameAlreadyExistsException extends ConflictException {
+  UsernameAlreadyExistsException([super.message = 'Questo username è già in uso.']);
 }
 
 class EmailAlreadyExistsInBackendException extends ConflictException {
-  EmailAlreadyExistsInBackendException([String message = 'Questa email è già registrata nel sistema.'])
-      : super(message);
+  EmailAlreadyExistsInBackendException([super.message = 'Questa email è già registrata nel sistema.']);
 }
 
 class InternalServerErrorException extends ApiException {
@@ -60,6 +57,5 @@ class InternalServerErrorException extends ApiException {
 }
 
 class FetchDataException extends ApiException {
-  FetchDataException([String message = 'Errore durante il recupero dei dati.'])
-      : super(message);
+  FetchDataException([super.message = 'Errore durante il recupero dei dati.']);
 }

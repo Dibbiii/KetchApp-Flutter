@@ -18,7 +18,7 @@ PageViewModel buildPageTwoViewModel({
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Background glow effect
+
             Container(
               width: 240,
               height: 240,
@@ -34,7 +34,7 @@ PageViewModel buildPageTwoViewModel({
                 ),
               ),
             ),
-            // Main image container
+
             Container(
               width: 200,
               height: 200,
@@ -60,7 +60,6 @@ PageViewModel buildPageTwoViewModel({
                 ),
               ),
             ),
-            // Decorative floating elements
             Positioned(
               top: 30,
               left: 25,

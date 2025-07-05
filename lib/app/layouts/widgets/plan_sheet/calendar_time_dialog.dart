@@ -10,8 +10,8 @@ class CalendarTimeDialog extends StatefulWidget {
     this.initialStart = '',
     this.initialEnd = '',
     required this.isGoogleCalendarEvent,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   State<CalendarTimeDialog> createState() => _CalendarTimeDialogState();

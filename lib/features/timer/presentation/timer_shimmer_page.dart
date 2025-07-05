@@ -79,7 +79,6 @@ class TimerShrimmerPage extends StatelessWidget {
         children: [
           Row(
             children: [
-              // Icon container
               Shimmer.fromColors(
                 baseColor: colors.primary.withValues(alpha: 0.1),
                 highlightColor: colors.primary.withValues(alpha: 0.2),
@@ -97,7 +96,6 @@ class TimerShrimmerPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Focus Session tag
                     Shimmer.fromColors(
                       baseColor: colors.primaryContainer.withValues(alpha: 0.3),
                       highlightColor: colors.primaryContainer.withValues(alpha: 0.6),
@@ -111,7 +109,6 @@ class TimerShrimmerPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    // Subject title
                     Shimmer.fromColors(
                       baseColor: colors.onSurface.withValues(alpha: 0.1),
                       highlightColor: colors.onSurface.withValues(alpha: 0.2),
@@ -127,7 +124,6 @@ class TimerShrimmerPage extends StatelessWidget {
                   ],
                 ),
               ),
-              // Close button
               Shimmer.fromColors(
                 baseColor: colors.surfaceContainerHighest.withValues(alpha: 0.4),
                 highlightColor: colors.surfaceContainer.withValues(alpha: 0.6),
@@ -143,7 +139,6 @@ class TimerShrimmerPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          // Stats container
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -349,7 +344,6 @@ class TimerShrimmerPage extends StatelessWidget {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Progress circle shimmer
                   Shimmer.fromColors(
                     baseColor: colors.primary.withValues(alpha: 0.1),
                     highlightColor: colors.primary.withValues(alpha: 0.3),
@@ -370,7 +364,6 @@ class TimerShrimmerPage extends StatelessWidget {
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Timer text
                       Shimmer.fromColors(
                         baseColor: colors.primary.withValues(alpha: 0.2),
                         highlightColor: colors.primary.withValues(alpha: 0.4),
@@ -384,7 +377,6 @@ class TimerShrimmerPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      // "rimanenti" label
                       Shimmer.fromColors(
                         baseColor: colors.primaryContainer.withValues(alpha: 0.2),
                         highlightColor: colors.primaryContainer.withValues(alpha: 0.4),
@@ -412,7 +404,6 @@ class TimerShrimmerPage extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        // Play/Pause button
         Shimmer.fromColors(
           baseColor: colors.primary.withValues(alpha: 0.2),
           highlightColor: colors.primary.withValues(alpha: 0.4),
@@ -425,7 +416,7 @@ class TimerShrimmerPage extends StatelessWidget {
             ),
           ),
         ),
-        // Secondary button
+
         Shimmer.fromColors(
           baseColor: colors.surfaceContainerHigh.withValues(alpha: 0.3),
           highlightColor: colors.surfaceContainerHigh.withValues(alpha: 0.5),

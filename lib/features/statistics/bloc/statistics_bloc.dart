@@ -52,14 +52,11 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
           "${endOfWeek.year.toString().padLeft(4, '0')}-${endOfWeek.month.toString().padLeft(2, '0')}-${endOfWeek.day.toString().padLeft(2, '0')}";
 
       final url = "users/$userUuid/statistics?startDate=$formattedStart&endDate=$formattedEnd";
-      print("Fetching data from URL: $url");
       final response = await api.fetchData(url);
-      print("Response: $response");
 
       if (response is Map<String, dynamic> && response.containsKey('dates')) {
         final dates = response['dates'] as List<dynamic>?;
         if (dates != null) {
-          // Data for the selected day
           final dayData = dates.firstWhere(
             (d) => d is Map<String, dynamic> && d['date'] == formattedDate,
             orElse: () => null,
@@ -67,7 +64,6 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
 
           List<dynamic> subjectStatsForDay = [];
           if (dayData != null && dayData['subjects'] is List) {
-            // Group tomatoes by subject for the selected day
             final tomatoes = (dayData['tomatoes'] ?? dayData['sessions'] ?? []) as List<dynamic>;
             final Map<String, List<int>> subjectTomatoes = {};
             for (final tomato in tomatoes) {
@@ -77,7 +73,6 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
                 subjectTomatoes.putIfAbsent(subject, () => []).add(id);
               }
             }
-            // Attach tomatoes to each subject
             subjectStatsForDay = (dayData['subjects'] as List<dynamic>).map((subject) {
               final subjectMap = Map<String, dynamic>.from(subject as Map);
               final subjectName = subjectMap['name'] ?? subjectMap['subject'] ?? subjectMap['subjectName'];
@@ -88,7 +83,6 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
             }).toList();
           }
 
-          // Data for the whole week
           final startOfWeek = date.subtract(Duration(days: date.weekday - 1));
           final weeklyData = List.filled(7, 0.0);
           for (int i = 0; i < 7; i++) {
@@ -113,7 +107,7 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
             displayedCalendarDate: date,
             subjectStats: subjectStatsForDay,
             weeklyStudyData: weeklyData,
-            weeklyDatesData: dates, // Store the weekly data
+            weeklyDatesData: dates,
           ));
         } else {
           emit(state.copyWith(
@@ -123,7 +117,6 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
           ));
         }
       } else {
-        // No data for today, emit empty list
         emit(state.copyWith(
           status: StatisticsStatus.loaded,
           displayedCalendarDate: date,
@@ -174,14 +167,12 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
     final selectedDate = event.selectedDate;
     final currentDisplayedDate = state.displayedCalendarDate;
 
-    // Check if the selected date is in the same week as the currently displayed date
     final startOfWeek = currentDisplayedDate.subtract(Duration(days: currentDisplayedDate.weekday - 1));
     final endOfWeek = startOfWeek.add(const Duration(days: 6));
 
     if (selectedDate.isAfter(startOfWeek.subtract(const Duration(days: 1))) &&
         selectedDate.isBefore(endOfWeek.add(const Duration(days: 1))) &&
         state.weeklyDatesData.isNotEmpty) {
-      // Data for the week is already loaded, just update the selected day
       final formattedDate =
           "${selectedDate.year.toString().padLeft(4, '0')}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}";
 
@@ -192,7 +183,6 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
 
       List<dynamic> subjectStatsForDay = [];
       if (dayData != null && dayData['subjects'] is List) {
-        // Group tomatoes by subject for the selected day
         final tomatoes = (dayData['tomatoes'] ?? dayData['sessions'] ?? []) as List<dynamic>;
         final Map<String, List<int>> subjectTomatoes = {};
         for (final tomato in tomatoes) {
@@ -202,7 +192,6 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
             subjectTomatoes.putIfAbsent(subject, () => []).add(id);
           }
         }
-        // Attach tomatoes to each subject
         subjectStatsForDay = (dayData['subjects'] as List<dynamic>).map((subject) {
           final subjectMap = Map<String, dynamic>.from(subject as Map);
           final subjectName = subjectMap['name'] ?? subjectMap['subject'] ?? subjectMap['subjectName'];
@@ -218,7 +207,6 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
         subjectStats: subjectStatsForDay,
       ));
     } else {
-      // Data for the week is not loaded, fetch it
       await _fetchAndEmitStatisticsForWeekContainingDate(selectedDate, emit);
     }
   }
@@ -230,11 +218,10 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
     if (event.newTotalStudyHours > state.recordStudyHours) {
       emit(state.copyWith(
         recordStudyHours: event.newTotalStudyHours,
-        bestStudyDay: DateTime.now(), // Assuming record is updated now
+        bestStudyDay: DateTime.now(),
         status: StatisticsStatus.loaded,
       ));
     } else if (state.status != StatisticsStatus.loaded) {
-      // Ensure state is loaded if it wasn't, even if record didn't change
       emit(state.copyWith(status: StatisticsStatus.loaded));
     }
   }

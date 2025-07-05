@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 
-// Imports for the new page view model files
+
 import './page_one_view.dart';
 import './page_two_view.dart';
 import './page_three_view.dart';
@@ -28,7 +28,6 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     super.initState();
     _initializeAnimations();
 
-    // Start animations immediately
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) {
         _fadeAnimationController.forward();

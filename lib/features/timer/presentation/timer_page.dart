@@ -9,7 +9,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:ketchapp_flutter/models/tomato.dart';
 import 'package:ketchapp_flutter/services/api_service.dart';
-import 'package:ketchapp_flutter/services/session_stats_service.dart';
 import 'package:provider/provider.dart';
 import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
 
@@ -484,7 +483,6 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    // Put timer in pause when leaving the page
     if (_timerBloc != null) {
       _timerBloc!.add(const TimerPaused());
     }
@@ -500,7 +498,6 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
     });
   }
 
-  // New function to navigate to tomato activity details
   void _onTomatoClicked(BuildContext context, Tomato tomato) async {
     final apiService = Provider.of<ApiService>(context, listen: false);
     Navigator.of(context).push(
@@ -514,27 +511,12 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
     );
   }
 
-  Future<void> _navigateToSummary(
-    BuildContext context,
-    List<int> completedTomatoIds,
-  ) async {
-    try {
-      final apiService = Provider.of<ApiService>(context, listen: false);
-      final sessionStatsService = SessionStatsService(apiService);
-      final sessionSummary = await sessionStatsService.calculateSessionStats(
-        completedTomatoIds,
-      );
-    } catch (e) {
-      // Optionally handle error
-    }
-  }
 
   Future<void> _toggleWhiteNoise(bool enable) async {
     if (enable) {
       _audioPlayer ??= AudioPlayer();
       await _audioPlayer!.setReleaseMode(ReleaseMode.loop);
       if (kIsWeb) {
-        // Use a .wav file for web compatibility and loop manually
         await _audioPlayer!.play(AssetSource('audio/music_web.wav'));
         _audioPlayer!.onPlayerComplete.listen((event) async {
           if (_whiteNoiseEnabled) {
@@ -550,19 +532,16 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
     }
   }
 
-  // --- Pomodoro and Break Duration Helpers ---
+
   int _getPomodoroDuration() {
-    // Default Pomodoro duration: 25 minutes
     return 25 * 60;
   }
 
   int _getBreakDuration() {
-    // Default break duration: 5 minutes
     return 5 * 60;
   }
 
   int _getBreakDurationForTomato(Tomato tomato) {
-    // You can customize this logic per tomato if needed
     return _getBreakDuration();
   }
 
@@ -598,7 +577,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
           );
           return bloc;
         }
-        // Show an error widget if not authenticated
+
         throw FlutterError(
           'User not authenticated. Please log in to continue.',
         );
@@ -607,41 +586,60 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
         listener: _handleTimerStateChanges,
         child: Scaffold(
           backgroundColor: colors.surface,
-          body: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  colors.primary.withValues(alpha: 0.06),
-                  colors.primaryContainer.withValues(alpha: 0.04),
-                  colors.surface,
-                  colors.secondaryContainer.withValues(alpha: 0.02),
-                  colors.tertiaryContainer.withValues(alpha: 0.01),
-                ],
-                stops: const [0.0, 0.25, 0.5, 0.8, 1.0],
-              ),
-            ),
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    _buildHeader(context, currentTomato, colors, theme),
-                    const SizedBox(height: 24),
-                    Expanded(
-                      child: _buildTimerSection(
-                        context,
-                        pomodoroDurationSeconds,
-                        breakDurationInSeconds,
-                        colors,
-                        theme,
-                      ),
+          appBar: null,
+          body: Stack(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      colors.primary.withValues(alpha: 0.06),
+                      colors.primaryContainer.withValues(alpha: 0.04),
+                      colors.surface,
+                      colors.secondaryContainer.withValues(alpha: 0.02),
+                      colors.tertiaryContainer.withValues(alpha: 0.01),
+                    ],
+                    stops: const [0.0, 0.25, 0.5, 0.8, 1.0],
+                  ),
+                ),
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SafeArea(
+                    child: Column(
+                      children: [
+                        _buildHeader(context, currentTomato, colors, theme),
+                        const SizedBox(height: 24),
+                        Expanded(
+                          child: _buildTimerSection(
+                            context,
+                            pomodoroDurationSeconds,
+                            breakDurationInSeconds,
+                            colors,
+                            theme,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+              Positioned(
+                top: 16,
+                right: 16,
+                child: Material(
+                  color: Colors.transparent,
+                  child: IconButton(
+                    icon: const Icon(Icons.home),
+                    tooltip: 'Go Home',
+                    onPressed: () {
+                      context.go('/home');
+                    },
+                  ),
+                ),
+              ),
+            ],
           ),
           floatingActionButton: null,
         ),
@@ -650,29 +648,23 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
   }
 
   void _handleTimerStateChanges(BuildContext context, TimerState state) {
-    print('🔄 Timer state changed to: ${state.runtimeType}');
-    print('   Duration: ${state.duration} seconds');
 
     switch (state.runtimeType) {
-      case WaitingNextTomato:
+      case const (WaitingNextTomato):
         _handleNextTomato(state as WaitingNextTomato);
         break;
-      case TomatoSwitched:
+      case const (TomatoSwitched):
         _handleTomatoSwitch(state as TomatoSwitched);
         break;
-      case WaitingForScheduledTime:
+      case const (WaitingForScheduledTime):
         _handleScheduledWait(state as WaitingForScheduledTime);
         break;
-      case NavigatingToSummary:
+      case const (NavigatingToSummary):
         _handleNavigationToSummary(context, state as NavigatingToSummary);
         break;
-      case BreakTimerInProgress:
-        print(
-          '🟢 Break timer started with ${state.duration} seconds and nextTomatoId: ${(state as BreakTimerInProgress).nextTomatoId}',
-        );
+      case const (BreakTimerInProgress):
         break;
-      case TimerError:
-        print('❌ Timer error: ${(state as dynamic).message}');
+      case const (TimerError):
         break;
     }
   }
@@ -708,11 +700,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
     BuildContext context,
     NavigatingToSummary state,
   ) {
-    // Naviga direttamente alla pagina di riepilogo usando il primo tomatoId completato
-    if (state.completedTomatoIds.isNotEmpty) {
-      final firstTomatoId = state.completedTomatoIds.first;
-      GoRouter.of(context).go('/timer-summary/$firstTomatoId');
-    }
+    GoRouter.of(context).go('/home');
   }
 
   Widget _buildHeader(
@@ -825,7 +813,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
             ],
           ),
           const SizedBox(height: 12),
-          // Unificata la timeline qui
+
           _ModernTomatoTimeline(
             tomatoes: widget.tomatoes,
             currentTomatoIndex: _currentTomatoIndex,
@@ -1053,7 +1041,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                     padding: const EdgeInsets.symmetric(
                       horizontal: 6,
                       vertical: 1,
-                    ), // ancora più compatto
+                    ),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
@@ -1061,7 +1049,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                           colors.tertiary.withValues(alpha: 0.15),
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(6), // più compatto
+                      borderRadius: BorderRadius.circular(6),
                       border: Border.all(
                         color: colors.tertiary.withValues(alpha: 0.3),
                         width: 1,
@@ -1072,7 +1060,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                       children: [
                         Icon(
                           Icons.local_cafe_rounded,
-                          size: 9, // più piccolo
+                          size: 9,
                           color: colors.tertiary,
                         ),
                         const SizedBox(width: 3),
@@ -1081,13 +1069,13 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: colors.onTertiaryContainer,
                             fontWeight: FontWeight.w600,
-                            fontSize: 8, // più piccolo
+                            fontSize: 8,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 6), // meno spazio
+                  const SizedBox(height: 6),
                 ],
                 AnimatedBuilder(
                   animation: _pulseAnimation,
@@ -1099,8 +1087,8 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                               ? _pulseAnimation.value
                               : 1.0,
                       child: Container(
-                        width: 130, // più piccolo
-                        height: 130, // più piccolo
+                        width: 130,
+                        height: 130,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: LinearGradient(
@@ -1116,7 +1104,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                           boxShadow: [
                             BoxShadow(
                               color: colors.shadow.withValues(alpha: 0.08),
-                              blurRadius: 10, // più compatto
+                              blurRadius: 10,
                               offset: const Offset(0, 3),
                               spreadRadius: -2,
                             ),
@@ -1125,7 +1113,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                                       ? colors.tertiary
                                       : colors.primary)
                                   .withValues(alpha: 0.05),
-                              blurRadius: 5, // più compatto
+                              blurRadius: 5,
                               offset: const Offset(0, 2),
                               spreadRadius: -1,
                             ),
@@ -1135,12 +1123,11 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                           alignment: Alignment.center,
                           children: [
                             SizedBox(
-                              width: 110, // più piccolo
-                              height: 110, // più piccolo
+                              width: 110,
+                              height: 110,
                               child: CircularProgressIndicator(
                                 value: progress,
                                 strokeWidth: 5,
-                                // più sottile
                                 backgroundColor: colors.outlineVariant
                                     .withValues(alpha: 0.2),
                                 valueColor: AlwaysStoppedAnimation<Color>(
@@ -1156,7 +1143,6 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                                 if (isBreak) ...[
                                   Container(
                                     padding: const EdgeInsets.all(3),
-                                    // più compatto
                                     decoration: BoxDecoration(
                                       gradient: LinearGradient(
                                         colors: [
@@ -1172,7 +1158,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                                     ),
                                     child: Icon(
                                       Icons.local_cafe_rounded,
-                                      size: 12, // più piccolo
+                                      size: 12,
                                       color: colors.tertiary,
                                     ),
                                   ),
@@ -1181,7 +1167,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                                 ConstrainedBox(
                                   constraints: const BoxConstraints(
                                     maxWidth: 80,
-                                  ), // più stretto
+                                  ),
                                   child: FittedBox(
                                     fit: BoxFit.scaleDown,
                                     child: Text(
@@ -1189,7 +1175,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                                       style: theme.textTheme.displaySmall
                                           ?.copyWith(
                                             fontSize: 22,
-                                            // più piccolo
+
                                             fontWeight: FontWeight.w300,
                                             color:
                                                 isBreak
@@ -1208,7 +1194,6 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                                     horizontal: 5,
                                     vertical: 1,
                                   ),
-                                  // più compatto
                                   decoration: BoxDecoration(
                                     color: (isBreak
                                             ? colors.tertiaryContainer
@@ -1216,7 +1201,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                                         .withValues(alpha: 0.3),
                                     borderRadius: BorderRadius.circular(
                                       3,
-                                    ), // più compatto
+                                    ),
                                   ),
                                   child: Text(
                                     'rimanenti',
@@ -1225,7 +1210,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                                         alpha: 0.8,
                                       ),
                                       fontWeight: FontWeight.w500,
-                                      fontSize: 7, // più piccolo
+                                      fontSize: 7,
                                     ),
                                   ),
                                 ),
@@ -1272,13 +1257,10 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
     ColorScheme colors,
     ThemeData theme,
   ) {
-    // Debug: stampiamo il tipo di stato ricevuto
-    print('🎯 Current state in _buildPrimaryControl: ${state.runtimeType}');
 
     if (state is WaitingFirstTomato ||
         state is WaitingNextTomato ||
         state is TomatoTimerReady) {
-      print('🎯 Showing start button');
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -1332,7 +1314,6 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
     }
 
     if (state is TomatoTimerInProgress) {
-      print('🎯 Showing pause/skip buttons');
       return Row(
         children: [
           Expanded(
@@ -1532,7 +1513,6 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
     }
 
     if (state is TomatoTimerPaused) {
-      print('🎯 Showing resume/skip buttons');
       return Row(
         children: [
           Expanded(
@@ -1792,7 +1772,6 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
       );
     }
 
-    print('🎯 No matching state found, showing empty widget');
     return const SizedBox.shrink();
   }
 
@@ -1923,7 +1902,7 @@ class _ModernTomatoTimeline extends StatelessWidget {
     required this.tomatoes,
     required this.currentTomatoIndex,
     required this.onTomatoSelected,
-    required this.onTomatoClicked, // Add navigation callback
+    required this.onTomatoClicked,
     required this.getBreakDurationForTomato,
   });
 
@@ -1948,7 +1927,7 @@ class _ModernTomatoTimeline extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: SizedBox(
-          height: 70, // Ensures ListView has a fixed height
+          height: 70,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: tomatoes.length,
@@ -1972,22 +1951,20 @@ class _ModernTomatoTimeline extends StatelessWidget {
       margin: const EdgeInsets.only(right: 16),
       child: GestureDetector(
         onTap: () {
-          // If it's a completed tomato, navigate to activity details
           if (isCompleted) {
             onTomatoClicked(context, tomato);
           } else {
-            // For current or future tomatoes, just select them
             onTomatoSelected(index);
           }
         },
         child: SizedBox(
-          width: 60, // Fixed width to prevent horizontal overflow
+          width: 60,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: isCurrent ? 28 : 24, // Further reduced to save space
+                width: isCurrent ? 28 : 24,
                 height: isCurrent ? 28 : 24,
                 decoration: BoxDecoration(
                   color: _getTomatoColor(colors, isCompleted, isCurrent),
@@ -2005,7 +1982,7 @@ class _ModernTomatoTimeline extends StatelessWidget {
                 ),
                 child: _buildTomatoIcon(colors, isCompleted, isCurrent),
               ),
-              const SizedBox(height: 3), // Further reduced spacing
+              const SizedBox(height: 3),
               Flexible(
                 child: Text(
                   DateFormat('HH:mm').format(tomato.startAt),
@@ -2015,7 +1992,7 @@ class _ModernTomatoTimeline extends StatelessWidget {
                         isCurrent
                             ? colors.primary
                             : colors.onSurface.withValues(alpha: 0.7),
-                    fontSize: 9, // Smaller font
+                    fontSize: 9,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 1,
@@ -2037,7 +2014,7 @@ class _ModernTomatoTimeline extends StatelessWidget {
                     child: Text(
                       '${breakDuration ~/ 60}m',
                       style: theme.textTheme.labelSmall?.copyWith(
-                        fontSize: 7, // Very small font for break duration
+                        fontSize: 7,
                         color: colors.onTertiaryContainer,
                       ),
                       maxLines: 1,

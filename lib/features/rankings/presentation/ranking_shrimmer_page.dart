@@ -105,7 +105,7 @@ class RankingShrimmerPage extends StatelessWidget {
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
           (context, index) => _buildTierSectionShimmer(context),
-          childCount: 3, // Number of shimmer tier sections
+          childCount: 3,
         ),
       ),
     );
@@ -120,7 +120,6 @@ class RankingShrimmerPage extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Tier Header
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -169,7 +168,6 @@ class RankingShrimmerPage extends StatelessWidget {
               ],
             ),
           ),
-          // User list items
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             child: Column(

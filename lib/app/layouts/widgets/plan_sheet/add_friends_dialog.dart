@@ -17,7 +17,7 @@ class AddFriendsDialog extends StatefulWidget {
 class _AddFriendsDialogState extends State<AddFriendsDialog> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode =
-      FocusNode(); // Added for manual focus if needed later
+      FocusNode();
   final List<String> _allFriends = [
     'Alice Wonderland',
     'Bob The Builder',
@@ -45,7 +45,7 @@ class _AddFriendsDialogState extends State<AddFriendsDialog> {
   void dispose() {
     _searchController.removeListener(_filterFriends);
     _searchController.dispose();
-    _searchFocusNode.dispose(); // Dispose the focus node
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -86,7 +86,7 @@ class _AddFriendsDialogState extends State<AddFriendsDialog> {
           children: <Widget>[
             TextField(
               controller: _searchController,
-              focusNode: _searchFocusNode, // Assign the focus node
+              focusNode: _searchFocusNode,
               decoration: InputDecoration(
                 hintText: 'Search friends...',
                 hintStyle: TextStyle(color: colors.onSurfaceVariant),

@@ -15,9 +15,9 @@ class NotificationService {
 
   static Future<void> schedulePomodoroNotification(String title, DateTime start) async {
     final scheduledTime = tz.TZDateTime.from(start.subtract(const Duration(minutes: 15)), tz.local);
-    if (scheduledTime.isBefore(DateTime.now())) return; // Non pianificare notifiche nel passato
+    if (scheduledTime.isBefore(DateTime.now())) return;
     await _notificationsPlugin.zonedSchedule(
-      scheduledTime.millisecondsSinceEpoch ~/ 1000, // id univoco
+      scheduledTime.millisecondsSinceEpoch ~/ 1000,
       'Promemoria Pomodoro',
       'Tra 15 minuti inizia: $title',
       scheduledTime,

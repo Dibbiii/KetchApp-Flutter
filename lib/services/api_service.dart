@@ -11,7 +11,7 @@ import 'package:ketchapp_flutter/models/activity.dart';
 import 'package:ketchapp_flutter/models/activity_type.dart';
 
 class ApiService {
-  final String _baseUrl = "http://10.161.93.143:8081/api";
+  final String _baseUrl = "http://192.168.43.117:8081/api";
 
   Future<dynamic> _processResponse(http.Response response) {
     final body = response.body;
@@ -19,8 +19,6 @@ class ApiService {
     try {
       decodedJson = json.decode(body);
     } catch (e) {
-      print('Info: Response body is not a valid JSON. Treating as plain text. $e');
-      // Se il corpo non è un JSON valido, lo tratto come testo semplice.
       decodedJson = body;
     }
 
@@ -36,7 +34,7 @@ class ApiService {
         throw ForbiddenException(decodedJson is Map ? decodedJson['message'] ?? 'Accesso negato' : 'Accesso negato');
       case 404:
         throw NotFoundException(decodedJson is Map ? decodedJson['message'] ?? 'Risorsa non trovata' : 'Risorsa non trovata');
-      case 409: // Conflict
+      case 409:
         throw UserAlreadyExistsException(decodedJson is Map ? decodedJson['message'] ?? 'L\'utente esiste già.' : 'L\'utente esiste già.');
       case 500:
         throw InternalServerErrorException(decodedJson is Map ? decodedJson['message'] ?? 'Errore interno del server' : 'Errore interno del server');
@@ -82,11 +80,9 @@ class ApiService {
 
   Future<void> createPlan(PlanModel plan) async {
     final planData = plan.toJson();
-    print('Creating plan with data: ${json.encode(planData)}');
     try {
       final response = await postData('plans', planData);
-      print('Response from createPlan: ${response}');
-      // Cicla su tutti i pomodori (tomatoes) nella risposta e aggiungili su Google Calendar
+
       if (response != null && response['subjects'] != null) {
         for (final subject in response['subjects']) {
           final subjectName = subject['name'] ?? 'Pomodoro';
@@ -96,34 +92,30 @@ class ApiService {
               final endAt = tomato['end_at'];
               if (startAt != null && endAt != null) {
                 final start = DateTime.parse(startAt);
+                final testStart = DateTime.now().add(const Duration(minutes: 1));
                 final end = DateTime.parse(endAt);
-                print('Aggiungo evento Google Calendar: $subjectName, $start - $end');
                 await CalendarService().addEvent(
                   title: subjectName,
                   start: start,
                   end: end,
                   description: 'Sessione Pomodoro creata da KetchApp',
                 );
-                await NotificationService.schedulePomodoroNotification(subjectName, start);
+                await NotificationService.schedulePomodoroNotification(subjectName, testStart);
               }
             }
           }
         }
       }
     } catch (e) {
-      print('Error in createPlan: ${e}');
       rethrow;
     }
   }
 
   Future<Map<String, dynamic>> getUserByFirebaseUid(String firebaseUid) async {
-    print('Fetching user by Firebase UID: $firebaseUid');
     try {
       final response = await fetchData('users/firebase/$firebaseUid');
-      // Assumendo che la risposta sia un JSON object con i dati dell'utente
       return response as Map<String, dynamic>;
     } catch (e) {
-      print('Error in getUserByFirebaseUid: $e');
       rethrow;
     }
   }
@@ -141,7 +133,6 @@ class ApiService {
   Future<List<Tomato>> getTodaysTomatoes(String userUuid) async {
     final today = DateTime.now().toUtc();
     final todayStr = "${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}";
-    print('Fetching tomatoes for user: $userUuid on $todayStr');
     final response = await fetchData('users/$userUuid/tomatoes?date=$todayStr');
     final List<dynamic> tomatoesJson = response as List<dynamic>;
     List<Tomato> tomatoes = tomatoesJson.map((json) => Tomato.fromJson(json)).toList();
@@ -165,20 +156,19 @@ class ApiService {
     return (decodedJson as List).map((e) => Achievement.fromJson(e)).toList();
   }
 
-  // Metodo per ottenere tutti gli achievements disponibili
+
   Future<List<dynamic>> getAllAchievements() async {
     final response = await fetchData('achievements');
     return response as List<dynamic>;
   }
 
-  // Metodo per ottenere gli achievements completati da un utente
+
   Future<List<dynamic>> getAchievements(String userUuid) async {
     final response = await fetchData('users/$userUuid/achievements');
     return response as List<dynamic>;
   }
 
   Future<Tomato> getTomatoById(int tomatoId) async {
-    print('Fetching tomato with id: $tomatoId');
     final response = await fetchData('tomatoes/$tomatoId');
     return Tomato.fromJson(response);
   }
@@ -193,7 +183,6 @@ class ApiService {
         'action': action.name,
       });
     } catch (e) {
-      print('Error creating activity: $e');
       rethrow;
     }
   }

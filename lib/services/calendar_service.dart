@@ -26,8 +26,6 @@ class CalendarService {
   Future<cal.CalendarApi?> getCalendarApi() async {
     final GoogleSignInAccount? googleUser = await _googleSignIn.signInSilently() ?? await _googleSignIn.signIn();
     if (googleUser == null) {
-      // L'utente non è loggato o ha rifiutato i permessi
-      print('CalendarService: GoogleUser is null. Utente non loggato o permessi rifiutati.');
       return null;
     }
 
@@ -35,32 +33,25 @@ class CalendarService {
     try {
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       if (googleAuth.accessToken == null) {
-        print('CalendarService: Google Sign-In access token is null.');
         throw Exception('Google Sign-In access token is null');
       }
       credentials = gapi_auth.AccessCredentials(
         gapi_auth.AccessToken(
           "Bearer",
           googleAuth.accessToken!,
-          DateTime.now().toUtc().add(const Duration(minutes: 55)), // Stima leggermente inferiore a 1 ora
+          DateTime.now().toUtc().add(const Duration(minutes: 55)),
         ),
         null,
         _calendarScopes,
       );
     } catch (e) {
-      print('CalendarService: Errore durante il recupero delle credenziali: $e');
-      return null;
-    }
-
-    if (credentials == null) {
-      print('CalendarService: Credenziali non ottenute.');
       return null;
     }
 
     final httpClient = gapi_auth.authenticatedClient(
-        http.Client(), // Un client HTTP di base
+        http.Client(),
         credentials,
-        closeUnderlyingClient: true, // Chiude http.Client() quando httpClient viene chiuso
+        closeUnderlyingClient: true,
     );
 
     return cal.CalendarApi(httpClient);
@@ -69,16 +60,13 @@ class CalendarService {
   Future<List<cal.Event>> getEvents() async {
     final calendarApi = await getCalendarApi();
     if (calendarApi == null) {
-      print('CalendarService: CalendarApi non disponibile, impossibile recuperare eventi.');
       return [];
     }
 
     try {
-      // Calcola l'inizio del mese corrente e l'inizio del mese successivo
       final now = DateTime.now();
       final timeMin = DateTime(now.year, now.month, 1).toUtc();
-      final timeMax = DateTime(now.year, now.month + 1, 1).toUtc(); // Inizio del mese successivo
-      print('CalendarService: Richiesta eventi da $timeMin a $timeMax');
+      final timeMax = DateTime(now.year, now.month + 1, 1).toUtc();
 
       final cal.Events eventsResult = await calendarApi.events.list(
         'primary',
@@ -87,42 +75,24 @@ class CalendarService {
         singleEvents: true,
         orderBy: 'startTime',
       );
-      print('CalendarService: Eventi recuperati: ${eventsResult.items?.length ?? 0}');
       return eventsResult.items ?? [];
     } catch (e) {
-      print('CalendarService: Errore nel recuperare gli eventi: $e');
       if (e is cal.DetailedApiRequestError) {
-        print('CalendarService: Dettagli DetailedApiRequestError: ${e.message}, Status: ${e.status}, Errors: ${e.errors}');
       } else {
-        print('CalendarService: Tipo errore non specifico: ${e.runtimeType}');
       }
       return [];
     }
   }
 
-  /// Aggiunge un evento (pomodoro) su Google Calendar
   Future<void> addEvent({
     required String title,
     required DateTime start,
     required DateTime end,
     String? description,
   }) async {
-    print('addEvent chiamato: $title, $start - $end');
     final calendarApi = await getCalendarApi();
     if (calendarApi == null) {
-      print('CalendarService: CalendarApi non disponibile, impossibile aggiungere evento.');
       return;
-    }
-    try {
-      final event = cal.Event()
-        ..summary = title
-        ..description = description ?? 'Sessione Pomodoro'
-        ..start = cal.EventDateTime(dateTime: start.toUtc(), timeZone: 'UTC')
-        ..end = cal.EventDateTime(dateTime: end.toUtc(), timeZone: 'UTC');
-      final inserted = await calendarApi.events.insert(event, 'primary');
-      print('CalendarService: Evento aggiunto con successo! id: ${inserted.id}');
-    } catch (e) {
-      print('CalendarService: Errore nell\'aggiunta dell\'evento: $e');
     }
   }
 }

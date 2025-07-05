@@ -1,4 +1,4 @@
-import 'dart:io'; // Required for File type
+import 'dart:io';
 import 'package:equatable/equatable.dart';
 
 abstract class ProfileState extends Equatable {
@@ -17,9 +17,9 @@ class ProfileLoaded extends ProfileState {
   final String? displayName;
   final String? email;
   final String? photoUrl;
-  final bool isUploadingImage; //  Per gestire lo stato di caricamento/eliminazione dell'immagine
+  final bool isUploadingImage;
   final File? localPreviewFile;
-  // Achievements
+
   final List<dynamic> allAchievements;
   final Set<String> completedAchievementTitles;
   final bool achievementsLoading;
@@ -31,7 +31,7 @@ class ProfileLoaded extends ProfileState {
     this.email,
     this.photoUrl,
     this.isUploadingImage = false,
-    this.localPreviewFile, // Added
+    this.localPreviewFile,
     this.allAchievements = const [],
     this.completedAchievementTitles = const {},
     this.achievementsLoading = false,

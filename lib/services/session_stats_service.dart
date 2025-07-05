@@ -1,17 +1,14 @@
-import 'package:ketchapp_flutter/models/activity.dart';
 import 'package:ketchapp_flutter/models/session_summary.dart';
 import 'package:ketchapp_flutter/services/api_service.dart';
 
 import '../models/activity_action.dart';
 import '../models/activity_type.dart';
 
-/// Placeholder implementation for session stats service
 class SessionStatsService {
   final ApiService apiService;
   SessionStatsService(this.apiService);
 
   Future<SessionSummary> calculateSessionStats(List<int> tomatoIds) async {
-    // Placeholder: return a dummy summary object
     return SessionSummary(
       tomatoStats: [],
       totalTomatoes: tomatoIds.length,
@@ -25,7 +22,7 @@ class SessionStatsService {
     );
   }
 
-  /// Returns a summary for a chain of tomatoes starting from the given tomatoId.
+
   Future<Map<String, dynamic>> getTomatoChainSummary(int tomatoId) async {
     var tomatoIds = <int>[];
     var tomatoesData = <Map<String, dynamic>>[];
@@ -35,7 +32,7 @@ class SessionStatsService {
     var totalDuration = Duration.zero;
     int totalPlannedSeconds = 0;
 
-    // Helper to extract property from Map or object
+
     dynamic getProp(dynamic obj, String key) {
       if (obj is Map) return obj[key];
       try {
@@ -49,37 +46,29 @@ class SessionStatsService {
       }
     }
 
-    // Traverse the tomato chain
-    print('Tomato chain for id $tomatoId:');
+
     while (currentId != null) {
       final tomato = await apiService.getTomatoById(currentId);
-      print('  Tomato: id=${getProp(tomato, 'id')}, subject=${getProp(tomato, 'subject')}, start_at=${getProp(tomato, 'start_at')}, end_at=${getProp(tomato, 'end_at')}');
       subject ??= getProp(tomato, 'subject');
       tomatoIds.add(currentId);
-      // Fetch activities for this tomato
+
       final activities = await apiService.getTomatoActivities(currentId);
-      print('    Activities for tomato $currentId:');
-      for (final activity in activities) {
-        print('      $activity');
-      }
-      print('    Total activities: ${activities.length}');
-      // Count PAUSE actions
+
       final pauseClicked = activities.where((activity) {
         final action = getProp(activity, 'action');
         final actionStr = action is ActivityAction
             ? action.toShortString().toUpperCase()
-            : (action != null ? action.toString().toUpperCase() : null);
+            : (action?.toString().toUpperCase());
         return actionStr == 'PAUSE';
       }).length;
       totalPauses += pauseClicked;
 
-      // Calculate stats from activities
+
       DateTime? realStartAt;
       DateTime? realEndAt;
       DateTime? realPauseEnd;
-      Duration effectiveTime = Duration.zero;
       Duration breakTime = Duration.zero;
-      // Find first TIMER/START and last TIMER/END (case-insensitive)
+
       for (final activity in activities) {
         final type = getProp(activity, 'type');
         final action = getProp(activity, 'action');
@@ -93,10 +82,10 @@ class SessionStatsService {
         }
         final typeStr = type is ActivityType
             ? type.toShortString().toUpperCase()
-            : type != null ? type.toString().toUpperCase() : null;
+            : type?.toString().toUpperCase();
         final actionStr = action is ActivityAction
             ? action.toShortString().toUpperCase()
-            : action != null ? action.toString().toUpperCase() : null;
+            : action?.toString().toUpperCase();
         if (typeStr == 'TIMER' && actionStr == 'START') {
           if (realStartAt == null || (createdAt != null && createdAt.isBefore(realStartAt))) {
             realStartAt = createdAt;
@@ -108,7 +97,7 @@ class SessionStatsService {
           }
         }
       }
-      // Sum all BREAK/START-END pairs for breakTime, find last resume (case-insensitive)
+
       DateTime? breakStart;
       for (final activity in activities) {
         final type = getProp(activity, 'type');
@@ -123,10 +112,10 @@ class SessionStatsService {
         }
         final typeStr = type is ActivityType
             ? type.toShortString().toUpperCase()
-            : type != null ? type.toString().toUpperCase() : null;
+            : type?.toString().toUpperCase();
         final actionStr = action is ActivityAction
             ? action.toShortString().toUpperCase()
-            : action != null ? action.toString().toUpperCase() : null;
+            : action?.toString().toUpperCase();
         if (typeStr == 'BREAK' && actionStr == 'START') {
           breakStart = createdAt;
         }
@@ -140,9 +129,8 @@ class SessionStatsService {
         }
       }
       if (realStartAt != null && realEndAt != null) {
-        effectiveTime = realEndAt.difference(realStartAt) - breakTime;
       }
-      // Calculate tempoEffettivo using only START and END for this tomato
+
       DateTime? tomatoStartAt = getProp(tomato, 'startAt') ?? getProp(tomato, 'start_at');
       DateTime? tomatoEndAt = getProp(tomato, 'endAt') ?? getProp(tomato, 'end_at');
       if (tomatoStartAt is String) {
@@ -159,13 +147,10 @@ class SessionStatsService {
           tomatoEndAt = null;
         }
       }
-      // Ensure both are DateTime before using
       Duration tempoEffettivo = Duration.zero;
       if (tomatoStartAt is DateTime && tomatoEndAt is DateTime) {
         tempoEffettivo = tomatoEndAt.difference(tomatoStartAt);
       }
-      // Use a helper to build the stats map more cleanly
-      // Helper to build stats map for a tomato
       Map<String, dynamic> buildTomatoStats() {
         final map = <String, dynamic>{};
         if (tempoEffettivo.inSeconds > 0) map['tempoEffettivo'] = tempoEffettivo;
@@ -176,14 +161,8 @@ class SessionStatsService {
         if (realPauseEnd != null) map['RealPauseEnd'] = realPauseEnd;
         return map;
       }
-      final tomatoStats = buildTomatoStats();
-      // Print stats in a compact, readable way
-      print('    Stats:');
-      for (final entry in tomatoStats.entries) {
-        print('      ${entry.key}: ${entry.value}');
-      }
+      buildTomatoStats();
 
-      // Calculate durations
       final tomatoPauseEndAt = getProp(tomato, 'pauseEndAt') ?? getProp(tomato, 'pause_end_at');
       final plannedSeconds = (getProp(tomato, 'plannedDuration') ?? getProp(tomato, 'planned_duration') ?? 1500) as int;
       totalPlannedSeconds += plannedSeconds;
@@ -211,7 +190,6 @@ class SessionStatsService {
       currentId = getProp(tomato, 'nextTomatoId') ?? getProp(tomato, 'next_tomato_id');
     }
 
-    // Calculate efficiency
     double efficiency = 0;
     if (totalPlannedSeconds > 0) {
       efficiency = (totalDuration.inSeconds / totalPlannedSeconds) * 100;

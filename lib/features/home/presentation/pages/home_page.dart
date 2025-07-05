@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -67,25 +68,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     await flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
 
-  Future<void> _showNotification() async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-    AndroidNotificationDetails(
-      'your_channel_id',
-      'Notifiche',
-      channelDescription: 'Notifiche locali',
-      importance: Importance.max,
-      priority: Priority.high,
-      ticker: 'ticker',
-    );
-    const NotificationDetails platformChannelSpecifics =
-    NotificationDetails(android: androidPlatformChannelSpecifics);
-    await flutterLocalNotificationsPlugin.show(
-      0,
-      'Ciao!',
-      'Questa è una notifica inviata dal bottone.',
-      platformChannelSpecifics,
-    );
-  }
 
   @override
   void dispose() {
@@ -229,7 +211,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                 ),
                 const SliverToBoxAdapter(
-                  child: SizedBox(height: 100), // Space for FAB
+                  child: SizedBox(height: 100),
                 ),
               ],
             ),

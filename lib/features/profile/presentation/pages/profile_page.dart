@@ -1,3 +1,4 @@
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,7 +12,6 @@ import 'package:ketchapp_flutter/features/profile/bloc/profile_state.dart';
 import 'package:ketchapp_flutter/services/api_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'profile_shrimmer_page.dart';
-import 'package:provider/provider.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -398,7 +398,7 @@ class _ProfilePageState extends State<ProfilePage>
                     _buildAchievementsSection(context, state, colors, textTheme),
                     const SizedBox(height: 24),
                     _buildLogoutSection(context, colors, textTheme),
-                    const SizedBox(height: 32), // Bottom spacing
+                    const SizedBox(height: 32),
                   ]),
                 ),
               ),
@@ -845,7 +845,7 @@ class _ProfilePageState extends State<ProfilePage>
               ),
             ),
             SizedBox(
-              height: 5 * 80.0, // Circa 5 card (altezza stimata 80)
+              height: 5 * 80.0,
               child: Stack(
                 children: [
                   _buildAchievementsGrid(
@@ -853,7 +853,7 @@ class _ProfilePageState extends State<ProfilePage>
                     colors,
                     textTheme,
                   ),
-                  // Scrollbar overlay
+
                   Positioned.fill(
                     child: IgnorePointer(
                       child: Align(
@@ -864,7 +864,7 @@ class _ProfilePageState extends State<ProfilePage>
                             thumbVisibility: true,
                             thickness: 5,
                             radius: const Radius.circular(8),
-                            child: Container(), // Dummy child, just for the overlay effect
+                            child: Container(),
                           ),
                         ),
                       ),
@@ -962,7 +962,7 @@ class _ProfilePageState extends State<ProfilePage>
             crossAxisCount: 2,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
-            childAspectRatio: 1.2, // Adjust as needed for card shape
+            childAspectRatio: 1.2,
           ),
           itemCount: state.allAchievements.length,
           itemBuilder: (context, index) {

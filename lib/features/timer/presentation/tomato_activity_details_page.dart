@@ -8,10 +8,10 @@ class TomatoActivityDetailsPage extends StatefulWidget {
   final ApiService apiService;
 
   const TomatoActivityDetailsPage({
-    Key? key,
+    super.key,
     required this.tomato,
     required this.apiService,
-  }) : super(key: key);
+  });
 
   @override
   State<TomatoActivityDetailsPage> createState() => _TomatoActivityDetailsPageState();
@@ -19,14 +19,10 @@ class TomatoActivityDetailsPage extends StatefulWidget {
 
 class _TomatoActivityDetailsPageState extends State<TomatoActivityDetailsPage>
     with TickerProviderStateMixin {
-  // Placeholder for activities
   List<dynamic> activities = [];
-  // Placeholder for loading state
   bool isLoading = true;
-  // Placeholder for error message
   String? errorMessage;
 
-  // Placeholder for animation controllers
   late AnimationController _fadeAnimationController;
   late AnimationController _scaleAnimationController;
   late Animation<double> _fadeAnimation;
@@ -36,7 +32,6 @@ class _TomatoActivityDetailsPageState extends State<TomatoActivityDetailsPage>
   void initState() {
     super.initState();
     _initializeAnimations();
-    // Placeholder for loading activities
   }
 
   void _initializeAnimations() {
@@ -82,7 +77,6 @@ class _TomatoActivityDetailsPageState extends State<TomatoActivityDetailsPage>
 
       final loadedActivities = await widget.apiService.getTomatoActivities(widget.tomato.id);
 
-      // Sort activities by time
       loadedActivities.sort((a, b) {
         try {
           final timeA = _getActivityProperty(a, 'createdAt') as DateTime;
@@ -107,53 +101,41 @@ class _TomatoActivityDetailsPageState extends State<TomatoActivityDetailsPage>
 
   dynamic _getActivityProperty(dynamic activity, String property) {
     if (activity is Map<String, dynamic>) {
-      // Handle different possible property names and formats
       switch (property) {
         case 'actionType':
           final actionType = activity['actionType'] ?? activity['action_type'] ?? activity['type'] ?? activity['action'] ?? 'unknown';
-          // Debug print to see what values we're getting
-          print('DEBUG: actionType found: $actionType for activity: $activity');
           return actionType;
         case 'activityType':
           final activityType = activity['activityType'] ?? activity['activity_type'] ?? activity['category'] ?? activity['timer_type'] ?? activity['type'] ?? 'timer';
-          // Debug print to see what values we're getting
-          print('DEBUG: activityType found: $activityType for activity: $activity');
           return activityType;
         case 'createdAt':
           final timeValue = activity['createdAt'] ?? activity['created_at'] ?? activity['timestamp'];
           if (timeValue == null) return null;
 
-          // Handle different time formats
           if (timeValue is DateTime) {
             return timeValue;
           } else if (timeValue is String) {
             try {
               return DateTime.parse(timeValue);
             } catch (e) {
-              // Try different formats
               try {
                 return DateFormat('yyyy-MM-dd HH:mm:ss').parse(timeValue);
               } catch (e2) {
                 try {
                   return DateFormat('yyyy-MM-ddTHH:mm:ss').parse(timeValue);
                 } catch (e3) {
-                  print('Failed to parse date: $timeValue');
                   return null;
                 }
               }
             }
           } else if (timeValue is int) {
-            // Handle timestamp in milliseconds or seconds
             try {
               if (timeValue > 1000000000000) {
-                // Milliseconds
                 return DateTime.fromMillisecondsSinceEpoch(timeValue);
               } else {
-                // Seconds
                 return DateTime.fromMillisecondsSinceEpoch(timeValue * 1000);
               }
             } catch (e) {
-              print('Failed to parse timestamp: $timeValue');
               return null;
             }
           }
@@ -163,9 +145,7 @@ class _TomatoActivityDetailsPageState extends State<TomatoActivityDetailsPage>
       }
     }
 
-    // Handle other possible types of activity objects
     try {
-      // Try to access as a class property using reflection-like approach
       switch (property) {
         case 'actionType':
           return activity?.actionType ?? activity?.action_type ?? activity?.type ?? 'unknown';
@@ -177,7 +157,6 @@ class _TomatoActivityDetailsPageState extends State<TomatoActivityDetailsPage>
           return null;
       }
     } catch (e) {
-      print('Error accessing property $property: $e');
       return null;
     }
   }
@@ -294,7 +273,6 @@ class _TomatoActivityDetailsPageState extends State<TomatoActivityDetailsPage>
   }
 
   Widget _buildTomatoHeader(BuildContext context, ColorScheme colors, TextTheme textTheme) {
-    // Use placeholder for isCompleted
     final bool isCompleted = widget.tomato['isCompleted'] ?? false;
 
     return Container(
@@ -822,8 +800,6 @@ class _TomatoActivityDetailsPageState extends State<TomatoActivityDetailsPage>
       case 'RESUME':
         return 'Session Resumed';
       default:
-        // For debugging, show the actual values received
-        print('WARN: Unknown actionType: "$actionType", activityType: "$activityType"');
         return 'Activity: $actionType';
     }
   }

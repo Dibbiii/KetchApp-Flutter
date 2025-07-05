@@ -9,7 +9,6 @@ class Footer extends StatefulWidget {
 }
 
 class _FooterState extends State<Footer> {
-  // Index mapping: 0: Home, 1: Statistics, 2: Trophy, 3: Profile
   int _selectedIndex = 0;
 
   @override
@@ -22,7 +21,6 @@ class _FooterState extends State<Footer> {
     } else if (location.startsWith('/statistics')) {
       newIndex = 1;
     } else if (location.startsWith('/ranking')) {
-      //
       newIndex = 2;
     } else if (location.startsWith('/profile')) {
       newIndex = 3;
@@ -106,7 +104,6 @@ class _FooterState extends State<Footer> {
     const IconData trophyOutlined = Icons.emoji_events_outlined;
     const IconData trophyFilled = Icons.emoji_events;
     const IconData profileOutlined = Icons.person_outline;
-    const IconData profileFilled = Icons.person;
 
     return BottomNavigationBar(
       items: <BottomNavigationBarItem>[
@@ -125,7 +122,7 @@ class _FooterState extends State<Footer> {
           icon: _buildIcon(trophyOutlined, _selectedIndex == 2, colors),
           activeIcon:
           _buildActiveIcon(trophyFilled, _selectedIndex == 2, colors),
-          label: 'Ranking', // Label was Trophy, changed to Ranking to match route
+          label: 'Ranking',
         ),
         BottomNavigationBarItem(
             icon: _buildIcon(profileOutlined, _selectedIndex == 3, colors),

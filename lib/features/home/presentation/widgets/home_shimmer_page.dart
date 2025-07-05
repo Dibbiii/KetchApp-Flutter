@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -20,8 +21,8 @@ class HomeShimmerPage extends StatelessWidget {
         ),
       ),
       child: Shimmer.fromColors(
-        baseColor: colors.surfaceVariant.withOpacity(0.5),
-        highlightColor: colors.surfaceVariant.withOpacity(1),
+        baseColor: colors.surfaceContainerHighest.withOpacity(0.5),
+        highlightColor: colors.surfaceContainerHighest.withOpacity(1),
         child: SafeArea(
           bottom: false,
           child: CustomScrollView(
@@ -56,7 +57,7 @@ class HomeShimmerPage extends StatelessWidget {
           height: 128,
           width: 128,
           decoration: BoxDecoration(
-            color: colors.surfaceVariant,
+            color: colors.surfaceContainerHighest,
             shape: BoxShape.circle,
           ),
         ),
@@ -65,7 +66,7 @@ class HomeShimmerPage extends StatelessWidget {
           height: 36,
           width: 220,
           decoration: BoxDecoration(
-            color: colors.surfaceVariant,
+            color: colors.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(8),
           ),
         ),
@@ -74,7 +75,7 @@ class HomeShimmerPage extends StatelessWidget {
           height: 48,
           width: double.infinity,
           decoration: BoxDecoration(
-            color: colors.surfaceVariant,
+            color: colors.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(20),
           ),
         ),
@@ -94,7 +95,7 @@ class HomeShimmerPage extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: colors.surfaceVariant.withOpacity(0.5),
+              color: colors.surfaceContainerHighest.withOpacity(0.5),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(28),
                 topRight: Radius.circular(28),
@@ -106,7 +107,7 @@ class HomeShimmerPage extends StatelessWidget {
                   height: 48,
                   width: 48,
                   decoration: BoxDecoration(
-                    color: colors.surfaceVariant,
+                    color: colors.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
@@ -119,7 +120,7 @@ class HomeShimmerPage extends StatelessWidget {
                         height: 24,
                         width: 180,
                         decoration: BoxDecoration(
-                          color: colors.surfaceVariant,
+                          color: colors.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
@@ -128,7 +129,7 @@ class HomeShimmerPage extends StatelessWidget {
                         height: 16,
                         width: 120,
                         decoration: BoxDecoration(
-                          color: colors.surfaceVariant,
+                          color: colors.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),

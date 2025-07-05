@@ -23,8 +23,6 @@ class AchievementBloc extends Bloc<AchievementEvent, AchievementState> {
       emit(AchievementLoading());
       try {
         final achievementsData = await _apiService.getAchievements(authState.userUuid);
-        print(achievementsData);
-        // Converti List<dynamic> in List<Achievement>
         final achievements = achievementsData.map((json) => Achievement.fromJson(json)).toList();
         emit(AchievementLoaded(achievements));
       } catch (e) {

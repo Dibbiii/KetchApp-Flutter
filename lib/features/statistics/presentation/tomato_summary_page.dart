@@ -8,12 +8,10 @@ import 'package:ketchapp_flutter/services/session_stats_service.dart';
 class TimerSummaryPage extends StatefulWidget {
   static const String routeName = '/timer-summary';
 
-  // Constructor for session summary (from timer)
   final dynamic sessionSummary;
   final VoidCallback? onGoHome;
   final VoidCallback? onPlanAgain;
 
-  // Constructor for subject statistics (from statistics page)
   final String? subjectName;
   final int? totalSeconds;
   final IconData? subjectIcon;
@@ -23,11 +21,9 @@ class TimerSummaryPage extends StatefulWidget {
   final String? id;
   const TimerSummaryPage({
     super.key,
-    // For session summary
     this.sessionSummary,
     this.onGoHome,
     this.onPlanAgain,
-    // For subject statistics
     this.subjectName,
     this.totalSeconds,
     this.subjectIcon,
@@ -36,7 +32,6 @@ class TimerSummaryPage extends StatefulWidget {
     this.id,
   });
 
-  // Named constructor for session summary
   const TimerSummaryPage.sessionSummary({
     Key? key,
     required dynamic sessionSummary,
@@ -49,7 +44,6 @@ class TimerSummaryPage extends StatefulWidget {
     onPlanAgain: onPlanAgain,
   );
 
-  // Named constructor for subject statistics
   const TimerSummaryPage.subjectStatistics({
     Key? key,
     required String subjectName,
@@ -89,7 +83,6 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
     _initializeAnimations();
     _fadeAnimationController.forward();
     _scaleAnimationController.forward();
-    // Usa il nuovo service per aggregare i dati dei pomodori
     if (widget.id != null) {
       final sessionStatsService = SessionStatsService(ApiService());
       _tomatoStatsFuture = sessionStatsService.getTomatoChainSummary(int.parse(widget.id!));
@@ -158,13 +151,11 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    // Handle GoRouter arguments for subject statistics
     Map<String, dynamic>? routeArgs;
     if (_isSubjectStatistics && widget.subjectName == null) {
       try {
         routeArgs = GoRouterState.of(context).extra as Map<String, dynamic>?;
       } catch (e) {
-        // Handle case where extra is null or not a Map
       }
     }
 
@@ -212,7 +203,6 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
     );
   }
 
-  // Session Summary View (from timer)
   Widget _buildSessionSummaryView(BuildContext context, ColorScheme colors, TextTheme textTheme) {
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
@@ -238,7 +228,6 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
     );
   }
 
-  // Subject Statistics View (from statistics page)
   Widget _buildSubjectStatisticsView(BuildContext context, ColorScheme colors, TextTheme textTheme, Map<String, dynamic>? routeArgs) {
     final subjectName = widget.subjectName ?? routeArgs?['name'] as String? ?? 'Unknown Subject';
     final totalSeconds = widget.totalSeconds ?? routeArgs?['totalSeconds'] as int? ?? 0;
@@ -619,7 +608,6 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
         ? endTime.difference(startTime).inSeconds
         : 0;
     final isCompleted = tomato['nextTomatoId'] != null;
-    // final tomatoId = tomato['id'] ?? 'N/A'; // Not used
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceContainerHigh.withValues(alpha: 0.6),
@@ -697,15 +685,6 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
     );
   }
 
-  String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes;
-    final seconds = duration.inSeconds.remainder(60);
-    if (minutes > 0) {
-      return '${minutes}m ${seconds}s';
-    } else {
-      return '${seconds}s';
-    }
-  }
 
   Widget _buildSubjectStatsOverview(BuildContext context, int totalSeconds, int tomatoCount, ColorScheme colors, TextTheme textTheme) {
     return Container(
@@ -787,7 +766,6 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
   }
 
   Widget _buildSubjectTomatoesSection(BuildContext context, List<dynamic> tomatoes, ColorScheme colors, TextTheme textTheme) {
-    // Usa il service per aggregare i dati dei pomodori anche qui
     if (widget.id != null) {
       return FutureBuilder<Map<String, dynamic>>(
         future: _tomatoStatsFuture,
@@ -806,7 +784,6 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
         },
       );
     } else {
-      // fallback per compatibilità vecchia
       return Container(
         decoration: BoxDecoration(
           color: colors.surfaceContainerLow,
@@ -920,7 +897,7 @@ class _TimerSummaryPageState extends State<TimerSummaryPage>
           final tomato = tomatoes[index];
           return _buildTomatoItem(
             context,
-            tomato, // pass the full tomato object
+            tomato,
             colors,
             textTheme,
           );

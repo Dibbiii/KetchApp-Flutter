@@ -15,8 +15,6 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMixin {
   late AnimationController _fadeAnimationController;
   late AnimationController _scaleAnimationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
@@ -34,21 +32,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeAnimationController,
-      curve: Curves.easeOutCubic,
-    ));
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.95,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _scaleAnimationController,
-      curve: Curves.easeOutBack,
-    ));
   }
 
   @override
@@ -226,7 +210,7 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Enhanced logo with shadow and animation
+
                         Container(
                           margin: const EdgeInsets.only(bottom: 48),
                           decoration: BoxDecoration(
@@ -253,8 +237,6 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                             ),
                           ),
                         ),
-
-                        // Enhanced typography
                         Text(
                           'Create Account',
                           style: textTheme.headlineLarge?.copyWith(
@@ -275,7 +257,7 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                         ),
                         const SizedBox(height: 48),
 
-                        // Enhanced input fields with Material 3 design
+
                         Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
@@ -514,7 +496,6 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
 
                         const SizedBox(height: 32),
 
-                        // Enhanced create account button
                         SizedBox(
                           width: double.infinity,
                           child: FilledButton(
@@ -548,7 +529,7 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
 
                         const SizedBox(height: 32),
 
-                        // Enhanced sign in prompt
+
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(

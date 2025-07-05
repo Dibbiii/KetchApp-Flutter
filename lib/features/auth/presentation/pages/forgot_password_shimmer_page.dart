@@ -7,7 +7,6 @@ class ForgotPasswordShimmerPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final size = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(
         title: Container(height: 24, width: 120, color: Colors.white, margin: const EdgeInsets.symmetric(vertical: 8)),

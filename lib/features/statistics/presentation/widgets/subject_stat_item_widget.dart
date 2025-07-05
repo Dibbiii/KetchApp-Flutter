@@ -6,17 +6,17 @@ class SubjectStatItemWidget extends StatelessWidget {
   final String subjectName;
   final String studyTime;
   final IconData? trailingIcon;
-  final VoidCallback? onTap; // Add onTap callback
+  final VoidCallback? onTap;
 
   const SubjectStatItemWidget({
-    Key? key,
+    super.key,
     required this.subjectIcon,
     this.iconColor = Colors.grey,
     required this.subjectName,
     required this.studyTime,
     this.trailingIcon,
-    this.onTap, // Initialize onTap
-  }) : super(key: key);
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +24,7 @@ class SubjectStatItemWidget extends StatelessWidget {
     final TextTheme textTheme = Theme.of(context).textTheme;
 
     return InkWell(
-      onTap: onTap, // Assign the onTap callback
+      onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12.0),
         child: Row(

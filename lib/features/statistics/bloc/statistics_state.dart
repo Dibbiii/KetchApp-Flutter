@@ -22,7 +22,6 @@ class StatisticsState extends Equatable {
     this.recordStudyHours = 0.0,
     required this.bestStudyDay,
     this.errorMessage,
-    // Initialize with a default value, e.g., screenTime
     this.selectedActivityDetailType = ActivityDetailType.screenTime,
     this.subjectStats = const [],
     this.weeklyDatesData = const [],
@@ -33,8 +32,6 @@ class StatisticsState extends Equatable {
     return StatisticsState(
       displayedCalendarDate: now,
       bestStudyDay: now,
-      // selectedActivityDetailType is already defaulted in the main constructor
-      // so no need to repeat it here unless you want a *different* initial default
     );
   }
 

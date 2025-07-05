@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
 import 'package:ketchapp_flutter/models/tomato.dart';
 import 'package:ketchapp_flutter/services/api_service.dart';
@@ -23,21 +22,6 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
   late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
 
-  String _formatDuration(Duration duration) {
-    if (duration.inMinutes < 1) {
-      return "less than a minute";
-    }
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60);
-    var parts = <String>[];
-    if (hours > 0) {
-      parts.add('$hours hour${hours > 1 ? 's' : ''}');
-    }
-    if (minutes > 0) {
-      parts.add('$minutes minute${minutes > 1 ? 's' : ''}');
-    }
-    return parts.join(' and ');
-  }
 
   @override
   void initState() {
@@ -412,28 +396,22 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: filteredTomatoes.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          final tomato = filteredTomatoes[index];
-          return TweenAnimationBuilder<double>(
-            duration: Duration(milliseconds: 300 + (index * 100)),
-            tween: Tween(begin: 0.0, end: 1.0),
-            curve: Curves.easeOutCubic,
-            builder: (context, value, child) {
-              return Transform.translate(
-                offset: Offset(0, 20 * (1 - value)),
-                child: Opacity(
-                  opacity: value,
-                  child: _buildTomatoCard(context, tomato, colors, textTheme),
-                ),
-              );
+      child: SizedBox(
+        height: 320,
+        child: Scrollbar(
+          thumbVisibility: true,
+          radius: const Radius.circular(8),
+          thickness: 5,
+          child: ListView.separated(
+            shrinkWrap: true,
+            itemCount: filteredTomatoes.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 16),
+            itemBuilder: (context, index) {
+              final tomato = filteredTomatoes[index];
+              return _buildTomatoCard(context, tomato, colors, textTheme);
             },
-          );
-        },
+          ),
+        ),
       ),
     );
   }

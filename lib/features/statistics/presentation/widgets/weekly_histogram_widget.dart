@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // For DateUtils
 
 List<DateTime> _getDaysInWeekForHistogram(DateTime dateInWeek) {
   DateTime startOfWeek = dateInWeek.subtract(
@@ -14,11 +13,11 @@ class WeeklyHistogramWidget extends StatelessWidget {
   final Function(DateTime) onDateSelected;
 
   const WeeklyHistogramWidget({
-    Key? key,
+    super.key,
     required this.displayedCalendarDate,
     required this.weeklyStudyData,
     required this.onDateSelected,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -38,14 +37,14 @@ class WeeklyHistogramWidget extends StatelessWidget {
     ];
 
     const double yAxisLabelWidth = 28.0;
-    const double dayLabelHeight = 20.0; // Height for "Lun", "Mar", etc.
+    const double dayLabelHeight = 20.0;
     const double xAxisElementsCombinedHeight =
-        dayLabelHeight; // Total height for x-axis text (only day label now)
+        dayLabelHeight;
     const double plotAreaHeight = 130.0;
     const double totalHistogramHeight =
         plotAreaHeight +
         xAxisElementsCombinedHeight +
-        8.0; // Adjusted total height
+        8.0;
     const double maxYAxisValue = 9.0;
     const List<double> yAxisTicks = [0, 3, 6, 9];
 
@@ -62,7 +61,6 @@ class WeeklyHistogramWidget extends StatelessWidget {
       padding: const EdgeInsets.only(top: 8.0),
       child: Stack(
         children: [
-          // Y-Axis Grid Lines
           Positioned.fill(
             left: 0,
             right: yAxisLabelWidth + 4,
@@ -96,11 +94,11 @@ class WeeklyHistogramWidget extends StatelessWidget {
               },
             ),
           ),
-          // Y-Axis Labels
+
           Positioned(
             top: 0,
             bottom:
-                xAxisElementsCombinedHeight, // Adjusted bottom for Y-axis labels
+                xAxisElementsCombinedHeight,
             right: 0,
             width: yAxisLabelWidth,
             child: LayoutBuilder(
@@ -124,7 +122,6 @@ class WeeklyHistogramWidget extends StatelessWidget {
               },
             ),
           ),
-          // Bars and X-Axis Labels (Day and Hours)
           Positioned(
             left: 0,
             right: yAxisLabelWidth + 4,

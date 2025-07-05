@@ -7,6 +7,7 @@ import 'dart:math';
 
 class PlanCreationLoadingPage extends StatefulWidget {
   final PlanModel plan;
+
   const PlanCreationLoadingPage({super.key, required this.plan});
 
   @override
@@ -31,39 +32,16 @@ class _PlanCreationLoadingPageState extends State<PlanCreationLoadingPage> {
       await ApiService().createPlan(widget.plan);
       final api = ApiService();
       final tomatoes = await api.getTodaysTomatoes(widget.plan.userUUID);
-      print('Tomatoes value: $tomatoes');
-      print('Tomatoes runtimeType: \'${tomatoes.runtimeType}\'');
-      print('Mounted: $mounted');
-      print('tomatoes is List: \'${tomatoes is List}\'');
-      if (tomatoes is List) {
-        print('tomatoes.length: \'${tomatoes.length}\'');
-        if (tomatoes.isNotEmpty) {
-          print('tomatoes.first: \'${tomatoes.first}\'');
-          try {
-            print('tomatoes.first.id: \'${tomatoes.first.id}\'');
-          } catch (e) {
-            print('Cannot access tomatoes.first.id: $e');
-          }
-        } else {
-          print('tomatoes is empty');
-        }
-      } else {
-        print('tomatoes is not a List');
-      }
-      if (mounted && tomatoes != null && tomatoes is List && tomatoes.isNotEmpty) {
-        print('Navigating to /timer/${tomatoes.first.id}');
+      if (mounted && tomatoes.isNotEmpty) {
         context.go('/timer/${tomatoes.first.id}');
       } else if (mounted) {
-        print('No tomatoes found, navigating to /home');
         context.go('/home?refresh=true');
       }
-    } catch (e, st) {
-      print('Error in _createPlanAndNavigate: $e');
-      print('Stacktrace: $st');
+    } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create plan: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to create plan: $e')));
         context.pop();
       }
     }
@@ -77,11 +55,7 @@ class _PlanCreationLoadingPageState extends State<PlanCreationLoadingPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(
-              width: 120,
-              height: 120,
-              child: _AnimatedGoogleShapes(),
-            ),
+            SizedBox(width: 120, height: 120, child: _AnimatedGoogleShapes()),
             const SizedBox(height: 40),
             AnimatedTextKit(
               animatedTexts: [
@@ -123,7 +97,11 @@ class _PlanCreationLoadingPageState extends State<PlanCreationLoadingPage> {
               turns: 1,
               duration: const Duration(seconds: 2),
               curve: Curves.easeInOut,
-              child: Icon(Icons.rocket_launch_rounded, size: 48, color: Theme.of(context).colorScheme.primary),
+              child: Icon(
+                Icons.rocket_launch_rounded,
+                size: 48,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
           ],
         ),
@@ -137,7 +115,8 @@ class _AnimatedGoogleShapes extends StatefulWidget {
   State<_AnimatedGoogleShapes> createState() => _AnimatedGoogleShapesState();
 }
 
-class _AnimatedGoogleShapesState extends State<_AnimatedGoogleShapes> with SingleTickerProviderStateMixin {
+class _AnimatedGoogleShapesState extends State<_AnimatedGoogleShapes>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -176,9 +155,9 @@ class _AnimatedGoogleShapesState extends State<_AnimatedGoogleShapes> with Singl
 
   Widget _buildShape(double angle, int index, Color color1, Color color2) {
     final double radius = 40;
-    // Calculate the angle for this shape
+
     final double shapeAngle = angle + (index * 3.1415926 / 2);
-    // Calculate x and y using trigonometry for circular placement
+
     final double x = radius * 1.5 * cos(shapeAngle);
     final double y = radius * 1.5 * sin(shapeAngle);
     return Transform.translate(

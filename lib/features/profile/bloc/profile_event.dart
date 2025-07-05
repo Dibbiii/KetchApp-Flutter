@@ -1,18 +1,16 @@
-import 'dart:io'; // Necessario per File
+import 'dart:io';
 import 'package:equatable/equatable.dart';
-import 'package:image_picker/image_picker.dart'; // Necessario per ImageSource
+import 'package:image_picker/image_picker.dart';
 
 abstract class ProfileEvent extends Equatable {
-  const ProfileEvent(); // Aggiunto const constructor
+  const ProfileEvent();
 
   @override
   List<Object?> get props => [];
 }
 
-// Per caricare i dati iniziali del profilo
 class LoadProfile extends ProfileEvent {}
 
-// Per richiedere la selezione di una nuova immagine del profilo
 class ProfileImagePickRequested extends ProfileEvent {
   final ImageSource source;
 
@@ -31,9 +29,9 @@ class ProfileImageUploadRequested extends ProfileEvent {
   List<Object?> get props => [imageFile];
 }
 
-// Per eliminare l'immagine del profilo corrente
+
 class ProfileImageDeleteRequested extends ProfileEvent {}
 
-// Per caricare achievements
+
 class LoadAchievements extends ProfileEvent {}
 

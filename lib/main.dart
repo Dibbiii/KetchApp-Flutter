@@ -21,7 +21,7 @@ Future<void> main() async {
 
   await initializeDateFormatting('it_IT', null);
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await NotificationService.initialize(); // Inizializza notifiche
+  await NotificationService.initialize();
 
   runApp(
     MultiProvider(
