@@ -1016,59 +1016,6 @@ class _ProfilePageState extends State<ProfilePage>
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                gradient: isCompleted
-                    ? LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          colors.primary.withAlpha((255 * 0.2).round()),
-                          colors.secondary.withAlpha((255 * 0.15).round()),
-                        ],
-                      )
-                    : null,
-                color: isCompleted ? null : colors.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: isCompleted
-                    ? [
-                        BoxShadow(
-                          color: colors.primary.withAlpha((255 * 0.2).round()),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Image.network(
-                iconUrl,
-                width: 36,
-                height: 36,
-                fit: BoxFit.contain,
-                color: isCompleted ? colors.primary : colors.onSurfaceVariant,
-                colorBlendMode: BlendMode.srcIn,
-                errorBuilder: (context, error, stackTrace) {
-                  return Icon(
-                    Icons.emoji_events,
-                    size: 36,
-                    color: isCompleted ? colors.primary : colors.onSurfaceVariant,
-                  );
-                },
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return SizedBox(
-                    width: 36,
-                    height: 36,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: isCompleted ? colors.primary : colors.onSurfaceVariant,
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 18),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

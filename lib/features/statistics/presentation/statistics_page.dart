@@ -17,7 +17,6 @@ class StatisticsPage extends StatefulWidget {
 class _StatisticsPageState extends State<StatisticsPage>
     with TickerProviderStateMixin {
   bool _isLocaleInitialized = false;
-  bool _showShimmer = true;
 
   late final AnimationController _animationController;
   late final AnimationController _fadeAnimationController;
@@ -32,15 +31,6 @@ class _StatisticsPageState extends State<StatisticsPage>
     super.initState();
     _initializeLocale();
     _initializeAnimations();
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          _showShimmer = false;
-        });
-        _fadeAnimationController.forward();
-        _scaleAnimationController.forward();
-      }
-    });
   }
 
   void _initializeAnimations() {
@@ -74,7 +64,6 @@ class _StatisticsPageState extends State<StatisticsPage>
       parent: _scaleAnimationController,
       curve: Curves.easeOutBack,
     ));
-
   }
 
   @override
@@ -82,11 +71,14 @@ class _StatisticsPageState extends State<StatisticsPage>
     super.didChangeDependencies();
     final statisticsBloc = BlocProvider.of<StatisticsBloc>(context);
     if (statisticsBloc.state.status == StatisticsStatus.initial) {
-      statisticsBloc.add(
-        StatisticsLoadRequested(
-          currentTotalStudyHours: 0,
-        ),
-      );
+      // Usa addPostFrameCallback per evitare chiamate multiple e problemi di build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && statisticsBloc.state.status == StatisticsStatus.initial) {
+          statisticsBloc.add(
+            StatisticsLoadRequested(currentTotalStudyHours: 0),
+          );
+        }
+      });
     }
   }
 
@@ -159,10 +151,6 @@ class _StatisticsPageState extends State<StatisticsPage>
       value: systemUiOverlayStyle,
       child: BlocBuilder<StatisticsBloc, StatisticsState>(
         builder: (context, state) {
-          if (_showShimmer) {
-            return const StatisticsShrimmerPage();
-          }
-
           if (state.status == StatisticsStatus.initial ||
               state.status == StatisticsStatus.loading) {
             return const StatisticsShrimmerPage();

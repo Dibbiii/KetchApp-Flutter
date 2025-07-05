@@ -92,7 +92,7 @@ class ApiService {
               final endAt = tomato['end_at'];
               if (startAt != null && endAt != null) {
                 final start = DateTime.parse(startAt);
-                final testStart = DateTime.now().add(const Duration(minutes: 1));
+                final notificationStart = start.subtract(const Duration(minutes: 15));
                 final end = DateTime.parse(endAt);
                 await CalendarService().addEvent(
                   title: subjectName,
@@ -100,7 +100,7 @@ class ApiService {
                   end: end,
                   description: 'Sessione Pomodoro creata da KetchApp',
                 );
-                await NotificationService.schedulePomodoroNotification(subjectName, testStart);
+                await NotificationService.schedulePomodoroNotification(subjectName, notificationStart);
               }
             }
           }

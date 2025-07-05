@@ -1,10 +1,10 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ketchapp_flutter/features/home/bloc/home_bloc.dart';
 import 'package:ketchapp_flutter/features/home/presentation/widgets/todays_tomatoes_card.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:ketchapp_flutter/services/notification_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required bool refresh});
@@ -16,6 +16,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final PageController _pageController = PageController();
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  late final ScrollController _scrollController;
 
   late AnimationController _fadeAnimationController;
   late AnimationController _scaleAnimationController;
@@ -25,8 +26,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    NotificationService.initialize();
     _initializeNotifications();
     _initializeAnimations();
+    _scrollController = ScrollController();
   }
 
   void _initializeAnimations() {
@@ -74,6 +77,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _pageController.dispose();
     _fadeAnimationController.dispose();
     _scaleAnimationController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -102,18 +106,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       value: systemUiOverlayStyle,
       child: Scaffold(
         backgroundColor: colors.surface,
-        body: BlocBuilder<HomeBloc, HomeState>(
-          builder: (context, state) {
-            if (state is HomeLoading) {
-              return _buildLoadingState(context, colors, textTheme);
-            } else if (state is HomeLoaded) {
-              return _buildLoadedState(context, colors, textTheme);
-            } else if (state is HomeError) {
-              return _buildErrorState(context, colors, textTheme, state);
-            } else {
-              return _buildInitializingState(context, colors, textTheme);
-            }
-          },
+        body: Stack(
+          children: [
+            BlocBuilder<HomeBloc, HomeState>(
+              builder: (context, state) {
+                if (state is HomeLoading) {
+                  return _buildLoadingState(context, colors, textTheme);
+                } else if (state is HomeLoaded) {
+                  return _buildLoadedState(context, colors, textTheme);
+                } else if (state is HomeError) {
+                  return _buildErrorState(context, colors, textTheme, state);
+                } else {
+                  return _buildInitializingState(context, colors, textTheme);
+                }
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -195,25 +203,30 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           opacity: _fadeAnimation,
           child: ScaleTransition(
             scale: _scaleAnimation,
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
-                    child: Column(
-                      children: [
-                        _buildWelcomeHeader(context, colors, textTheme),
-                        const SizedBox(height: 40),
-                        _buildTomatoesSection(context, colors, textTheme),
-                      ],
+            child: Scrollbar(
+              thumbVisibility: true,
+              controller: _scrollController,
+              child: CustomScrollView(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
+                      child: Column(
+                        children: [
+                          _buildWelcomeHeader(context, colors, textTheme),
+                          const SizedBox(height: 40),
+                          _buildTomatoesSection(context, colors, textTheme),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 100),
-                ),
-              ],
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: 100),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
