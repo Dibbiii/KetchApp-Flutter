@@ -407,14 +407,10 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     final scheduledStartTime = newTomato.startAt;
     final currentTime = DateTime.now().toUtc();
 
-    print('🕐 Controllo orario pomodoro $nextTomatoId:');
-    print('   Programmato per: $scheduledStartTime');
-    print('   Ora corrente: $currentTime');
 
     if (scheduledStartTime.isAfter(currentTime)) {
       // Il pomodoro è programmato per il futuro - dobbiamo aspettare
       final waitTime = scheduledStartTime.difference(currentTime);
-      print('⏰ Il prossimo pomodoro inizierà tra ${_formatDuration(waitTime)}');
 
       emit(WaitingForScheduledTime(
         nextTomatoId: nextTomatoId,
@@ -429,7 +425,6 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     }
 
     // Il pomodoro può iniziare ora
-    print('✅ Il pomodoro può iniziare ora');
 
     if (autoStart) {
       // Auto-switch with notification
@@ -461,7 +456,6 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
         if (newWaitTime.inSeconds <= 0) {
           // È ora di iniziare il pomodoro!
           timer.cancel();
-          print('🎯 È ora di iniziare il pomodoro ${currentState.nextTomatoId}!');
           emit(TomatoTimerReady(isWhiteNoiseEnabled: state.isWhiteNoiseEnabled));
         } else {
           // Aggiorna il countdown
@@ -478,20 +472,6 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     });
   }
 
-  /// Helper per formattare la durata in modo leggibile
-  String _formatDuration(Duration duration) {
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60);
-    final seconds = duration.inSeconds.remainder(60);
-
-    if (hours > 0) {
-      return '${hours}h ${minutes}m ${seconds}s';
-    } else if (minutes > 0) {
-      return '${minutes}m ${seconds}s';
-    } else {
-      return '${seconds}s';
-    }
-  }
 
   void _onTicked(_TimerTicked event, Emitter<TimerState> emit) {
     final duration = event.duration;

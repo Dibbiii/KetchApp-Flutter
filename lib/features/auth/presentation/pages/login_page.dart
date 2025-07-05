@@ -15,8 +15,6 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   late AnimationController _fadeAnimationController;
   late AnimationController _scaleAnimationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
@@ -34,21 +32,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeAnimationController,
-      curve: Curves.easeOutCubic,
-    ));
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.95,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _scaleAnimationController,
-      curve: Curves.easeOutBack,
-    ));
   }
 
   @override
@@ -193,7 +177,6 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
     final ColorScheme colors = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
     final Size size = MediaQuery.of(context).size;
-    final isLoading = context.watch<AuthBloc>().state is AuthLoading;
 
     if (_showShimmer) {
       return const LoginShimmerPage();
@@ -219,14 +202,13 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Enhanced logo with shadow and animation
                         Container(
                           margin: const EdgeInsets.only(bottom: 48),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: colors.primary.withOpacity(0.2),
+                                color: colors.primary.withValues(alpha:0.2),
                                 blurRadius: 20,
                                 offset: const Offset(0, 8),
                               ),
@@ -246,8 +228,6 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                             ),
                           ),
                         ),
-
-                        // Enhanced typography
                         Text(
                           'Welcome Back',
                           style: textTheme.headlineLarge?.copyWith(
@@ -261,20 +241,18 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                         Text(
                           'Sign in to continue to KetchApp',
                           style: textTheme.bodyLarge?.copyWith(
-                            color: colors.onSurface.withOpacity(0.7),
+                            color: colors.onSurface.withValues(alpha:0.7),
                             fontWeight: FontWeight.w400,
                           ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 48),
-
-                        // Enhanced input fields with Material 3 design
                         Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: colors.shadow.withOpacity(0.1),
+                                color: colors.shadow.withValues(alpha:0.1),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -324,13 +302,12 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                           ),
                         ),
                         const SizedBox(height: 20),
-
                         Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: colors.shadow.withOpacity(0.1),
+                                color: colors.shadow.withValues(alpha:0.1),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -338,6 +315,7 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                           ),
                           child: TextFormField(
                             controller: _passwordController,
+                            obscureText: true,
                             style: textTheme.bodyLarge?.copyWith(color: colors.onSurface),
                             decoration: InputDecoration(
                               labelText: 'Password',
@@ -369,158 +347,83 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                                 horizontal: 16,
                               ),
                             ),
-                            obscureText: true,
-                            textInputAction: TextInputAction.done,
-                            onFieldSubmitted: (_) => _submitLogin(),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Please enter your password';
-                              }
-                              if (value.length < 6) {
-                                return 'Password must be at least 6 characters';
                               }
                               return null;
                             },
                           ),
                         ),
-
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
                             onPressed: () {
-                              HapticFeedback.lightImpact();
                               context.push('/forgot_password');
                             },
-                            style: TextButton.styleFrom(
-                              foregroundColor: colors.primary,
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              textStyle: textTheme.bodyMedium?.copyWith(
+                            child: Text(
+                              'Forgot Password?',
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colors.primary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            child: const Text('Forgot password?'),
                           ),
                         ),
                         const SizedBox(height: 32),
-
-                        // Enhanced sign in button
-                        SizedBox(
-                          width: double.infinity,
-                          child: FilledButton(
-                            onPressed: isLoading ? null : _submitLogin,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: colors.primary,
-                              foregroundColor: colors.onPrimary,
-                              minimumSize: const Size.fromHeight(56),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+                        BlocBuilder<AuthBloc, AuthState>(
+                          builder: (context, state) {
+                            final isLoading = state is AuthLoading;
+                            return FilledButton(
+                              onPressed: isLoading ? null : _submitLogin,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: colors.primary,
+                                foregroundColor: colors.onPrimary,
+                                minimumSize: const Size.fromHeight(48),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                textStyle: textTheme.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                              elevation: 2,
-                              shadowColor: colors.primary.withOpacity(0.3),
-                              textStyle: textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            child: isLoading
-                                ? SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: colors.onPrimary,
-                                    ),
-                                  )
-                                : const Text('Sign In'),
-                          ),
+                              child: isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Text('Sign In'),
+                            );
+                          },
                         ),
-
                         const SizedBox(height: 24),
-
-                        // Divider with "or" text
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Expanded(child: Divider(color: colors.outline)),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                            Text(
+                              "Don't have an account?",
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colors.onSurfaceVariant,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                context.push('/register');
+                              },
                               child: Text(
-                                'or',
+                                'Register',
                                 style: textTheme.bodyMedium?.copyWith(
-                                  color: colors.onSurfaceVariant,
+                                  color: colors.primary,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
-                            Expanded(child: Divider(color: colors.outline)),
                           ],
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // Enhanced Google sign in button
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            icon: Image.network(
-                              'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/24px-Google_%22G%22_logo.svg.png',
-                              height: 24.0,
-                              width: 24.0,
-                            ),
-                            label: const Text('Continue with Google'),
-                            onPressed: () {
-                              HapticFeedback.lightImpact();
-                              context.read<AuthBloc>().add(AuthGoogleSignInRequested());
-                            },
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: colors.onSurface,
-                              backgroundColor: colors.surface,
-                              minimumSize: const Size.fromHeight(56),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              side: BorderSide(color: colors.outline),
-                              textStyle: textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 32),
-
-                        // Enhanced sign up prompt
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: colors.surfaceContainerHighest.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Don't have an account?",
-                                style: textTheme.bodyMedium?.copyWith(
-                                  color: colors.onSurface.withOpacity(0.7),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              TextButton(
-                                onPressed: () {
-                                  HapticFeedback.lightImpact();
-                                  context.go('/register');
-                                },
-                                style: TextButton.styleFrom(
-                                  foregroundColor: colors.primary,
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                                  textStyle: textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                child: const Text('Create account'),
-                              ),
-                            ],
-                          ),
                         ),
                       ],
                     ),

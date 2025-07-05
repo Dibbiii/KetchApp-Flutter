@@ -1,18 +1,17 @@
+// ignore_for_file: unused_field, deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:ketchapp_flutter/features/statistics/presentation/statistics_shrimmer_page.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ketchapp_flutter/features/statistics/bloc/statistics_bloc.dart';
 import 'package:ketchapp_flutter/features/statistics/presentation/widgets/weekly_histogram_widget.dart';
-import 'package:ketchapp_flutter/features/statistics/presentation/widgets/subject_stat_item_widget.dart';
-import 'package:ketchapp_flutter/features/statistics/presentation/tomato_summary_page.dart';
 import 'package:go_router/go_router.dart';
 
 class StatisticsPage extends StatefulWidget {
-  const StatisticsPage({Key? key}) : super(key: key);
+  const StatisticsPage({super.key});
 
   @override
   State<StatisticsPage> createState() => _StatisticsPageState();
@@ -819,7 +818,6 @@ class _StatisticsPageState extends State<StatisticsPage>
         onTap: () {
           final tomatoes = stat['tomatoes'] ?? [];
           final firstTomatoId = tomatoes.isNotEmpty ? tomatoes.first : null;
-          print('Tapped subject, firstTomatoId: ' + firstTomatoId.toString());
           if (firstTomatoId != null) {
             context.push('/timer-summary/[3m$firstTomatoId[23m');
           }

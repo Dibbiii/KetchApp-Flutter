@@ -52,9 +52,7 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
           "${endOfWeek.year.toString().padLeft(4, '0')}-${endOfWeek.month.toString().padLeft(2, '0')}-${endOfWeek.day.toString().padLeft(2, '0')}";
 
       final url = "users/$userUuid/statistics?startDate=$formattedStart&endDate=$formattedEnd";
-      print("Fetching data from URL: $url");
       final response = await api.fetchData(url);
-      print("Response: $response");
 
       if (response is Map<String, dynamic> && response.containsKey('dates')) {
         final dates = response['dates'] as List<dynamic>?;

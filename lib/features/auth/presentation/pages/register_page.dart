@@ -15,8 +15,6 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMixin {
   late AnimationController _fadeAnimationController;
   late AnimationController _scaleAnimationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
@@ -34,21 +32,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeAnimationController,
-      curve: Curves.easeOutCubic,
-    ));
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.95,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _scaleAnimationController,
-      curve: Curves.easeOutBack,
-    ));
   }
 
   @override
@@ -200,7 +184,6 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
     final ColorScheme colors = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
     final Size size = MediaQuery.of(context).size;
-    final isLoading = context.watch<AuthBloc>().state is AuthLoading;
 
     if (_showShimmer) {
       return const RegisterShimmerPage();
@@ -226,7 +209,6 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Enhanced logo with shadow and animation
                         Container(
                           margin: const EdgeInsets.only(bottom: 48),
                           decoration: BoxDecoration(
@@ -253,8 +235,6 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                             ),
                           ),
                         ),
-
-                        // Enhanced typography
                         Text(
                           'Create Account',
                           style: textTheme.headlineLarge?.copyWith(
@@ -274,14 +254,12 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 48),
-
-                        // Enhanced input fields with Material 3 design
                         Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: colors.shadow.withValues(alpha: 0.1),
+                                color: colors.shadow.withValues(alpha:0.1),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -320,27 +298,21 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                                 horizontal: 16,
                               ),
                             ),
-                            keyboardType: TextInputType.text,
-                            textInputAction: TextInputAction.next,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Please enter a username';
-                              }
-                              if (value.length < 3) {
-                                return 'Username must be at least 3 characters';
                               }
                               return null;
                             },
                           ),
                         ),
                         const SizedBox(height: 20),
-
                         Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: colors.shadow.withValues(alpha: 0.1),
+                                color: colors.shadow.withValues(alpha:0.1),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -351,7 +323,7 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                             style: textTheme.bodyLarge?.copyWith(color: colors.onSurface),
                             decoration: InputDecoration(
                               labelText: 'Email',
-                              hintText: 'Enter your email address',
+                              hintText: 'Enter your email',
                               prefixIcon: Icon(
                                 Icons.email_outlined,
                                 color: colors.onSurfaceVariant,
@@ -380,26 +352,21 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                               ),
                             ),
                             keyboardType: TextInputType.emailAddress,
-                            textInputAction: TextInputAction.next,
                             validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your email';
-                              }
-                              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                                return 'Please enter a valid email address';
+                              if (value == null || value.isEmpty || !value.contains('@')) {
+                                return 'Please enter a valid email';
                               }
                               return null;
                             },
                           ),
                         ),
                         const SizedBox(height: 20),
-
                         Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: colors.shadow.withValues(alpha: 0.1),
+                                color: colors.shadow.withValues(alpha:0.1),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -407,10 +374,11 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                           ),
                           child: TextFormField(
                             controller: _passwordController,
+                            obscureText: true,
                             style: textTheme.bodyLarge?.copyWith(color: colors.onSurface),
                             decoration: InputDecoration(
                               labelText: 'Password',
-                              hintText: 'Create a strong password',
+                              hintText: 'Enter your password',
                               prefixIcon: Icon(
                                 Icons.lock_outline_rounded,
                                 color: colors.onSurfaceVariant,
@@ -438,27 +406,24 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                                 horizontal: 16,
                               ),
                             ),
-                            obscureText: true,
-                            textInputAction: TextInputAction.next,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Please enter a password';
                               }
-                              if (value.length < 8) {
-                                return 'Password must be at least 8 characters';
+                              if (value.length < 6) {
+                                return 'Password must be at least 6 characters';
                               }
                               return null;
                             },
                           ),
                         ),
                         const SizedBox(height: 20),
-
                         Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: colors.shadow.withValues(alpha: 0.1),
+                                color: colors.shadow.withValues(alpha:0.1),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -466,10 +431,11 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                           ),
                           child: TextFormField(
                             controller: _confirmPasswordController,
+                            obscureText: true,
                             style: textTheme.bodyLarge?.copyWith(color: colors.onSurface),
                             decoration: InputDecoration(
                               labelText: 'Confirm Password',
-                              hintText: 'Confirm your password',
+                              hintText: 'Re-enter your password',
                               prefixIcon: Icon(
                                 Icons.lock_outline_rounded,
                                 color: colors.onSurfaceVariant,
@@ -497,9 +463,6 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                                 horizontal: 16,
                               ),
                             ),
-                            obscureText: true,
-                            textInputAction: TextInputAction.done,
-                            onFieldSubmitted: (_) => _submitRegister(),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Please confirm your password';
@@ -511,76 +474,59 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                             },
                           ),
                         ),
-
                         const SizedBox(height: 32),
-
-                        // Enhanced create account button
-                        SizedBox(
-                          width: double.infinity,
-                          child: FilledButton(
-                            onPressed: isLoading ? null : _submitRegister,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: colors.primary,
-                              foregroundColor: colors.onPrimary,
-                              minimumSize: const Size.fromHeight(56),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+                        BlocBuilder<AuthBloc, AuthState>(
+                          builder: (context, state) {
+                            final isLoading = state is AuthLoading;
+                            return FilledButton(
+                              onPressed: isLoading ? null : _submitRegister,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: colors.primary,
+                                foregroundColor: colors.onPrimary,
+                                minimumSize: const Size.fromHeight(48),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                textStyle: textTheme.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                              elevation: 2,
-                              shadowColor: colors.primary.withValues(alpha: 0.3),
-                              textStyle: textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.5,
+                              child: isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Text('Register'),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Already have an account?",
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colors.onSurfaceVariant,
                               ),
                             ),
-                            child: isLoading
-                                ? SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: colors.onPrimary,
-                                    ),
-                                  )
-                                : const Text('Create Account'),
-                          ),
-                        ),
-
-                        const SizedBox(height: 32),
-
-                        // Enhanced sign in prompt
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: colors.surfaceContainerHighest.withValues(alpha: 0.3),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Already have an account?",
+                            TextButton(
+                              onPressed: () {
+                                context.push('/login');
+                              },
+                              child: Text(
+                                'Sign In',
                                 style: textTheme.bodyMedium?.copyWith(
-                                  color: colors.onSurface.withValues(alpha: 0.7),
+                                  color: colors.primary,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              TextButton(
-                                onPressed: () {
-                                  HapticFeedback.lightImpact();
-                                  context.go('/login');
-                                },
-                                style: TextButton.styleFrom(
-                                  foregroundColor: colors.primary,
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                                  textStyle: textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                child: const Text('Sign In'),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

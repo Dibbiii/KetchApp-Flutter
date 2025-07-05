@@ -26,9 +26,7 @@ class _PlanCreationLoadingPageState extends State<PlanCreationLoadingPage>
   Future<void> _createPlanAndNavigate() async {
     try {
       await widget.createPlan();
-      // Navigation is handled inside createPlan on success
     } catch (e) {
-      // If plan creation fails, pop the loading page to show the error on the previous screen
       if (mounted) {
         Navigator.pop(context);
       }
@@ -79,4 +77,3 @@ class _PlanCreationLoadingPageState extends State<PlanCreationLoadingPage>
     );
   }
 }
-

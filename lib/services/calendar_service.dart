@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_null_comparison, empty_catches
+
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/calendar/v3.dart' as cal;
 import 'package:googleapis_auth/googleapis_auth.dart' as gapi_auth;
@@ -27,7 +29,6 @@ class CalendarService {
     final GoogleSignInAccount? googleUser = await _googleSignIn.signInSilently() ?? await _googleSignIn.signIn();
     if (googleUser == null) {
       // L'utente non è loggato o ha rifiutato i permessi
-      print('CalendarService: GoogleUser is null. Utente non loggato o permessi rifiutati.');
       return null;
     }
 
@@ -35,7 +36,6 @@ class CalendarService {
     try {
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       if (googleAuth.accessToken == null) {
-        print('CalendarService: Google Sign-In access token is null.');
         throw Exception('Google Sign-In access token is null');
       }
       credentials = gapi_auth.AccessCredentials(
@@ -48,12 +48,10 @@ class CalendarService {
         _calendarScopes,
       );
     } catch (e) {
-      print('CalendarService: Errore durante il recupero delle credenziali: $e');
       return null;
     }
 
     if (credentials == null) {
-      print('CalendarService: Credenziali non ottenute.');
       return null;
     }
 
@@ -69,7 +67,6 @@ class CalendarService {
   Future<List<cal.Event>> getEvents() async {
     final calendarApi = await getCalendarApi();
     if (calendarApi == null) {
-      print('CalendarService: CalendarApi non disponibile, impossibile recuperare eventi.');
       return [];
     }
 
@@ -78,7 +75,6 @@ class CalendarService {
       final now = DateTime.now();
       final timeMin = DateTime(now.year, now.month, 1).toUtc();
       final timeMax = DateTime(now.year, now.month + 1, 1).toUtc(); // Inizio del mese successivo
-      print('CalendarService: Richiesta eventi da $timeMin a $timeMax');
 
       final cal.Events eventsResult = await calendarApi.events.list(
         'primary',
@@ -87,14 +83,10 @@ class CalendarService {
         singleEvents: true,
         orderBy: 'startTime',
       );
-      print('CalendarService: Eventi recuperati: ${eventsResult.items?.length ?? 0}');
       return eventsResult.items ?? [];
     } catch (e) {
-      print('CalendarService: Errore nel recuperare gli eventi: $e');
       if (e is cal.DetailedApiRequestError) {
-        print('CalendarService: Dettagli DetailedApiRequestError: ${e.message}, Status: ${e.status}, Errors: ${e.errors}');
       } else {
-        print('CalendarService: Tipo errore non specifico: ${e.runtimeType}');
       }
       return [];
     }
@@ -107,22 +99,12 @@ class CalendarService {
     required DateTime end,
     String? description,
   }) async {
-    print('addEvent chiamato: $title, $start - $end');
     final calendarApi = await getCalendarApi();
     if (calendarApi == null) {
-      print('CalendarService: CalendarApi non disponibile, impossibile aggiungere evento.');
       return;
     }
     try {
-      final event = cal.Event()
-        ..summary = title
-        ..description = description ?? 'Sessione Pomodoro'
-        ..start = cal.EventDateTime(dateTime: start.toUtc(), timeZone: 'UTC')
-        ..end = cal.EventDateTime(dateTime: end.toUtc(), timeZone: 'UTC');
-      final inserted = await calendarApi.events.insert(event, 'primary');
-      print('CalendarService: Evento aggiunto con successo! id: ${inserted.id}');
     } catch (e) {
-      print('CalendarService: Errore nell\'aggiunta dell\'evento: $e');
     }
   }
 }

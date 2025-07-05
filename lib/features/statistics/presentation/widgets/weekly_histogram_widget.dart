@@ -1,3 +1,5 @@
+// ignore_for_file: unused_import, deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // For DateUtils
 
@@ -14,11 +16,11 @@ class WeeklyHistogramWidget extends StatelessWidget {
   final Function(DateTime) onDateSelected;
 
   const WeeklyHistogramWidget({
-    Key? key,
+    super.key,
     required this.displayedCalendarDate,
     required this.weeklyStudyData,
     required this.onDateSelected,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

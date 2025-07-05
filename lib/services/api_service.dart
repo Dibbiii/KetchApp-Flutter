@@ -19,7 +19,6 @@ class ApiService {
     try {
       decodedJson = json.decode(body);
     } catch (e) {
-      print('Info: Response body is not a valid JSON. Treating as plain text. $e');
       // Se il corpo non è un JSON valido, lo tratto come testo semplice.
       decodedJson = body;
     }
@@ -82,10 +81,8 @@ class ApiService {
 
   Future<void> createPlan(PlanModel plan) async {
     final planData = plan.toJson();
-    print('Creating plan with data: ${json.encode(planData)}');
     try {
       final response = await postData('plans', planData);
-      print('Response from createPlan: ${response}');
       // Cicla su tutti i pomodori (tomatoes) nella risposta e aggiungili su Google Calendar
       if (response != null && response['subjects'] != null) {
         for (final subject in response['subjects']) {
@@ -97,7 +94,6 @@ class ApiService {
               if (startAt != null && endAt != null) {
                 final start = DateTime.parse(startAt);
                 final end = DateTime.parse(endAt);
-                print('Aggiungo evento Google Calendar: $subjectName, $start - $end');
                 await CalendarService().addEvent(
                   title: subjectName,
                   start: start,
@@ -111,19 +107,16 @@ class ApiService {
         }
       }
     } catch (e) {
-      print('Error in createPlan: ${e}');
       rethrow;
     }
   }
 
   Future<Map<String, dynamic>> getUserByFirebaseUid(String firebaseUid) async {
-    print('Fetching user by Firebase UID: $firebaseUid');
     try {
       final response = await fetchData('users/firebase/$firebaseUid');
       // Assumendo che la risposta sia un JSON object con i dati dell'utente
       return response as Map<String, dynamic>;
     } catch (e) {
-      print('Error in getUserByFirebaseUid: $e');
       rethrow;
     }
   }
@@ -141,7 +134,6 @@ class ApiService {
   Future<List<Tomato>> getTodaysTomatoes(String userUuid) async {
     final today = DateTime.now().toUtc();
     final todayStr = "${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}";
-    print('Fetching tomatoes for user: $userUuid on $todayStr');
     final response = await fetchData('users/$userUuid/tomatoes?date=$todayStr');
     final List<dynamic> tomatoesJson = response as List<dynamic>;
     List<Tomato> tomatoes = tomatoesJson.map((json) => Tomato.fromJson(json)).toList();
@@ -178,7 +170,6 @@ class ApiService {
   }
 
   Future<Tomato> getTomatoById(int tomatoId) async {
-    print('Fetching tomato with id: $tomatoId');
     final response = await fetchData('tomatoes/$tomatoId');
     return Tomato.fromJson(response);
   }
@@ -193,7 +184,6 @@ class ApiService {
         'action': action.name,
       });
     } catch (e) {
-      print('Error creating activity: $e');
       rethrow;
     }
   }

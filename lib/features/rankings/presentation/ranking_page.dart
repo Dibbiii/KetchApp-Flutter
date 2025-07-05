@@ -1,3 +1,5 @@
+// ignore_for_file: unused_import, deprecated_member_use
+
 import 'dart:async';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';

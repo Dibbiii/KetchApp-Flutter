@@ -8,10 +8,10 @@ class TomatoActivityDetailsPage extends StatefulWidget {
   final ApiService apiService;
 
   const TomatoActivityDetailsPage({
-    Key? key,
+    super.key,
     required this.tomato,
     required this.apiService,
-  }) : super(key: key);
+  });
 
   @override
   State<TomatoActivityDetailsPage> createState() => _TomatoActivityDetailsPageState();
@@ -112,12 +112,10 @@ class _TomatoActivityDetailsPageState extends State<TomatoActivityDetailsPage>
         case 'actionType':
           final actionType = activity['actionType'] ?? activity['action_type'] ?? activity['type'] ?? activity['action'] ?? 'unknown';
           // Debug print to see what values we're getting
-          print('DEBUG: actionType found: $actionType for activity: $activity');
           return actionType;
         case 'activityType':
           final activityType = activity['activityType'] ?? activity['activity_type'] ?? activity['category'] ?? activity['timer_type'] ?? activity['type'] ?? 'timer';
           // Debug print to see what values we're getting
-          print('DEBUG: activityType found: $activityType for activity: $activity');
           return activityType;
         case 'createdAt':
           final timeValue = activity['createdAt'] ?? activity['created_at'] ?? activity['timestamp'];
@@ -137,7 +135,6 @@ class _TomatoActivityDetailsPageState extends State<TomatoActivityDetailsPage>
                 try {
                   return DateFormat('yyyy-MM-ddTHH:mm:ss').parse(timeValue);
                 } catch (e3) {
-                  print('Failed to parse date: $timeValue');
                   return null;
                 }
               }
@@ -153,7 +150,6 @@ class _TomatoActivityDetailsPageState extends State<TomatoActivityDetailsPage>
                 return DateTime.fromMillisecondsSinceEpoch(timeValue * 1000);
               }
             } catch (e) {
-              print('Failed to parse timestamp: $timeValue');
               return null;
             }
           }
@@ -177,7 +173,6 @@ class _TomatoActivityDetailsPageState extends State<TomatoActivityDetailsPage>
           return null;
       }
     } catch (e) {
-      print('Error accessing property $property: $e');
       return null;
     }
   }
@@ -823,7 +818,6 @@ class _TomatoActivityDetailsPageState extends State<TomatoActivityDetailsPage>
         return 'Session Resumed';
       default:
         // For debugging, show the actual values received
-        print('WARN: Unknown actionType: "$actionType", activityType: "$activityType"');
         return 'Activity: $actionType';
     }
   }

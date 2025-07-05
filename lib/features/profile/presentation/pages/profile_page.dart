@@ -1,3 +1,5 @@
+// ignore_for_file: depend_on_referenced_packages, use_build_context_synchronously
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,7 +13,6 @@ import 'package:ketchapp_flutter/features/profile/bloc/profile_state.dart';
 import 'package:ketchapp_flutter/services/api_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'profile_shrimmer_page.dart';
-import 'package:provider/provider.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});

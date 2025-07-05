@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
 import 'package:ketchapp_flutter/models/tomato.dart';
 import 'package:ketchapp_flutter/services/api_service.dart';
@@ -23,21 +22,6 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
   late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
 
-  String _formatDuration(Duration duration) {
-    if (duration.inMinutes < 1) {
-      return "less than a minute";
-    }
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60);
-    var parts = <String>[];
-    if (hours > 0) {
-      parts.add('$hours hour${hours > 1 ? 's' : ''}');
-    }
-    if (minutes > 0) {
-      parts.add('$minutes minute${minutes > 1 ? 's' : ''}');
-    }
-    return parts.join(' and ');
-  }
 
   @override
   void initState() {

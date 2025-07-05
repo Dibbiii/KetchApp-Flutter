@@ -1,3 +1,5 @@
+// ignore_for_file: unused_import, unused_local_variable
+
 import 'package:ketchapp_flutter/models/activity.dart';
 import 'package:ketchapp_flutter/models/session_summary.dart';
 import 'package:ketchapp_flutter/services/api_service.dart';
@@ -50,25 +52,20 @@ class SessionStatsService {
     }
 
     // Traverse the tomato chain
-    print('Tomato chain for id $tomatoId:');
     while (currentId != null) {
       final tomato = await apiService.getTomatoById(currentId);
-      print('  Tomato: id=${getProp(tomato, 'id')}, subject=${getProp(tomato, 'subject')}, start_at=${getProp(tomato, 'start_at')}, end_at=${getProp(tomato, 'end_at')}');
       subject ??= getProp(tomato, 'subject');
       tomatoIds.add(currentId);
       // Fetch activities for this tomato
       final activities = await apiService.getTomatoActivities(currentId);
-      print('    Activities for tomato $currentId:');
       for (final activity in activities) {
-        print('      $activity');
       }
-      print('    Total activities: ${activities.length}');
       // Count PAUSE actions
       final pauseClicked = activities.where((activity) {
         final action = getProp(activity, 'action');
         final actionStr = action is ActivityAction
             ? action.toShortString().toUpperCase()
-            : (action != null ? action.toString().toUpperCase() : null);
+            : (action?.toString().toUpperCase());
         return actionStr == 'PAUSE';
       }).length;
       totalPauses += pauseClicked;
@@ -93,10 +90,10 @@ class SessionStatsService {
         }
         final typeStr = type is ActivityType
             ? type.toShortString().toUpperCase()
-            : type != null ? type.toString().toUpperCase() : null;
+            : type?.toString().toUpperCase();
         final actionStr = action is ActivityAction
             ? action.toShortString().toUpperCase()
-            : action != null ? action.toString().toUpperCase() : null;
+            : action?.toString().toUpperCase();
         if (typeStr == 'TIMER' && actionStr == 'START') {
           if (realStartAt == null || (createdAt != null && createdAt.isBefore(realStartAt))) {
             realStartAt = createdAt;
@@ -123,10 +120,10 @@ class SessionStatsService {
         }
         final typeStr = type is ActivityType
             ? type.toShortString().toUpperCase()
-            : type != null ? type.toString().toUpperCase() : null;
+            : type?.toString().toUpperCase();
         final actionStr = action is ActivityAction
             ? action.toShortString().toUpperCase()
-            : action != null ? action.toString().toUpperCase() : null;
+            : action?.toString().toUpperCase();
         if (typeStr == 'BREAK' && actionStr == 'START') {
           breakStart = createdAt;
         }
@@ -178,9 +175,7 @@ class SessionStatsService {
       }
       final tomatoStats = buildTomatoStats();
       // Print stats in a compact, readable way
-      print('    Stats:');
       for (final entry in tomatoStats.entries) {
-        print('      ${entry.key}: ${entry.value}');
       }
 
       // Calculate durations

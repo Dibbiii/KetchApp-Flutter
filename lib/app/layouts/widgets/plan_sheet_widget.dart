@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -143,6 +142,13 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
       _subjectControllers.removeAt(idx);
       _subjectFocusNodes.removeAt(idx);
       _subjectDurations.remove(idx);
+      final newDurations = <int, double>{};
+      for (int i = 0; i < _subjectControllers.length; i++) {
+        newDurations[i] = _subjectDurations[i < idx ? i : i + 1] ?? 1.0;
+      }
+      _subjectDurations
+        ..clear()
+        ..addAll(newDurations);
     });
   }
 
@@ -482,57 +488,6 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
     }
   }
 
-  void _fetchGoogleCalendarEvents() {
-    setState(() {
-      // _isLoadingCalendarEvents = true;
-    });
-    _calendarService
-        .getEvents()
-        .then((events) {
-          setState(() {
-            // _isLoadingCalendarEvents = false;
-            // Clear existing events
-            for (var idx in _googleCalendarEvents) {
-              if (idx < _calendarControllers.length) {
-                _calendarControllers[idx].dispose();
-                _calendarFocusNodes[idx].dispose();
-              }
-            }
-            _calendarControllers.clear();
-            _calendarFocusNodes.clear();
-            _googleCalendarEvents.clear();
-
-            // Add new events
-            for (var event in events) {
-              final startTime = event.start?.dateTime?.toLocal();
-              final endTime = event.end?.dateTime?.toLocal();
-
-              if (startTime != null && endTime != null) {
-                final controller = TextEditingController(
-                  text: event.summary ?? 'No title',
-                );
-                _calendarControllers.add(controller);
-                _calendarFocusNodes.add(FocusNode());
-                _calendarTimes[_calendarControllers.length - 1] = {
-                  'start_at': DateFormat('HH:mm').format(startTime),
-                  'end_at': DateFormat('HH:mm').format(endTime),
-                  'date': DateFormat('E, d MMM', 'it_IT').format(startTime),
-                };
-                _googleCalendarEvents.add(_calendarControllers.length - 1);
-              }
-            }
-          });
-        })
-        .catchError((error) {
-          setState(() {
-            // _isLoadingCalendarEvents = false;
-          });
-          // Handle error (e.g., show a snackbar)
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to fetch events: $error')),
-          );
-        });
-  }
 
   void _clearGoogleCalendarEvents() {
     // Remove only Google events
@@ -1569,37 +1524,6 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
               ),
       ),
     );
-  }
-
-
-  void _removeSubject(int index) {
-    setState(() {
-      _subjectControllers[index].dispose();
-      _subjectFocusNodes[index].dispose();
-      _subjectControllers.removeAt(index);
-      _subjectFocusNodes.removeAt(index);
-      _subjectDurations.remove(index);
-
-      // Reindex the remaining durations
-      final newDurations = <int, double>{};
-      for (int i = 0; i < _subjectControllers.length; i++) {
-        if (i < index) {
-          newDurations[i] = _subjectDurations[i] ?? 1.0;
-        } else {
-          newDurations[i] = _subjectDurations[i + 1] ?? 1.0;
-        }
-      }
-      _subjectDurations.clear();
-      _subjectDurations.addAll(newDurations);
-    });
-  }
-
-  void _showSessionTimeDialog(BuildContext context) {
-    // Implementation for session time dialog
-  }
-
-  void _showBreakTimeDialog(BuildContext context) {
-    // Implementation for break time dialog
   }
 
   void _editCalendarTime(BuildContext context, int index) {

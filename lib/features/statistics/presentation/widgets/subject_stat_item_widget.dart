@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 
 class SubjectStatItemWidget extends StatelessWidget {
@@ -9,14 +11,14 @@ class SubjectStatItemWidget extends StatelessWidget {
   final VoidCallback? onTap; // Add onTap callback
 
   const SubjectStatItemWidget({
-    Key? key,
+    super.key,
     required this.subjectIcon,
     this.iconColor = Colors.grey,
     required this.subjectName,
     required this.studyTime,
     this.trailingIcon,
     this.onTap, // Initialize onTap
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

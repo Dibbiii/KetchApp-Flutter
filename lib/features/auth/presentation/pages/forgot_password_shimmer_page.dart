@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -7,7 +9,6 @@ class ForgotPasswordShimmerPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final size = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(
         title: Container(height: 24, width: 120, color: Colors.white, margin: const EdgeInsets.symmetric(vertical: 8)),
@@ -21,17 +22,48 @@ class ForgotPasswordShimmerPage extends StatelessWidget {
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
             child: Shimmer.fromColors(
-              baseColor: colors.onSurface.withOpacity(0.08),
-              highlightColor: colors.onSurface.withOpacity(0.18),
+              baseColor: colors.surfaceVariant,
+              highlightColor: colors.surface,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Container(height: 60, width: 60, margin: const EdgeInsets.only(bottom: 24), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30))),
-                  Container(height: 28, width: double.infinity, margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8))),
-                  Container(height: 20, width: double.infinity, margin: const EdgeInsets.only(bottom: 32), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8))),
-                  Container(height: 56, width: double.infinity, margin: const EdgeInsets.only(bottom: 24), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8))),
-                  Container(height: 48, width: double.infinity, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8))),
+                  Container(
+                    height: 60,
+                    width: 60,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    height: 28,
+                    width: 180,
+                    color: Colors.white,
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    height: 20,
+                    width: 220,
+                    color: Colors.white,
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                  const SizedBox(height: 32),
+                  Container(
+                    height: 56,
+                    width: double.infinity,
+                    color: Colors.white,
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    height: 48,
+                    width: double.infinity,
+                    color: Colors.white,
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                  ),
                 ],
               ),
             ),
@@ -41,4 +73,3 @@ class ForgotPasswordShimmerPage extends StatelessWidget {
     );
   }
 }
-

@@ -46,8 +46,7 @@ class TomatoTimerReady extends TimerState {
 }
 
 class TomatoTimerInProgress extends TimerState {
-  const TomatoTimerInProgress(int duration, {bool isWhiteNoiseEnabled = false})
-      : super(duration, isWhiteNoiseEnabled: isWhiteNoiseEnabled);
+  const TomatoTimerInProgress(super.duration, {super.isWhiteNoiseEnabled});
 
   @override
   TomatoTimerInProgress copyWith({
@@ -62,8 +61,7 @@ class TomatoTimerInProgress extends TimerState {
 }
 
 class TomatoTimerPaused extends TimerState {
-  const TomatoTimerPaused(int duration, {bool isWhiteNoiseEnabled = false})
-      : super(duration, isWhiteNoiseEnabled: isWhiteNoiseEnabled);
+  const TomatoTimerPaused(super.duration, {super.isWhiteNoiseEnabled});
 
   @override
   TomatoTimerPaused copyWith({
@@ -79,8 +77,7 @@ class TomatoTimerPaused extends TimerState {
 
 class BreakTimerInProgress extends TimerState {
   final int nextTomatoId;
-  const BreakTimerInProgress(int duration, {required this.nextTomatoId, bool isWhiteNoiseEnabled = false})
-      : super(duration, isWhiteNoiseEnabled: isWhiteNoiseEnabled);
+  const BreakTimerInProgress(super.duration, {required this.nextTomatoId, super.isWhiteNoiseEnabled});
 
   @override
   List<Object> get props => [duration, nextTomatoId, isWhiteNoiseEnabled];
@@ -101,8 +98,7 @@ class BreakTimerInProgress extends TimerState {
 
 class BreakTimerPaused extends TimerState {
   final int nextTomatoId;
-  const BreakTimerPaused(int duration, {required this.nextTomatoId, bool isWhiteNoiseEnabled = false})
-      : super(duration, isWhiteNoiseEnabled: isWhiteNoiseEnabled);
+  const BreakTimerPaused(super.duration, {required this.nextTomatoId, super.isWhiteNoiseEnabled});
 
   @override
   List<Object> get props => [duration, nextTomatoId, isWhiteNoiseEnabled];

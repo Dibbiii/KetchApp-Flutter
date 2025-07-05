@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-
 import 'app_colors.dart';
 
 final ThemeData lightTheme = ThemeData(
-  // COLOR SCHEME
   colorScheme: const ColorScheme(
     brightness: Brightness.light,
     primary: primaryColorLight,
@@ -35,62 +33,37 @@ final ThemeData lightTheme = ThemeData(
     inversePrimary: inversePrimaryColorLight,
     surfaceTint: surfaceTintColorLight,
   ),
-  // DEPRECATED COLORS (kept for reference or specific needs, prefer colorScheme)
   primaryColor: primaryColorLight,
   focusColor: focusColorLight,
   hoverColor: hoverColorLight,
   canvasColor: canvasColorLight,
-  // scaffoldBackgroundColor is typically the same as colorScheme.background
   scaffoldBackgroundColor: backgroundColorLight,
-  // bottomAppBarColor is now part of bottomAppBarTheme.color or use colorScheme.surface
-  // cardColor is now part of cardTheme.color or use colorScheme.surface
   dividerColor: dividerColorLight,
   highlightColor: highlightColorLight,
   splashColor: splashColorLight,
-  // selectedRowColor is deprecated, use widget-specific themes like DataTableThemeData
   unselectedWidgetColor: unselectedWidgetColorLight,
   disabledColor: disabledColorLight,
-  // Secondary header color.
   secondaryHeaderColor: secondaryHeaderColorLight,
-  // Text selection theme.
   textSelectionTheme: TextSelectionThemeData(
     cursorColor: primaryColorLight,
     selectionColor: primaryColorLight.withValues(alpha: 0.4),
     selectionHandleColor: primaryColorLight,
   ),
-  // Hint text color in text fields.
   hintColor: onSurfaceColorLight.withValues(alpha: 0.6),
-  // Toggleable active color is managed by component themes like checkboxTheme, radioTheme, switchTheme.
-
-  // TYPOGRAPHY & ICONOGRAPHY
-  // Default text theme.
   textTheme: const TextTheme(),
-  // Customize as needed
-  // Text theme for primary color backgrounds.
   primaryTextTheme: const TextTheme(),
-  // Customize as needed
-  // Default icon theme.
   iconTheme: IconThemeData(color: onSurfaceColorLight),
-  // Icon theme for primary color backgrounds.
   primaryIconTheme: IconThemeData(color: onPrimaryColorLight),
-
-  // COMPONENT THEMES
-  // Theme for app bars.
   appBarTheme: AppBarTheme(
     backgroundColor: surfaceColorLight,
-    // Or primaryColorLight if preferred
     foregroundColor: onSurfaceColorLight,
-    // Or onPrimaryColorLight if backgroundColor is primaryColorLight
     elevation: elevationHeight,
-    surfaceTintColor:
-        Colors.transparent, // M3 surface tint, often transparent or primary
+    surfaceTintColor: Colors.transparent,
   ),
-  // Theme for bottom app bars.
   bottomAppBarTheme: BottomAppBarTheme(
     color: surfaceColorLight,
     elevation: elevationHeight,
   ),
-  // Theme for bottom navigation bars.
   bottomNavigationBarTheme: BottomNavigationBarThemeData(
     backgroundColor: surfaceColorLight,
     selectedItemColor: primaryColorLight,
@@ -100,7 +73,6 @@ final ThemeData lightTheme = ThemeData(
     showSelectedLabels: true,
     showUnselectedLabels: true,
   ),
-  // Theme for bottom sheet widgets.
   bottomSheetTheme: BottomSheetThemeData(
     backgroundColor: surfaceColorLight,
     elevation: elevationHeight,
@@ -110,31 +82,28 @@ final ThemeData lightTheme = ThemeData(
       borderRadius: BorderRadius.vertical(top: Radius.circular(12.0)),
     ),
   ),
-  // Theme for cards.
   cardTheme: const CardThemeData(
     elevation: elevationHeight,
     color: surfaceColorLight,
-    surfaceTintColor: Colors.transparent, // M3 surface tint
+    surfaceTintColor: Colors.transparent,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.all(
         Radius.circular(12.0),
-      ), // Consistent border radius
+      ),
     ),
   ),
-  // Theme for checkboxes.
   checkboxTheme: CheckboxThemeData(
-    fillColor: WidgetStateProperty.resolveWith<Color?>((
-      Set<WidgetState> states,
-    ) {
-      if (states.contains(WidgetState.selected)) {
-        return primaryColorLight;
-      }
-      return null; // Use default
-    }),
+    fillColor: WidgetStateProperty.resolveWith<Color?>(
+      (Set<WidgetState> states) {
+        if (states.contains(WidgetState.selected)) {
+          return primaryColorLight;
+        }
+        return null;
+      },
+    ),
     checkColor: WidgetStateProperty.all(onPrimaryColorLight),
     side: BorderSide(color: onSurfaceColorLight.withValues(alpha: 0.6)),
   ),
-  // Theme for chips.
   chipTheme: ChipThemeData(
     backgroundColor: surfaceColorLight.withValues(alpha: 0.8),
     deleteIconColor: onSurfaceColorLight.withValues(alpha: 0.7),
@@ -143,21 +112,15 @@ final ThemeData lightTheme = ThemeData(
     secondarySelectedColor: secondaryColorLight.withValues(alpha: 0.2),
     labelStyle: TextStyle(color: onSurfaceColorLight),
     secondaryLabelStyle: TextStyle(color: onSecondaryColorLight),
-    // This might need onSecondaryColorLight if chip uses secondary color as base
     padding: const EdgeInsets.all(8.0),
-    // Adjusted padding
     shape: StadiumBorder(
       side: BorderSide(color: outlineColorLight.withValues(alpha: 0.5)),
     ),
   ),
-  // Theme for data tables.
   dataTableTheme: const DataTableThemeData(),
-  // Customize as needed
-  // Theme for dialogs.
   dialogTheme: DialogThemeData(
     backgroundColor: surfaceColorLight,
     elevation: elevationHeight + 10,
-    // Dialogs often have higher elevation
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
     titleTextStyle: const TextStyle(
       color: onSurfaceColorLight,
@@ -166,25 +129,21 @@ final ThemeData lightTheme = ThemeData(
     ),
     contentTextStyle: const TextStyle(color: onSurfaceColorLight, fontSize: 16),
   ),
-  // Theme for dividers.
   dividerTheme: DividerThemeData(
     color: onSurfaceColorLight.withValues(alpha: 0.12),
     space: 1.0,
     thickness: 1.0,
   ),
-  // Theme for drawer widgets.
   drawerTheme: DrawerThemeData(
     backgroundColor: surfaceColorLight,
     elevation: elevationHeight + 5,
   ),
-  // Theme for dropdown menus.
   dropdownMenuTheme: DropdownMenuThemeData(
     inputDecorationTheme: InputDecorationTheme(
       fillColor: surfaceColorLight,
       hoverColor: primaryColorLight.withValues(alpha: 0.1),
     ),
   ),
-  // Theme for elevated buttons.
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
       backgroundColor: primaryColorLight,
@@ -194,14 +153,12 @@ final ThemeData lightTheme = ThemeData(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     ),
   ),
-  // Theme for expansion tiles.
   expansionTileTheme: ExpansionTileThemeData(
     iconColor: primaryColorLight,
     collapsedIconColor: onSurfaceColorLight.withValues(alpha: 0.7),
     textColor: primaryColorLight,
     collapsedTextColor: onSurfaceColorLight,
   ),
-  // Theme for floating action buttons.
   floatingActionButtonTheme: FloatingActionButtonThemeData(
     backgroundColor: primaryColorLight,
     foregroundColor: onPrimaryColorLight,
@@ -209,13 +166,11 @@ final ThemeData lightTheme = ThemeData(
     highlightElevation: elevationHeight + 2,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16.0),
-    ), // M3 often uses more rounded FABs
+    ),
   ),
-  // Theme for icon buttons.
   iconButtonTheme: IconButtonThemeData(
     style: IconButton.styleFrom(foregroundColor: primaryColorLight),
   ),
-  // Theme for input decorations (used by text fields).
   inputDecorationTheme: InputDecorationTheme(
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8.0),
@@ -244,7 +199,6 @@ final ThemeData lightTheme = ThemeData(
     prefixIconColor: onSurfaceColorLight.withValues(alpha: 0.7),
     suffixIconColor: onSurfaceColorLight.withValues(alpha: 0.7),
   ),
-  // Theme for list tiles.
   listTileTheme: ListTileThemeData(
     iconColor: primaryColorLight,
     textColor: onSurfaceColorLight,
@@ -252,7 +206,6 @@ final ThemeData lightTheme = ThemeData(
     selectedTileColor: primaryColorLight.withValues(alpha: 0.1),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
   ),
-  // Theme for menus.
   menuTheme: MenuThemeData(
     style: MenuStyle(
       backgroundColor: WidgetStateProperty.all(surfaceColorLight),
@@ -262,14 +215,12 @@ final ThemeData lightTheme = ThemeData(
       ),
     ),
   ),
-  // Theme for menu bars.
   menuBarTheme: MenuBarThemeData(
     style: MenuStyle(
       backgroundColor: WidgetStateProperty.all(surfaceColorLight),
       elevation: WidgetStateProperty.all(elevationHeight),
     ),
   ),
-  // Theme for navigation bars (Material 3).
   navigationBarTheme: NavigationBarThemeData(
     backgroundColor: surfaceColorLight,
     elevation: elevationHeight,
@@ -287,13 +238,11 @@ final ThemeData lightTheme = ThemeData(
       return TextStyle(color: onSurfaceColorLight.withValues(alpha: 0.7));
     }),
   ),
-  // Theme for navigation drawers (Material 3).
   navigationDrawerTheme: NavigationDrawerThemeData(
     backgroundColor: surfaceColorLight,
     elevation: elevationHeight + 2,
     indicatorColor: primaryColorLight.withValues(alpha: 0.2),
   ),
-  // Theme for navigation rails.
   navigationRailTheme: NavigationRailThemeData(
     backgroundColor: surfaceColorLight,
     elevation: elevationHeight,
@@ -309,7 +258,6 @@ final ThemeData lightTheme = ThemeData(
       color: onSurfaceColorLight.withValues(alpha: 0.7),
     ),
   ),
-  // Theme for outlined buttons.
   outlinedButtonTheme: OutlinedButtonThemeData(
     style: OutlinedButton.styleFrom(
       foregroundColor: primaryColorLight,
@@ -318,31 +266,27 @@ final ThemeData lightTheme = ThemeData(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     ),
   ),
-  // Theme for popup menus.
   popupMenuTheme: PopupMenuThemeData(
     color: surfaceColorLight,
     elevation: elevationHeight,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
     textStyle: TextStyle(color: onSurfaceColorLight),
   ),
-  // Theme for progress indicators.
   progressIndicatorTheme: ProgressIndicatorThemeData(
     color: primaryColorLight,
     linearTrackColor: primaryColorLight.withValues(alpha: 0.2),
     circularTrackColor: primaryColorLight.withValues(alpha: 0.2),
   ),
-  // Theme for radio buttons.
   radioTheme: RadioThemeData(
-    fillColor: WidgetStateProperty.resolveWith<Color?>((
-      Set<WidgetState> states,
-    ) {
-      if (states.contains(WidgetState.selected)) {
-        return primaryColorLight;
-      }
-      return onSurfaceColorLight.withValues(alpha: 0.6);
-    }),
+    fillColor: WidgetStateProperty.resolveWith<Color?>(
+      (Set<WidgetState> states) {
+        if (states.contains(WidgetState.selected)) {
+          return primaryColorLight;
+        }
+        return onSurfaceColorLight.withValues(alpha: 0.6);
+      },
+    ),
   ),
-  // Theme for scrollbars.
   scrollbarTheme: ScrollbarThemeData(
     thumbColor: WidgetStateProperty.all(
       primaryColorLight.withValues(alpha: 0.7),
@@ -354,29 +298,27 @@ final ThemeData lightTheme = ThemeData(
     radius: const Radius.circular(4.0),
     interactive: true,
   ),
-  // Theme for segmented buttons (Material 3).
   segmentedButtonTheme: SegmentedButtonThemeData(
     style: ButtonStyle(
-      backgroundColor: WidgetStateProperty.resolveWith<Color?>((
-        Set<WidgetState> states,
-      ) {
-        if (states.contains(WidgetState.selected)) {
-          return primaryColorLight.withValues(alpha: 0.2);
-        }
-        return surfaceColorLight;
-      }),
-      foregroundColor: WidgetStateProperty.resolveWith<Color?>((
-        Set<WidgetState> states,
-      ) {
-        if (states.contains(WidgetState.selected)) {
-          return primaryColorLight;
-        }
-        return onSurfaceColorLight;
-      }),
+      backgroundColor: WidgetStateProperty.resolveWith<Color?>(
+        (Set<WidgetState> states) {
+          if (states.contains(WidgetState.selected)) {
+            return primaryColorLight.withValues(alpha: 0.2);
+          }
+          return surfaceColorLight;
+        },
+      ),
+      foregroundColor: WidgetStateProperty.resolveWith<Color?>(
+        (Set<WidgetState> states) {
+          if (states.contains(WidgetState.selected)) {
+            return primaryColorLight;
+          }
+          return onSurfaceColorLight;
+        },
+      ),
       side: WidgetStateProperty.all(BorderSide(color: outlineColorLight)),
     ),
   ),
-  // Theme for sliders.
   sliderTheme: SliderThemeData(
     activeTrackColor: primaryColorLight,
     inactiveTrackColor: primaryColorLight.withValues(alpha: 0.3),
@@ -385,56 +327,49 @@ final ThemeData lightTheme = ThemeData(
     valueIndicatorColor: primaryColorLight.withValues(alpha: 0.8),
     valueIndicatorTextStyle: TextStyle(color: onPrimaryColorLight),
   ),
-  // Theme for snack bars.
   snackBarTheme: SnackBarThemeData(
     backgroundColor: snackBarBackgroundColorLight,
     contentTextStyle: TextStyle(color: onSnackBarBackgroundColorLight),
     actionTextColor: primaryColorLight,
-    // For better visibility of action button
     elevation: elevationHeight,
     behavior: SnackBarBehavior.floating,
-    // Modern look
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
   ),
-  // Theme for switches.
   switchTheme: SwitchThemeData(
-    thumbColor: WidgetStateProperty.resolveWith<Color?>((
-      Set<WidgetState> states,
-    ) {
-      if (states.contains(WidgetState.selected)) {
-        return primaryColorLight;
-      }
-      return null; // Use default (often greyish)
-    }),
-    trackColor: WidgetStateProperty.resolveWith<Color?>((
-      Set<WidgetState> states,
-    ) {
-      if (states.contains(WidgetState.selected)) {
-        return primaryColorLight.withValues(alpha: 0.5);
-      }
-      return null; // Use default
-    }),
-    trackOutlineColor: WidgetStateProperty.resolveWith<Color?>((
-      Set<WidgetState> states,
-    ) {
-      if (states.contains(WidgetState.focused)) {
-        return primaryColorLight.withValues(alpha: 0.5);
-      }
-      return Colors.transparent; // Default behavior
-    }),
+    thumbColor: WidgetStateProperty.resolveWith<Color?>(
+      (Set<WidgetState> states) {
+        if (states.contains(WidgetState.selected)) {
+          return primaryColorLight;
+        }
+        return null;
+      },
+    ),
+    trackColor: WidgetStateProperty.resolveWith<Color?>(
+      (Set<WidgetState> states) {
+        if (states.contains(WidgetState.selected)) {
+          return primaryColorLight.withValues(alpha: 0.5);
+        }
+        return null;
+      },
+    ),
+    trackOutlineColor: WidgetStateProperty.resolveWith<Color?>(
+      (Set<WidgetState> states) {
+        if (states.contains(WidgetState.focused)) {
+          return primaryColorLight.withValues(alpha: 0.5);
+        }
+        return Colors.transparent;
+      },
+    ),
   ),
-  // Theme for tab bars.
   tabBarTheme: TabBarThemeData(
     indicator: UnderlineTabIndicator(
       borderSide: BorderSide(width: 2.0, color: primaryColorLight),
     ),
     indicatorColor: primaryColorLight,
-    // Often redundant with indicator but good for explicitness
     labelColor: primaryColorLight,
     unselectedLabelColor: onSurfaceColorLight.withValues(alpha: 0.7),
-    dividerColor: Colors.transparent, // M3 often has no divider
+    dividerColor: Colors.transparent,
   ),
-  // Theme for text buttons.
   textButtonTheme: TextButtonThemeData(
     style: TextButton.styleFrom(
       foregroundColor: primaryColorLight,
@@ -442,7 +377,6 @@ final ThemeData lightTheme = ThemeData(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     ),
   ),
-  // Theme for time pickers.
   timePickerTheme: TimePickerThemeData(
     backgroundColor: surfaceColorLight,
     hourMinuteShape: RoundedRectangleBorder(
@@ -455,7 +389,6 @@ final ThemeData lightTheme = ThemeData(
     dialBackgroundColor: primaryColorLight.withValues(alpha: 0.1),
     entryModeIconColor: primaryColorLight,
   ),
-  // Theme for tooltips.
   tooltipTheme: TooltipThemeData(
     preferBelow: false,
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -466,26 +399,14 @@ final ThemeData lightTheme = ThemeData(
     ),
     textStyle: TextStyle(color: surfaceColorLight, fontSize: 12),
   ),
-
-  // MISCELLANEOUS
-  // The platform that the material widgets should adapt to.
   platform: TargetPlatform.android,
-  // The visual density for UI components.
   visualDensity: VisualDensity.adaptivePlatformDensity,
-  // Whether to use Material 3.
   useMaterial3: true,
-  // Defines ink splash appearance (InkSparkle.splashFactory for M3 effects).
   splashFactory: InkSparkle.splashFactory,
-  // Updated for M3
-  // Defines the default Material tap target size.
   materialTapTargetSize: MaterialTapTargetSize.padded,
-  // Default page transition for different TargetPlatform.
   pageTransitionsTheme: const PageTransitionsTheme(),
 );
-
-// Dark Theme Definition
 final ThemeData darkTheme = ThemeData(
-  // COLOR SCHEME
   colorScheme: const ColorScheme(
     brightness: Brightness.dark,
     primary: primaryColorDark,
@@ -517,7 +438,6 @@ final ThemeData darkTheme = ThemeData(
     inversePrimary: inversePrimaryColorDark,
     surfaceTint: surfaceTintColorDark,
   ),
-  // DEPRECATED COLORS (kept for reference or specific needs, prefer colorScheme)
   primaryColor: primaryColorDark,
   focusColor: focusColorDark,
   hoverColor: hoverColorDark,
@@ -535,21 +455,15 @@ final ThemeData darkTheme = ThemeData(
     selectionHandleColor: primaryColorDark,
   ),
   hintColor: onSurfaceColorDark.withValues(alpha: 0.6),
-
-  // TYPOGRAPHY & ICONOGRAPHY
   textTheme: const TextTheme(),
-  // Customize for dark theme if needed
   primaryTextTheme: const TextTheme(),
-  // Customize for dark theme if needed
   iconTheme: IconThemeData(color: onSurfaceColorDark),
   primaryIconTheme: IconThemeData(color: onPrimaryColorDark),
-
-  // COMPONENT THEMES (Dark counterparts of lightTheme)
   appBarTheme: AppBarTheme(
-    backgroundColor: surfaceColorDark, // Or primaryColorDark
-    foregroundColor: onSurfaceColorDark, // Or onPrimaryColorDark
+    backgroundColor: surfaceColorDark,
+    foregroundColor: onSurfaceColorDark,
     elevation: elevationHeight,
-    surfaceTintColor: Colors.transparent, // Or primaryColorDark for M3 tint
+    surfaceTintColor: Colors.transparent,
   ),
   bottomAppBarTheme: BottomAppBarTheme(
     color: surfaceColorDark,
@@ -574,18 +488,18 @@ final ThemeData darkTheme = ThemeData(
   cardTheme: CardThemeData(
     elevation: elevationHeight,
     color: surfaceColorDark,
-    surfaceTintColor: Colors.transparent, // Or primaryColorDark for M3 tint
+    surfaceTintColor: Colors.transparent,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
   ),
   checkboxTheme: CheckboxThemeData(
-    fillColor: WidgetStateProperty.resolveWith<Color?>((
-      Set<WidgetState> states,
-    ) {
-      if (states.contains(WidgetState.selected)) {
-        return primaryColorDark;
-      }
-      return null;
-    }),
+    fillColor: WidgetStateProperty.resolveWith<Color?>(
+      (Set<WidgetState> states) {
+        if (states.contains(WidgetState.selected)) {
+          return primaryColorDark;
+        }
+        return null;
+      },
+    ),
     checkColor: WidgetStateProperty.all(onPrimaryColorDark),
     side: BorderSide(color: onSurfaceColorDark.withValues(alpha: 0.6)),
   ),
@@ -603,7 +517,6 @@ final ThemeData darkTheme = ThemeData(
     ),
   ),
   dataTableTheme: const DataTableThemeData(),
-  // Customize for dark theme
   dialogTheme: DialogThemeData(
     backgroundColor: surfaceColorDark,
     elevation: elevationHeight + 10,
@@ -762,14 +675,14 @@ final ThemeData darkTheme = ThemeData(
     circularTrackColor: primaryColorDark.withValues(alpha: 0.2),
   ),
   radioTheme: RadioThemeData(
-    fillColor: WidgetStateProperty.resolveWith<Color?>((
-      Set<WidgetState> states,
-    ) {
-      if (states.contains(WidgetState.selected)) {
-        return primaryColorDark;
-      }
-      return onSurfaceColorDark.withValues(alpha: 0.6);
-    }),
+    fillColor: WidgetStateProperty.resolveWith<Color?>(
+      (Set<WidgetState> states) {
+        if (states.contains(WidgetState.selected)) {
+          return primaryColorDark;
+        }
+        return onSurfaceColorDark.withValues(alpha: 0.6);
+      },
+    ),
   ),
   scrollbarTheme: ScrollbarThemeData(
     thumbColor: WidgetStateProperty.all(
@@ -784,22 +697,22 @@ final ThemeData darkTheme = ThemeData(
   ),
   segmentedButtonTheme: SegmentedButtonThemeData(
     style: ButtonStyle(
-      backgroundColor: WidgetStateProperty.resolveWith<Color?>((
-        Set<WidgetState> states,
-      ) {
-        if (states.contains(WidgetState.selected)) {
-          return primaryColorDark.withValues(alpha: 0.2);
-        }
-        return surfaceColorDark;
-      }),
-      foregroundColor: WidgetStateProperty.resolveWith<Color?>((
-        Set<WidgetState> states,
-      ) {
-        if (states.contains(WidgetState.selected)) {
-          return primaryColorDark;
-        }
-        return onSurfaceColorDark;
-      }),
+      backgroundColor: WidgetStateProperty.resolveWith<Color?>(
+        (Set<WidgetState> states) {
+          if (states.contains(WidgetState.selected)) {
+            return primaryColorDark.withValues(alpha: 0.2);
+          }
+          return surfaceColorDark;
+        },
+      ),
+      foregroundColor: WidgetStateProperty.resolveWith<Color?>(
+        (Set<WidgetState> states) {
+          if (states.contains(WidgetState.selected)) {
+            return primaryColorDark;
+          }
+          return onSurfaceColorDark;
+        },
+      ),
       side: WidgetStateProperty.all(BorderSide(color: outlineColorDark)),
     ),
   ),
@@ -820,30 +733,30 @@ final ThemeData darkTheme = ThemeData(
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
   ),
   switchTheme: SwitchThemeData(
-    thumbColor: WidgetStateProperty.resolveWith<Color?>((
-      Set<WidgetState> states,
-    ) {
-      if (states.contains(WidgetState.selected)) {
-        return primaryColorDark;
-      }
-      return null;
-    }),
-    trackColor: WidgetStateProperty.resolveWith<Color?>((
-      Set<WidgetState> states,
-    ) {
-      if (states.contains(WidgetState.selected)) {
-        return primaryColorDark.withValues(alpha: 0.5);
-      }
-      return null;
-    }),
-    trackOutlineColor: WidgetStateProperty.resolveWith<Color?>((
-      Set<WidgetState> states,
-    ) {
-      if (states.contains(WidgetState.focused)) {
-        return primaryColorDark.withValues(alpha: 0.5);
-      }
-      return Colors.transparent;
-    }),
+    thumbColor: WidgetStateProperty.resolveWith<Color?>(
+      (Set<WidgetState> states) {
+        if (states.contains(WidgetState.selected)) {
+          return primaryColorDark;
+        }
+        return null;
+      },
+    ),
+    trackColor: WidgetStateProperty.resolveWith<Color?>(
+      (Set<WidgetState> states) {
+        if (states.contains(WidgetState.selected)) {
+          return primaryColorDark.withValues(alpha: 0.5);
+        }
+        return null;
+      },
+    ),
+    trackOutlineColor: WidgetStateProperty.resolveWith<Color?>(
+      (Set<WidgetState> states) {
+        if (states.contains(WidgetState.focused)) {
+          return primaryColorDark.withValues(alpha: 0.5);
+        }
+        return Colors.transparent;
+      },
+    ),
   ),
   tabBarTheme: TabBarThemeData(
     indicator: UnderlineTabIndicator(
@@ -883,8 +796,6 @@ final ThemeData darkTheme = ThemeData(
     ),
     textStyle: TextStyle(color: surfaceColorDark, fontSize: 12),
   ),
-
-  // MISCELLANEOUS
   platform: TargetPlatform.android,
   visualDensity: VisualDensity.adaptivePlatformDensity,
   useMaterial3: true,

@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element, unused_local_variable, depend_on_referenced_packages
+
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 
@@ -650,29 +652,23 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
   }
 
   void _handleTimerStateChanges(BuildContext context, TimerState state) {
-    print('🔄 Timer state changed to: ${state.runtimeType}');
-    print('   Duration: ${state.duration} seconds');
 
     switch (state.runtimeType) {
-      case WaitingNextTomato:
+      case const (WaitingNextTomato):
         _handleNextTomato(state as WaitingNextTomato);
         break;
-      case TomatoSwitched:
+      case const (TomatoSwitched):
         _handleTomatoSwitch(state as TomatoSwitched);
         break;
-      case WaitingForScheduledTime:
+      case const (WaitingForScheduledTime):
         _handleScheduledWait(state as WaitingForScheduledTime);
         break;
-      case NavigatingToSummary:
+      case const (NavigatingToSummary):
         _handleNavigationToSummary(context, state as NavigatingToSummary);
         break;
-      case BreakTimerInProgress:
-        print(
-          '🟢 Break timer started with ${state.duration} seconds and nextTomatoId: ${(state as BreakTimerInProgress).nextTomatoId}',
-        );
+      case const (BreakTimerInProgress):
         break;
-      case TimerError:
-        print('❌ Timer error: ${(state as dynamic).message}');
+      case const (TimerError):
         break;
     }
   }
@@ -1273,12 +1269,10 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
     ThemeData theme,
   ) {
     // Debug: stampiamo il tipo di stato ricevuto
-    print('🎯 Current state in _buildPrimaryControl: ${state.runtimeType}');
 
     if (state is WaitingFirstTomato ||
         state is WaitingNextTomato ||
         state is TomatoTimerReady) {
-      print('🎯 Showing start button');
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -1332,7 +1326,6 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
     }
 
     if (state is TomatoTimerInProgress) {
-      print('🎯 Showing pause/skip buttons');
       return Row(
         children: [
           Expanded(
@@ -1532,7 +1525,6 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
     }
 
     if (state is TomatoTimerPaused) {
-      print('🎯 Showing resume/skip buttons');
       return Row(
         children: [
           Expanded(
@@ -1792,7 +1784,6 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
       );
     }
 
-    print('🎯 No matching state found, showing empty widget');
     return const SizedBox.shrink();
   }
 

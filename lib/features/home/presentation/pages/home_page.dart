@@ -15,7 +15,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final PageController _pageController = PageController();
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-
   late AnimationController _fadeAnimationController;
   late AnimationController _scaleAnimationController;
   late Animation<double> _fadeAnimation;
@@ -37,7 +36,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -45,7 +43,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       parent: _fadeAnimationController,
       curve: Curves.easeOutCubic,
     ));
-
     _scaleAnimation = Tween<double>(
       begin: 0.95,
       end: 1.0,
@@ -53,7 +50,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       parent: _scaleAnimationController,
       curve: Curves.easeOutBack,
     ));
-
     _fadeAnimationController.forward();
     _scaleAnimationController.forward();
   }
@@ -67,26 +63,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     await flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
 
-  Future<void> _showNotification() async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-    AndroidNotificationDetails(
-      'your_channel_id',
-      'Notifiche',
-      channelDescription: 'Notifiche locali',
-      importance: Importance.max,
-      priority: Priority.high,
-      ticker: 'ticker',
-    );
-    const NotificationDetails platformChannelSpecifics =
-    NotificationDetails(android: androidPlatformChannelSpecifics);
-    await flutterLocalNotificationsPlugin.show(
-      0,
-      'Ciao!',
-      'Questa è una notifica inviata dal bottone.',
-      platformChannelSpecifics,
-    );
-  }
-
   @override
   void dispose() {
     _pageController.dispose();
@@ -97,13 +73,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = Theme
-        .of(context)
-        .colorScheme;
-    final TextTheme textTheme = Theme
-        .of(context)
-        .textTheme;
-
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    final TextTheme textTheme = Theme.of(context).textTheme;
     final SystemUiOverlayStyle systemUiOverlayStyle = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: colors.brightness == Brightness.light
@@ -115,7 +86,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ? Brightness.dark
           : Brightness.light,
     );
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: systemUiOverlayStyle,
       child: Scaffold(
@@ -137,15 +107,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildLoadingState(BuildContext context, ColorScheme colors,
-      TextTheme textTheme) {
+  Widget _buildLoadingState(BuildContext context, ColorScheme colors, TextTheme textTheme) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            colors.primary.withOpacity(0.03),
+            colors.primary.withValues(alpha:0.03),
             colors.surface,
           ],
         ),
@@ -157,11 +126,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: colors.primaryContainer.withOpacity(0.8),
+                color: colors.primaryContainer.withValues(alpha:0.8),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: colors.primary.withOpacity(0.1),
+                    color: colors.primary.withValues(alpha:0.1),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -170,7 +139,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               child: CircularProgressIndicator(
                 strokeWidth: 3,
                 color: colors.primary,
-                backgroundColor: colors.primary.withOpacity(0.1),
+                backgroundColor: colors.primary.withValues(alpha:0.1),
               ),
             ),
             const SizedBox(height: 32),
@@ -194,15 +163,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildLoadedState(BuildContext context, ColorScheme colors,
-      TextTheme textTheme) {
+  Widget _buildLoadedState(BuildContext context, ColorScheme colors, TextTheme textTheme) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            colors.primary.withOpacity(0.05),
+            colors.primary.withValues(alpha:0.05),
             colors.surface,
           ],
         ),
@@ -229,7 +197,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                 ),
                 const SliverToBoxAdapter(
-                  child: SizedBox(height: 100), // Space for FAB
+                  child: SizedBox(height: 100),
                 ),
               ],
             ),
@@ -239,8 +207,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildWelcomeHeader(BuildContext context, ColorScheme colors,
-      TextTheme textTheme) {
+  Widget _buildWelcomeHeader(BuildContext context, ColorScheme colors, TextTheme textTheme) {
     return Column(
       children: [
         Container(
@@ -250,14 +217,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                colors.primary.withOpacity(0.15),
-                colors.tertiary.withOpacity(0.1),
+                colors.primary.withValues(alpha:0.15),
+                colors.tertiary.withValues(alpha:0.1),
               ],
             ),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: colors.primary.withOpacity(0.15),
+                color: colors.primary.withValues(alpha:0.15),
                 blurRadius: 24,
                 offset: const Offset(0, 8),
               ),
@@ -285,7 +252,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             color: colors.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: colors.outline.withOpacity(0.1),
+              color: colors.outline.withValues(alpha:0.1),
             ),
           ),
           child: Text(
@@ -301,18 +268,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildTomatoesSection(BuildContext context, ColorScheme colors,
-      TextTheme textTheme) {
+  Widget _buildTomatoesSection(BuildContext context, ColorScheme colors, TextTheme textTheme) {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: colors.outline.withOpacity(0.08),
+          color: colors.outline.withValues(alpha:0.08),
         ),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withOpacity(0.04),
+            color: colors.shadow.withValues(alpha:0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -329,8 +295,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    colors.primaryContainer.withOpacity(0.8),
-                    colors.tertiaryContainer.withOpacity(0.6),
+                    colors.primaryContainer.withValues(alpha:0.8),
+                    colors.tertiaryContainer.withValues(alpha:0.6),
                   ],
                 ),
               ),
@@ -339,7 +305,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: colors.primary.withOpacity(0.15),
+                      color: colors.primary.withValues(alpha:0.15),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Icon(
@@ -365,7 +331,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         Text(
                           "Your focus sessions await",
                           style: textTheme.bodyMedium?.copyWith(
-                            color: colors.onPrimaryContainer.withOpacity(0.8),
+                            color: colors.onPrimaryContainer.withValues(alpha:0.8),
                           ),
                         ),
                       ],
@@ -384,15 +350,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildErrorState(BuildContext context, ColorScheme colors,
-      TextTheme textTheme, HomeError state) {
+  Widget _buildErrorState(BuildContext context, ColorScheme colors, TextTheme textTheme, HomeError state) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            colors.errorContainer.withOpacity(0.1),
+            colors.errorContainer.withValues(alpha:0.1),
             colors.surface,
           ],
         ),
@@ -406,11 +371,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: colors.errorContainer.withOpacity(0.8),
+                  color: colors.errorContainer.withValues(alpha:0.8),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: colors.error.withOpacity(0.1),
+                      color: colors.error.withValues(alpha:0.1),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -469,8 +434,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildInitializingState(BuildContext context, ColorScheme colors,
-      TextTheme textTheme) {
+  Widget _buildInitializingState(BuildContext context, ColorScheme colors, TextTheme textTheme) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -484,7 +448,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             child: CircularProgressIndicator(
               strokeWidth: 2,
               color: colors.primary,
-              backgroundColor: colors.primary.withOpacity(0.1),
+              backgroundColor: colors.primary.withValues(alpha:0.1),
             ),
           ),
           const SizedBox(height: 16),

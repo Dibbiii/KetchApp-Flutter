@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_type_check, avoid_print
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ketchapp_flutter/features/plan/models/plan_model.dart';
@@ -50,6 +52,7 @@ class _PlanCreationLoadingPageState extends State<PlanCreationLoadingPage> {
       } else {
         print('tomatoes is not a List');
       }
+      // ignore: unnecessary_null_comparison
       if (mounted && tomatoes != null && tomatoes is List && tomatoes.isNotEmpty) {
         print('Navigating to /timer/${tomatoes.first.id}');
         context.go('/timer/${tomatoes.first.id}');
