@@ -1,11 +1,15 @@
+// ignore_for_file: unused_field, deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:ketchapp_flutter/features/statistics/presentation/statistics_shrimmer_page.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ketchapp_flutter/features/statistics/bloc/statistics_bloc.dart';
 import 'package:ketchapp_flutter/features/statistics/presentation/widgets/weekly_histogram_widget.dart';
+
 
 class StatisticsPage extends StatefulWidget {
   const StatisticsPage({super.key});
@@ -17,6 +21,7 @@ class StatisticsPage extends StatefulWidget {
 class _StatisticsPageState extends State<StatisticsPage>
     with TickerProviderStateMixin {
   bool _isLocaleInitialized = false;
+  bool _showShimmer = true;
 
   late final AnimationController _animationController;
   late final AnimationController _fadeAnimationController;
@@ -31,6 +36,15 @@ class _StatisticsPageState extends State<StatisticsPage>
     super.initState();
     _initializeLocale();
     _initializeAnimations();
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _showShimmer = false;
+        });
+        _fadeAnimationController.forward();
+        _scaleAnimationController.forward();
+      }
+    });
   }
 
   void _initializeAnimations() {
@@ -64,6 +78,7 @@ class _StatisticsPageState extends State<StatisticsPage>
       parent: _scaleAnimationController,
       curve: Curves.easeOutBack,
     ));
+
   }
 
   @override
@@ -71,14 +86,11 @@ class _StatisticsPageState extends State<StatisticsPage>
     super.didChangeDependencies();
     final statisticsBloc = BlocProvider.of<StatisticsBloc>(context);
     if (statisticsBloc.state.status == StatisticsStatus.initial) {
-      // Usa addPostFrameCallback per evitare chiamate multiple e problemi di build
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && statisticsBloc.state.status == StatisticsStatus.initial) {
-          statisticsBloc.add(
-            StatisticsLoadRequested(currentTotalStudyHours: 0),
-          );
-        }
-      });
+      statisticsBloc.add(
+        StatisticsLoadRequested(
+          currentTotalStudyHours: 0,
+        ),
+      );
     }
   }
 
@@ -151,6 +163,10 @@ class _StatisticsPageState extends State<StatisticsPage>
       value: systemUiOverlayStyle,
       child: BlocBuilder<StatisticsBloc, StatisticsState>(
         builder: (context, state) {
+          if (_showShimmer) {
+            return const StatisticsShrimmerPage();
+          }
+
           if (state.status == StatisticsStatus.initial ||
               state.status == StatisticsStatus.loading) {
             return const StatisticsShrimmerPage();
