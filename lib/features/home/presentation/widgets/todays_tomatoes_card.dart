@@ -21,12 +21,13 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
   late Animation<double> _pulseAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
-
+  late final ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
+    _scrollController = ScrollController();
     final authState = context.read<AuthBloc>().state;
     if (authState is Authenticated) {
       _tomatoesFuture = ApiService().getTodaysTomatoes(authState.userUuid);
@@ -77,6 +78,7 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
   void dispose() {
     _pulseAnimationController.dispose();
     _slideAnimationController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -393,6 +395,7 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
     final filteredTomatoes = uniqueSubjects.values.toList();
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final ScrollController scrollController = ScrollController();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -400,9 +403,11 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
         height: 320,
         child: Scrollbar(
           thumbVisibility: true,
+          controller: _scrollController,
           radius: const Radius.circular(8),
           thickness: 5,
           child: ListView.separated(
+            controller: _scrollController,
             shrinkWrap: true,
             itemCount: filteredTomatoes.length,
             separatorBuilder: (context, index) => const SizedBox(height: 16),
