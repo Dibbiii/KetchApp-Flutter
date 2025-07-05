@@ -1,3 +1,5 @@
+// ignore_for_file: unused_import, deprecated_member_use
+
 import 'package:flutter/material.dart';
 
 List<DateTime> _getDaysInWeekForHistogram(DateTime dateInWeek) {

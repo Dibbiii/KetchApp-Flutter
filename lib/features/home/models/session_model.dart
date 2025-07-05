@@ -28,8 +28,7 @@ class Session extends Equatable {
       plannedDuration: Duration(minutes: map['plannedDurationMinutes'] as int),
       status: SessionStatus.values.firstWhere(
         (e) => e.toString() == map['status'],
-        orElse:
-            () => SessionStatus.planned,
+        orElse: () => SessionStatus.planned,
       ),
     );
   }
@@ -65,13 +64,13 @@ class Session extends Equatable {
 
   @override
   List<Object?> get props => [
-    id,
-    subject,
-    task,
-    startTime,
-    plannedDuration,
-    status,
-  ];
+        id,
+        subject,
+        task,
+        startTime,
+        plannedDuration,
+        status,
+      ];
 
   @override
   bool get stringify => true;

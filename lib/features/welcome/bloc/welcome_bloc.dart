@@ -1,3 +1,5 @@
+// ignore_for_file: camel_case_types
+
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
