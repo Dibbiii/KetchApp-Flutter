@@ -67,7 +67,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/audio/music.mp3
-    - assets/audio/music_web.mp3
+    - assets/audio/music_web.wav
     - assets/audio/
     - assets/images/

@@ -33,7 +33,8 @@ class StatisticsState extends Equatable {
     return StatisticsState(
       displayedCalendarDate: now,
       bestStudyDay: now,
-      selectedActivityDetailType: ActivityDetailType.screenTime,
+      // selectedActivityDetailType is already defaulted in the main constructor
+      // so no need to repeat it here unless you want a *different* initial default
     );
   }
 
