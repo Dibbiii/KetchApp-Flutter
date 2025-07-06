@@ -132,7 +132,7 @@ class TimerPage extends StatelessWidget {
                 child: Column(
                   children: [
                     Text(
-                      'Caricamento sessione...',
+                      'Loading Session...',
                       style: theme.textTheme.headlineSmall?.copyWith(
                         color: colors.onSurface,
                         fontWeight: FontWeight.w600,
@@ -141,7 +141,7 @@ class TimerPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Preparando i tuoi pomodori',
+                      'Creating your tomatoes...',
                       style: theme.textTheme.bodyLarge?.copyWith(
                         color: colors.onSurface.withValues(alpha: 0.7),
                         fontWeight: FontWeight.w500,
@@ -232,7 +232,7 @@ class TimerPage extends StatelessWidget {
                   child: Column(
                     children: [
                       Text(
-                        'Errore nel caricamento',
+                        'Loading Error',
                         style: theme.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: colors.onSurface,
@@ -270,7 +270,7 @@ class TimerPage extends StatelessWidget {
                   child: FilledButton.icon(
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.home_rounded),
-                    label: const Text('Torna alla Home'),
+                    label: const Text('Back to Home'),
                     style: FilledButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
@@ -367,7 +367,7 @@ class TimerPage extends StatelessWidget {
                   child: Column(
                     children: [
                       Text(
-                        'Nessun pomodoro oggi',
+                        'No tomatoes for today',
                         style: theme.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: colors.onSurface,
@@ -375,7 +375,7 @@ class TimerPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Non hai pianificato pomodori per oggi.\nPianifica la tua sessione per iniziare!',
+                        'You have not planned any tomatoes for today.\nPlan your session to begin!',
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodyLarge?.copyWith(
                           color: colors.onSurface.withValues(alpha: 0.8),
@@ -406,7 +406,7 @@ class TimerPage extends StatelessWidget {
                   child: FilledButton.icon(
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.add_rounded),
-                    label: const Text('Pianifica Sessione'),
+                    label: const Text('Plan Session'),
                     style: FilledButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
@@ -850,7 +850,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     _buildStatChip(
-                      'Durata',
+                      'Duration',
                       '${_getPomodoroDuration() ~/ 60} min',
                       Icons.timer_rounded,
                       colors.primary,
@@ -858,7 +858,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                       theme,
                     ),
                     _buildStatChip(
-                      'Pausa',
+                      'Pause',
                       '${_getBreakDuration() ~/ 60} min',
                       Icons.local_cafe_rounded,
                       colors.tertiary,
@@ -866,7 +866,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                       theme,
                     ),
                     _buildStatChip(
-                      'Totale',
+                      'Total',
                       '${widget.tomatoes.length}',
                       Icons.spa_rounded,
                       colors.secondary,
@@ -881,7 +881,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                   children: [
                     Icon(Icons.surround_sound, color: colors.primary, size: 20),
                     const SizedBox(width: 8),
-                    Text('Rumore bianco', style: theme.textTheme.bodyMedium),
+                    Text('White Noise', style: theme.textTheme.bodyMedium),
                     const SizedBox(width: 8),
                     Switch(
                       value: _whiteNoiseEnabled,
@@ -1065,7 +1065,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                         ),
                         const SizedBox(width: 3),
                         Text(
-                          'Pausa ${breakDurationInSeconds ~/ 60}min',
+                          'Pause ${breakDurationInSeconds ~/ 60}min',
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: colors.onTertiaryContainer,
                             fontWeight: FontWeight.w600,
@@ -1204,7 +1204,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                                     ),
                                   ),
                                   child: Text(
-                                    'rimanenti',
+                                    'remaining',
                                     style: theme.textTheme.labelSmall?.copyWith(
                                       color: colors.onSurface.withValues(
                                         alpha: 0.8,
@@ -1295,7 +1295,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
             bloc.add(const TimerStarted());
           },
           icon: const Icon(Icons.play_arrow_rounded, size: 28),
-          label: const Text('Inizia Focus'),
+          label: const Text('Start Focus'),
           style: FilledButton.styleFrom(
             backgroundColor: Colors.transparent,
             foregroundColor: colors.onPrimary,
@@ -1353,7 +1353,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                   bloc.add(const TimerPaused());
                 },
                 icon: const Icon(Icons.pause_rounded, size: 24),
-                label: const Text('Pausa'),
+                label: const Text('Pause'),
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   foregroundColor: colors.onSecondaryContainer,
@@ -1402,7 +1402,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                   bloc.add(const TimerSkipToEnd());
                 },
                 icon: const Icon(Icons.skip_next_rounded, size: 24),
-                label: const Text('Salta'),
+                label: const Text('Skip'),
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   foregroundColor: colors.onTertiary,
@@ -1453,7 +1453,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                   bloc.add(const TimerPaused());
                 },
                 icon: const Icon(Icons.pause_rounded, size: 24),
-                label: const Text('Pausa'),
+                label: const Text('Pause'),
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   foregroundColor: colors.onTertiaryContainer,
@@ -1495,7 +1495,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                   bloc.add(const TimerSkipToEnd());
                 },
                 icon: const Icon(Icons.skip_next_rounded, size: 24),
-                label: const Text('Salta'),
+                label: const Text('Skip'),
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   foregroundColor: colors.onTertiary,
@@ -1548,7 +1548,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                   bloc.add(const TimerResumed());
                 },
                 icon: const Icon(Icons.play_arrow_rounded, size: 24),
-                label: const Text('Riprendi'),
+                label: const Text('Resume'),
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   foregroundColor: colors.onPrimary,
@@ -1598,7 +1598,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                   bloc.add(const TimerSkipToEnd());
                 },
                 icon: const Icon(Icons.skip_next_rounded, size: 24),
-                label: const Text('Salta'),
+                label: const Text('Skip'),
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   foregroundColor: colors.onTertiary,
@@ -1677,7 +1677,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
             ),
             const SizedBox(height: 20),
             Text(
-              'Sessione Completata!',
+              'Session Completed!',
               style: theme.textTheme.headlineSmall?.copyWith(
                 color: colors.onTertiaryContainer,
                 fontWeight: FontWeight.w700,
@@ -1692,7 +1692,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                'Ben fatto! Hai completato tutti i pomodori.',
+                'Well Done! You compleded all tomatoes.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: colors.onTertiaryContainer.withValues(alpha: 0.9),
@@ -1752,7 +1752,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
             ),
             const SizedBox(height: 20),
             Text(
-              'Preparando il riepilogo...',
+              'Preparing the summary...',
               style: theme.textTheme.titleLarge?.copyWith(
                 color: colors.onPrimaryContainer,
                 fontWeight: FontWeight.w600,
@@ -1761,7 +1761,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
             ),
             const SizedBox(height: 8),
             Text(
-              'Caricamento statistiche sessione',
+              'Loading session statistics',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colors.onPrimaryContainer.withValues(alpha: 0.8),
                 fontWeight: FontWeight.w500,
@@ -1835,7 +1835,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Prossimo pomodoro tra:',
+                    'Next tomato in:',
                     style: theme.textTheme.titleSmall?.copyWith(
                       color: colors.onSecondaryContainer,
                       fontWeight: FontWeight.w600,
@@ -1861,7 +1861,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                'Programmato: ${DateFormat('HH:mm').format(state.scheduledStartTime.toLocal())}',
+                'Scheduled: ${DateFormat('HH:mm').format(state.scheduledStartTime.toLocal())}',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colors.onSecondaryContainer.withValues(alpha: 0.8),
                   fontWeight: FontWeight.w500,
