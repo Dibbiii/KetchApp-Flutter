@@ -1,5 +1,3 @@
-// ignore_for_file: deprecated_member_use, depend_on_referenced_packages
-
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -18,7 +16,6 @@ class NotificationService {
 
   static Future<void> schedulePomodoroNotification(String title, DateTime start) async {
     final scheduledTime = tz.TZDateTime.from(start.subtract(const Duration(minutes: 15)), tz.local);
-    // Notifica immediata
     await _notificationsPlugin.show(
       DateTime.now().millisecondsSinceEpoch ~/ 1000,
       'Promemoria Pomodoro',
@@ -28,7 +25,6 @@ class NotificationService {
         iOS: DarwinNotificationDetails(),
       ),
     );
-    // Notifica 15 minuti prima
     if (scheduledTime.isAfter(DateTime.now())) {
       try {
         await _notificationsPlugin.zonedSchedule(

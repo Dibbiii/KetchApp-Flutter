@@ -517,7 +517,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
       _audioPlayer ??= AudioPlayer();
       await _audioPlayer!.setReleaseMode(ReleaseMode.loop);
       if (kIsWeb) {
-        await _audioPlayer!.play(AssetSource('audio/music_web.wav'));
+        await _audioPlayer!.play(AssetSource('audio/music.mp3'));
         _audioPlayer!.onPlayerComplete.listen((event) async {
           if (_whiteNoiseEnabled) {
             await _audioPlayer!.seek(Duration.zero);

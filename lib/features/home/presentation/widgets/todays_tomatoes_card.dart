@@ -307,24 +307,6 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
         children: [
           Container(
             padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  colors.surfaceContainerHighest.withValues(alpha: 0.8),
-                  colors.surfaceContainerHigh.withValues(alpha: 0.6),
-                ],
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: colors.shadow.withValues(alpha: 0.1),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
             child: Icon(
               Icons.auto_awesome_outlined,
               color: colors.primary,

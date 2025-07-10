@@ -1,8 +1,5 @@
-// ignore_for_file: unused_field, deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:ketchapp_flutter/features/statistics/presentation/statistics_shrimmer_page.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -798,10 +795,6 @@ class _StatisticsPageState extends State<StatisticsPage>
         ),
         trailing: Container(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: colors.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(8),
-          ),
           child: Icon(
             Icons.arrow_forward_ios_rounded,
             color: colors.primary,

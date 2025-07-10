@@ -1,5 +1,3 @@
-// ignore_for_file: library_private_types_in_public_api
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -198,7 +196,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                         ],
                       ),
                       child: Text(
-                        'Get Started',
+                        'Start',
                         style: textTheme.titleMedium?.copyWith(
                           color: colors.onPrimary,
                           fontWeight: FontWeight.w700,

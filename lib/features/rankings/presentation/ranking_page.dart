@@ -1,5 +1,3 @@
-// ignore_for_file: unused_import, deprecated_member_use
-
 import 'dart:async';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
@@ -119,7 +117,6 @@ class _RankingPageState extends State<RankingPage>
   void _filterUsers(String query) {
     _currentSearchQuery = query;
     _performFiltering();
-    // Play confetti if there's a top-ranked user
     if (_filteredUsers.isNotEmpty &&
         _filteredUsers.first.rank == 1 &&
         _currentSearchQuery.isEmpty) {
@@ -208,7 +205,6 @@ class _RankingPageState extends State<RankingPage>
                           child: _buildLoadedContent(context, state, colors, textTheme),
                         ),
                       ),
-                    // Confetti widgets
                     if (_filteredUsers.isNotEmpty &&
                         _filteredUsers.first.rank == 1 &&
                         _currentSearchQuery.isEmpty) ...[
@@ -262,7 +258,7 @@ class _RankingPageState extends State<RankingPage>
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(20), // Ridotto da 28 a 20
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -287,7 +283,7 @@ class _RankingPageState extends State<RankingPage>
             color: colors.primary,
           ),
         ),
-        const SizedBox(height: 16), // Ridotto da 24 a 16
+        const SizedBox(height: 16),
         Text(
           'Global Ranking',
           style: textTheme.displaySmall?.copyWith(
@@ -296,9 +292,9 @@ class _RankingPageState extends State<RankingPage>
             letterSpacing: -0.5,
           ),
         ),
-        const SizedBox(height: 6), // Ridotto da 8 a 6
+        const SizedBox(height: 6),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6), // Ridotto da (16, 8) a (14, 6)
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
             color: colors.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(20),
@@ -342,8 +338,8 @@ class _RankingPageState extends State<RankingPage>
             color: colors.onSurfaceVariant,
           ),
           prefixIcon: Container(
-            margin: const EdgeInsets.all(10), // Ridotto da 12 a 10
-            padding: const EdgeInsets.all(6), // Ridotto da 8 a 6
+            margin: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: colors.primaryContainer.withOpacity(0.8),
               borderRadius: BorderRadius.circular(12),
@@ -357,7 +353,7 @@ class _RankingPageState extends State<RankingPage>
           border: InputBorder.none,
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(
-            vertical: 12, // Ridotto da 16 a 12
+            vertical: 12,
             horizontal: 20,
           ),
         ),
@@ -378,7 +374,6 @@ class _RankingPageState extends State<RankingPage>
       sortedUsers.sort((a, b) => b.hours.compareTo(a.hours));
     }
 
-    // Define tier thresholds
     const int diamondThreshold = 100;
     const int goldThreshold = 70;
     const int silverThreshold = 40;
@@ -442,7 +437,7 @@ class _RankingPageState extends State<RankingPage>
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(16), // Ridotto da 20 a 16
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -456,7 +451,7 @@ class _RankingPageState extends State<RankingPage>
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10), // Ridotto da 12 a 10
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: tierColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(16),
@@ -467,7 +462,7 @@ class _RankingPageState extends State<RankingPage>
                       size: 24,
                     ),
                   ),
-                  const SizedBox(width: 12), // Ridotto da 16 a 12
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -480,7 +475,7 @@ class _RankingPageState extends State<RankingPage>
                             letterSpacing: -0.25,
                           ),
                         ),
-                        const SizedBox(height: 2), // Ridotto da 4 a 2
+                        const SizedBox(height: 2),
                         Text(
                           requirement,
                           style: textTheme.bodyMedium?.copyWith(
@@ -492,7 +487,7 @@ class _RankingPageState extends State<RankingPage>
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5), // Ridotto da (12, 6) a (10, 5)
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
                       color: tierColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(12),
@@ -511,9 +506,9 @@ class _RankingPageState extends State<RankingPage>
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(12), // Ridotto da 16 a 12
+              padding: const EdgeInsets.all(12),
               itemCount: users.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 6), // Ridotto da 8 a 6
+              separatorBuilder: (context, index) => const SizedBox(height: 6),
               itemBuilder: (context, index) {
                 final userData = users[index];
                 return _buildEnhancedUserTile(userData, tierColor, colors, textTheme);
@@ -535,10 +530,10 @@ class _RankingPageState extends State<RankingPage>
         ),
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4), // Ridotto da (16, 8) a (14, 4)
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
         leading: Container(
-          width: 44, // Ridotto da 48 a 44
-          height: 44, // Ridotto da 48 a 44
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -580,7 +575,7 @@ class _RankingPageState extends State<RankingPage>
           ),
         ),
         trailing: Container(
-          padding: const EdgeInsets.all(6), // Ridotto da 8 a 6
+          padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
             color: tierColor.withOpacity(0.15),
             borderRadius: BorderRadius.circular(8),

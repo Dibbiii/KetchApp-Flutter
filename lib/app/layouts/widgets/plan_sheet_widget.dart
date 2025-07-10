@@ -1388,7 +1388,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                         Row(
                           children: [
                             Text(
-                              'Orario:',
+                              'Time:',
                               style: textTheme.labelMedium?.copyWith(
                                 color: colors.onSurfaceVariant,
                               ),
@@ -1407,7 +1407,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                         OutlinedButton.icon(
                           onPressed: () => _editCalendarTime(context, index),
                           icon: const Icon(Icons.edit_rounded, size: 18),
-                          label: const Text('Modifica orario'),
+                          label: const Text('Edit Time'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: fixedColor,
                             side: BorderSide(color: fixedColor),
