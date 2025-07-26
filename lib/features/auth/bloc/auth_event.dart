@@ -4,10 +4,10 @@ part of 'auth_bloc.dart';
 abstract class AuthEvent {}
 
 class AuthLoginRequested extends AuthEvent {
-  final String identifier;
+  final String username;
   final String password;
 
-  AuthLoginRequested({required this.identifier, required this.password});
+  AuthLoginRequested({required this.username, required this.password});
 }
 
 class AuthRegisterRequested extends AuthEvent {

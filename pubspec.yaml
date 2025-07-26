@@ -42,7 +42,7 @@ dependencies:
 
   # Utils
   uuid: ^4.5.1
-  intl: ^0.20.2
+  intl: 0.19.0
 
   # Google APIs per Google Calendar
   googleapis: ^14.0.0

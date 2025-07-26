@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
+import 'package:ketchapp_flutter/features/auth/bloc/api_auth_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'register_shimmer_page.dart';
 
@@ -62,15 +62,15 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
       value: systemUiOverlayStyle,
       child: Scaffold(
         backgroundColor: colors.surface,
-        body: BlocListener<AuthBloc, AuthState>(
+        body: BlocListener<ApiAuthBloc, ApiAuthState>(
           listener: (context, state) {
-            if (state is AuthError) {
+            if (state is ApiAuthFailure) {
               if (!mounted) return;
               ScaffoldMessenger.of(context)
                 ..hideCurrentSnackBar()
                 ..showSnackBar(
                   SnackBar(
-                    content: Text(state.message),
+                    content: Text(state.error),
                     backgroundColor: colors.error,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
@@ -169,8 +169,8 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
     HapticFeedback.lightImpact();
     FocusScope.of(context).unfocus();
     if (_formKey.currentState!.validate()) {
-      context.read<AuthBloc>().add(
-            AuthRegisterRequested(
+      context.read<ApiAuthBloc>().add(
+            ApiAuthRegisterRequested(
               username: _usernameController.text.trim(),
               email: _emailController.text.trim(),
               password: _passwordController.text,
@@ -184,7 +184,7 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
     final ColorScheme colors = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
     final Size size = MediaQuery.of(context).size;
-    final isLoading = context.watch<AuthBloc>().state is AuthLoading;
+    final isLoading = context.watch<ApiAuthBloc>().state is ApiAuthLoading;
 
     if (_showShimmer) {
       return const RegisterShimmerPage();

@@ -1,19 +1,17 @@
-/*import 'dart:async';
+import 'dart:async';
 import 'package:bloc/bloc.dart';
-import 'package:equatable/equatable.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
+import 'package:ketchapp_flutter/features/auth/bloc/api_auth_bloc.dart';
 import 'package:ketchapp_flutter/features/statistics/bloc/statistics_event.dart';
 import 'package:ketchapp_flutter/features/statistics/bloc/statistics_state.dart';
-
 import '../../../services/api_service.dart';
 
-class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
-  final AuthBloc _authBloc;
+class ApiStatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
+  final ApiAuthBloc _apiAuthBloc;
+  final ApiService _apiService;
 
-  StatisticsBloc({required AuthBloc authBloc})
-      : _authBloc = authBloc,
+  ApiStatisticsBloc({required ApiAuthBloc apiAuthBloc, required ApiService apiService})
+      : _apiAuthBloc = apiAuthBloc,
+        _apiService = apiService,
         super(StatisticsState.initial()) {
     on<StatisticsLoadRequested>(_onLoadRequested);
     on<StatisticsPreviousWeekRequested>(_onPreviousWeekRequested);
@@ -29,16 +27,15 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
   ) async {
     emit(state.copyWith(status: StatisticsStatus.loading));
     try {
-      final authState = _authBloc.state;
-      if (authState is! Authenticated) {
+      final authState = _apiAuthBloc.state;
+      if (authState is! ApiAuthenticated) {
         emit(state.copyWith(
             status: StatisticsStatus.error,
             errorMessage: 'User not authenticated'));
         return;
       }
 
-      final api = ApiService();
-      final userUuid = authState.userUuid;
+      final userUuid = authState.userData['uuid'];
 
       final formattedDate =
           "${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
@@ -51,7 +48,7 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
           "${endOfWeek.year.toString().padLeft(4, '0')}-${endOfWeek.month.toString().padLeft(2, '0')}-${endOfWeek.day.toString().padLeft(2, '0')}";
 
       final url = "users/$userUuid/statistics?startDate=$formattedStart&endDate=$formattedEnd";
-      final response = await api.fetchData(url);
+      final response = await _apiService.fetchData(url);
 
       if (response is Map<String, dynamic> && response.containsKey('dates')) {
         final dates = response['dates'] as List<dynamic>?;
@@ -225,4 +222,3 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
     }
   }
 }
-*/

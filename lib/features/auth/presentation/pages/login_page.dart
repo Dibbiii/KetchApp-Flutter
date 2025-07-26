@@ -1,8 +1,7 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
+import 'package:ketchapp_flutter/features/auth/bloc/api_auth_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'login_shrimmer_page.dart';
 
@@ -61,15 +60,15 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       value: systemUiOverlayStyle,
       child: Scaffold(
         backgroundColor: colors.surface,
-        body: BlocListener<AuthBloc, AuthState>(
+        body: BlocListener<ApiAuthBloc, ApiAuthState>(
           listener: (context, state) {
-            if (state is AuthError) {
+            if (state is ApiAuthFailure) {
               if (!mounted) return;
               ScaffoldMessenger.of(context)
                 ..hideCurrentSnackBar()
                 ..showSnackBar(
                   SnackBar(
-                    content: Text(state.message),
+                    content: Text(state.error),
                     backgroundColor: colors.error,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
@@ -95,7 +94,7 @@ class _LoginForm extends StatefulWidget {
 
 class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _identifierController;
+  late final TextEditingController _usernameController;
   late final TextEditingController _passwordController;
 
   bool _showShimmer = true;
@@ -107,7 +106,7 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _identifierController = TextEditingController();
+    _usernameController = TextEditingController();
     _passwordController = TextEditingController();
     _initializeAnimations();
 
@@ -151,7 +150,7 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _identifierController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     _fadeAnimationController.dispose();
     _scaleAnimationController.dispose();
@@ -162,10 +161,10 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
     HapticFeedback.lightImpact();
     FocusScope.of(context).unfocus();
     if (_formKey.currentState!.validate()) {
-      context.read<AuthBloc>().add(
-            AuthLoginRequested(
-              identifier: _identifierController.text.trim(),
-              password: _passwordController.text,
+      context.read<ApiAuthBloc>().add(
+            ApiAuthLoginRequested(
+              _usernameController.text.trim(),
+              _passwordController.text,
             ),
           );
     }
@@ -176,7 +175,7 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
     final ColorScheme colors = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
     final Size size = MediaQuery.of(context).size;
-    final isLoading = context.watch<AuthBloc>().state is AuthLoading;
+    final isLoading = context.watch<ApiAuthBloc>().state is ApiAuthLoading;
 
     if (_showShimmer) {
       return const LoginShimmerPage();
@@ -264,11 +263,11 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                             ],
                           ),
                           child: TextFormField(
-                            controller: _identifierController,
+                            controller: _usernameController,
                             style: textTheme.bodyLarge?.copyWith(color: colors.onSurface),
                             decoration: InputDecoration(
-                              labelText: 'Email or Username',
-                              hintText: 'Enter your email or username',
+                              labelText: 'Username',
+                              hintText: 'Inserisci il tuo username',
                               prefixIcon: Icon(
                                 Icons.person_outline_rounded,
                                 color: colors.onSurfaceVariant,
@@ -416,56 +415,6 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                                     ),
                                   )
                                 : const Text('Sign In'),
-                          ),
-                        ),
-
-                        const SizedBox(height: 24),
-
-
-                        Row(
-                          children: [
-                            Expanded(child: Divider(color: colors.outline)),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              child: Text(
-                                'or',
-                                style: textTheme.bodyMedium?.copyWith(
-                                  color: colors.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                            Expanded(child: Divider(color: colors.outline)),
-                          ],
-                        ),
-
-                        const SizedBox(height: 24),
-
-
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            icon: Image.network(
-                              'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/24px-Google_%22G%22_logo.svg.png',
-                              height: 24.0,
-                              width: 24.0,
-                            ),
-                            label: const Text('Continue with Google'),
-                            onPressed: () {
-                              HapticFeedback.lightImpact();
-                              context.read<AuthBloc>().add(AuthGoogleSignInRequested());
-                            },
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: colors.onSurface,
-                              backgroundColor: colors.surface,
-                              minimumSize: const Size.fromHeight(56),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              side: BorderSide(color: colors.outline),
-                              textStyle: textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
                           ),
                         ),
 

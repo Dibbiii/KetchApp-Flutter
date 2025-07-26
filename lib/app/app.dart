@@ -13,6 +13,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appRouter = createRouter(context);
     return MultiBlocProvider(
       providers: [
         BlocProvider<RankingBloc>(
@@ -55,7 +56,7 @@ class MyApp extends StatelessWidget {
             title: 'Ketchapp',
             theme: lightAppTheme,
             darkTheme: darkAppTheme,
-            routerConfig: router,
+            routerConfig: appRouter,
           );
         },
       ),

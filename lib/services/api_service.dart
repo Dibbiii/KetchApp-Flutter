@@ -9,9 +9,45 @@ import 'package:ketchapp_flutter/services/calendar_service.dart';
 import 'package:ketchapp_flutter/services/notification_service.dart';
 import 'package:ketchapp_flutter/models/activity.dart';
 import 'package:ketchapp_flutter/models/activity_type.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
 
 class ApiService {
-  final String _baseUrl = "http://192.168.43.117:8081/api";
+  final String _baseUrl = "http://151.61.228.91:8080/api";
+  String? _token;
+
+  ApiService() {
+    loadToken();
+  }
+
+  Future<void> loadToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.containsKey('authToken')) {
+      _token = prefs.getString('authToken');
+    }
+  }
+
+  Future<void> setAuthToken(String token) async {
+    _token = token;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('authToken', token);
+  }
+
+  Future<void> clearAuthToken() async {
+    _token = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('authToken');
+  }
+
+  Map<String, String> _getHeaders() {
+    final headers = <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    };
+    if (_token != null) {
+      headers['Authorization'] = 'Bearer $_token';
+    }
+    return headers;
+  }
 
   Future<dynamic> _processResponse(http.Response response) {
     final body = response.body;
@@ -44,17 +80,20 @@ class ApiService {
     }
   }
 
-  Future<dynamic> fetchData(String endpoint) async {
-    final response = await http.get(Uri.parse('$_baseUrl/$endpoint')); 
+  Future<dynamic> fetchData(String endpoint, {String? baseUrlOverride}) async {
+    final url = (baseUrlOverride ?? _baseUrl) + '/$endpoint';
+    final response = await http.get(
+      Uri.parse(url),
+      headers: _getHeaders(),
+    );
     return _processResponse(response);
   }
 
-  Future<dynamic> postData(String endpoint, Map<String, dynamic> data) async {
+  Future<dynamic> postData(String endpoint, Map<String, dynamic> data, {String? baseUrlOverride}) async {
+    final url = (baseUrlOverride ?? _baseUrl) + '/$endpoint';
     final response = await http.post(
-      Uri.parse('$_baseUrl/$endpoint'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
+      Uri.parse(url),
+      headers: _getHeaders(),
       body: json.encode(data),
     );
 
@@ -62,18 +101,22 @@ class ApiService {
   }
 
   Future<dynamic> deleteData(String endpoint) async {
-    final response = await http.delete(Uri.parse('$_baseUrl/$endpoint'));
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/$endpoint'),
+      headers: _getHeaders(),
+    );
     return _processResponse(response);
   }
 
   Future<dynamic> findEmailByUsername(String username) async {
-    final response = await http.get(Uri.parse('$_baseUrl/users/email/$username'));
+    final response = await http.get(Uri.parse('$_baseUrl/users/email/$username'), headers: _getHeaders());
     return _processResponse(response);
   }
 
   Future<String> getUserUUIDByFirebaseUid(String firebaseUid) async {
     final response = await http.get(
-        Uri.parse('$_baseUrl/users/firebase/$firebaseUid'));
+        Uri.parse('$_baseUrl/users/firebase/$firebaseUid'),
+        headers: _getHeaders());
     final responseData = await _processResponse(response);
     return responseData.toString();
   }
@@ -126,7 +169,7 @@ class ApiService {
   }
 
   Future<Future> getGlobalRanking() async {
-    final response = await http.get(Uri.parse('$_baseUrl/users/ranking/global'));
+    final response = await http.get(Uri.parse('$_baseUrl/users/ranking/global'), headers: _getHeaders());
     return _processResponse(response);
   }
 
@@ -151,7 +194,7 @@ class ApiService {
   }
 
   Future<List<Achievement>> getUserAchievements(String userUuid) async {
-    final response = await http.get(Uri.parse('$_baseUrl/users/$userUuid/achievements'));
+    final response = await http.get(Uri.parse('$_baseUrl/users/$userUuid/achievements'), headers: _getHeaders());
     final decodedJson = await _processResponse(response);
     return (decodedJson as List).map((e) => Achievement.fromJson(e)).toList();
   }
@@ -196,5 +239,25 @@ class ApiService {
       currentId = tomato.nextTomatoId;
     }
     return chain;
+  }
+
+  Future<Map<String, dynamic>> uploadProfilePicture(String userUuid, File imageFile) async {
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$_baseUrl/users/$userUuid/profile-picture'),
+    );
+    request.headers.addAll(_getHeaders());
+    request.files.add(await http.MultipartFile.fromPath('profilePicture', imageFile.path));
+
+    final response = await request.send();
+    return await _processResponse(await http.Response.fromStream(response)) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> deleteProfilePicture(String userUuid) async {
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/users/$userUuid/profile-picture'),
+      headers: _getHeaders(),
+    );
+    return await _processResponse(response) as Map<String, dynamic>;
   }
 }

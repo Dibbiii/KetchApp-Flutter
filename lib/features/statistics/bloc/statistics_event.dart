@@ -1,4 +1,5 @@
-part of 'statistics_bloc.dart';
+import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 
 @immutable
 abstract class StatisticsEvent extends Equatable {
@@ -9,12 +10,7 @@ abstract class StatisticsEvent extends Equatable {
 }
 
 class StatisticsLoadRequested extends StatisticsEvent {
-  final double currentTotalStudyHours;
-
-  const StatisticsLoadRequested({required this.currentTotalStudyHours});
-
-  @override
-  List<Object?> get props => [currentTotalStudyHours];
+  const StatisticsLoadRequested();
 }
 
 class StatisticsPreviousWeekRequested extends StatisticsEvent {}
@@ -40,4 +36,3 @@ class StatisticsTotalStudyHoursUpdated extends StatisticsEvent {
   @override
   List<Object?> get props => [newTotalStudyHours];
 }
-

@@ -4,7 +4,9 @@ import 'package:intl/intl.dart';
 import 'package:ketchapp_flutter/features/statistics/presentation/statistics_shrimmer_page.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ketchapp_flutter/features/statistics/bloc/statistics_bloc.dart';
+import 'package:ketchapp_flutter/features/statistics/bloc/api_statistics_bloc.dart';
+import 'package:ketchapp_flutter/features/statistics/bloc/statistics_event.dart';
+import 'package:ketchapp_flutter/features/statistics/bloc/statistics_state.dart';
 import 'package:ketchapp_flutter/features/statistics/presentation/widgets/weekly_histogram_widget.dart';
 
 
@@ -81,14 +83,7 @@ class _StatisticsPageState extends State<StatisticsPage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final statisticsBloc = BlocProvider.of<StatisticsBloc>(context);
-    if (statisticsBloc.state.status == StatisticsStatus.initial) {
-      statisticsBloc.add(
-        StatisticsLoadRequested(
-          currentTotalStudyHours: 0,
-        ),
-      );
-    }
+    // La logica di caricamento iniziale è ora gestita dal router
   }
 
   Future<void> _initializeLocale() async {
@@ -141,7 +136,7 @@ class _StatisticsPageState extends State<StatisticsPage>
       return _buildInitializingState(context);
     }
 
-    final statisticsBloc = BlocProvider.of<StatisticsBloc>(context);
+    final statisticsBloc = BlocProvider.of<ApiStatisticsBloc>(context);
     final colors = Theme.of(context).colorScheme;
 
     final SystemUiOverlayStyle systemUiOverlayStyle = SystemUiOverlayStyle(
@@ -158,7 +153,7 @@ class _StatisticsPageState extends State<StatisticsPage>
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: systemUiOverlayStyle,
-      child: BlocBuilder<StatisticsBloc, StatisticsState>(
+      child: BlocBuilder<ApiStatisticsBloc, StatisticsState>(
         builder: (context, state) {
           if (_showShimmer) {
             return const StatisticsShrimmerPage();
@@ -304,8 +299,8 @@ class _StatisticsPageState extends State<StatisticsPage>
                   icon: const Icon(Icons.refresh_rounded),
                   label: const Text('Try Again'),
                   onPressed: () {
-                    final statisticsBloc = BlocProvider.of<StatisticsBloc>(context);
-                    statisticsBloc.add(StatisticsLoadRequested(currentTotalStudyHours: 0));
+                    final statisticsBloc = BlocProvider.of<ApiStatisticsBloc>(context);
+                    statisticsBloc.add(const StatisticsLoadRequested());
                   },
                   style: FilledButton.styleFrom(
                     backgroundColor: colors.primaryContainer,
@@ -324,7 +319,7 @@ class _StatisticsPageState extends State<StatisticsPage>
     );
   }
 
-  Widget _buildLoadedState(BuildContext context, StatisticsState state, StatisticsBloc statisticsBloc) {
+  Widget _buildLoadedState(BuildContext context, StatisticsState state, ApiStatisticsBloc statisticsBloc) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -444,7 +439,7 @@ class _StatisticsPageState extends State<StatisticsPage>
     );
   }
 
-  Widget _buildWeekNavigator(BuildContext context, StatisticsState state, StatisticsBloc statisticsBloc, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildWeekNavigator(BuildContext context, StatisticsState state, ApiStatisticsBloc statisticsBloc, ColorScheme colors, TextTheme textTheme) {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
@@ -520,7 +515,7 @@ class _StatisticsPageState extends State<StatisticsPage>
     );
   }
 
-  Widget _buildHistogramSection(BuildContext context, StatisticsState state, StatisticsBloc statisticsBloc, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildHistogramSection(BuildContext context, StatisticsState state, ApiStatisticsBloc statisticsBloc, ColorScheme colors, TextTheme textTheme) {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,

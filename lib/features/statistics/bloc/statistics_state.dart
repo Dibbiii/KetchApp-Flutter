@@ -1,4 +1,4 @@
-part of 'statistics_bloc.dart';
+import 'package:equatable/equatable.dart';
 
 enum StatisticsStatus { initial, loading, loaded, error }
 
@@ -65,14 +65,14 @@ class StatisticsState extends Equatable {
 
   @override
   List<Object?> get props => [
-    status,
-    displayedCalendarDate,
-    weeklyStudyData,
-    recordStudyHours,
-    bestStudyDay,
-    errorMessage,
-    selectedActivityDetailType,
-    subjectStats,
-    weeklyDatesData,
-  ];
+        status,
+        displayedCalendarDate,
+        weeklyStudyData,
+        recordStudyHours,
+        bestStudyDay,
+        errorMessage,
+        selectedActivityDetailType,
+        subjectStats,
+        weeklyDatesData,
+      ];
 }

@@ -1,15 +1,13 @@
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
-import 'package:ketchapp_flutter/features/profile/bloc/profile_bloc.dart';
-import 'package:ketchapp_flutter/features/profile/bloc/profile_event.dart';
-import 'package:ketchapp_flutter/features/profile/bloc/profile_state.dart';
-import 'package:ketchapp_flutter/services/api_service.dart';
+import 'package:ketchapp_flutter/features/auth/bloc/api_auth_bloc.dart';
+import 'package:ketchapp_flutter/features/profile/bloc/api_profile_bloc.dart';
+import 'package:ketchapp_flutter/features/profile/bloc/api_profile_event.dart';
+import 'package:ketchapp_flutter/features/profile/bloc/api_profile_state.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'profile_shrimmer_page.dart';
 
@@ -23,7 +21,6 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage>
     with TickerProviderStateMixin {
   bool _showShimmer = true;
-  String? _username;
 
   late AnimationController _fadeAnimationController;
   late AnimationController _scaleAnimationController;
@@ -36,7 +33,7 @@ class _ProfilePageState extends State<ProfilePage>
   void initState() {
     super.initState();
     _initializeAnimations();
-    _fetchUsernameAndLoadProfile();
+    context.read<ApiProfileBloc>().add(LoadApiProfile());
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         setState(() {
@@ -83,31 +80,9 @@ class _ProfilePageState extends State<ProfilePage>
     super.dispose();
   }
 
-  Future<void> _fetchUsernameAndLoadProfile() async {
-    final authState = context.read<AuthBloc>().state;
-    String? userUuid;
-    if (authState is Authenticated) {
-      userUuid = authState.userUuid;
-    }
-    if (userUuid != null) {
-      try {
-        final apiService = context.read<ApiService>();
-        final userData = await apiService.fetchData('users/$userUuid');
-        setState(() {
-          _username = userData['username'] as String?;
-        });
-      } catch (e) {
-        setState(() {
-          _username = null;
-        });
-      }
-    }
-    context.read<ProfileBloc>().add(LoadProfile());
-  }
-
   void _dispatchPickImage(ImageSource source) async {
-    final currentBlocState = context.read<ProfileBloc>().state;
-    if (currentBlocState is ProfileLoaded && currentBlocState.isUploadingImage) {
+    final currentBlocState = context.read<ApiProfileBloc>().state;
+    if (currentBlocState is ApiProfileLoaded && currentBlocState.isUploadingImage) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
@@ -175,12 +150,12 @@ class _ProfilePageState extends State<ProfilePage>
         return;
       }
     }
-    context.read<ProfileBloc>().add(ProfileImagePickRequested(source));
+    context.read<ApiProfileBloc>().add(ApiProfileImagePickRequested(source));
   }
 
   void _dispatchDeleteProfileImage() {
-    final currentBlocState = context.read<ProfileBloc>().state;
-    if (currentBlocState is ProfileLoaded && currentBlocState.isUploadingImage) {
+    final currentBlocState = context.read<ApiProfileBloc>().state;
+    if (currentBlocState is ApiProfileLoaded && currentBlocState.isUploadingImage) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
@@ -188,7 +163,7 @@ class _ProfilePageState extends State<ProfilePage>
         );
       return;
     }
-    context.read<ProfileBloc>().add(ProfileImageDeleteRequested());
+    context.read<ApiProfileBloc>().add(ApiProfileImageDeleteRequested());
   }
 
   @override
@@ -223,19 +198,19 @@ class _ProfilePageState extends State<ProfilePage>
               ],
             ),
           ),
-          child: BlocListener<ProfileBloc, ProfileState>(
+          child: BlocListener<ApiProfileBloc, ApiProfileState>(
             listener: _handleProfileStateChanges,
-            child: BlocBuilder<ProfileBloc, ProfileState>(
+            child: BlocBuilder<ApiProfileBloc, ApiProfileState>(
               builder: (context, state) {
-                if (_showShimmer || state is ProfileLoading) {
+                if (_showShimmer || state is ApiProfileLoading || state is ApiProfileInitial) {
                   return const ProfileShrimmerPage();
                 }
 
-                if (state is ProfileError) {
+                if (state is ApiProfileError) {
                   return _buildErrorState(context, state.message, colors, textTheme);
                 }
 
-                if (state is ProfileLoaded) {
+                if (state is ApiProfileLoaded) {
                   return _buildLoadedState(context, state, colors, textTheme);
                 }
 
@@ -248,10 +223,10 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  void _handleProfileStateChanges(BuildContext context, ProfileState state) {
+  void _handleProfileStateChanges(BuildContext context, ApiProfileState state) {
     final colors = Theme.of(context).colorScheme;
 
-    if (state is ProfileUpdateSuccess) {
+    if (state is ApiProfileUpdateSuccess) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(
@@ -260,7 +235,7 @@ class _ProfilePageState extends State<ProfilePage>
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ));
-    } else if (state is ProfileError) {
+    } else if (state is ApiProfileError) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(
@@ -362,7 +337,7 @@ class _ProfilePageState extends State<ProfilePage>
             FilledButton.tonalIcon(
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Try Again'),
-              onPressed: () => context.read<ProfileBloc>().add(LoadProfile()),
+              onPressed: () => context.read<ApiProfileBloc>().add(LoadApiProfile()),
               style: FilledButton.styleFrom(
                 backgroundColor: colors.primaryContainer,
                 foregroundColor: colors.onPrimaryContainer,
@@ -378,7 +353,7 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  Widget _buildLoadedState(BuildContext context, ProfileLoaded state, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildLoadedState(BuildContext context, ApiProfileLoaded state, ColorScheme colors, TextTheme textTheme) {
     return SafeArea(
       child: FadeTransition(
         opacity: _fadeAnimation,
@@ -409,7 +384,7 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  Widget _buildProfileHeader(BuildContext context, ProfileLoaded state, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildProfileHeader(BuildContext context, ApiProfileLoaded state, ColorScheme colors, TextTheme textTheme) {
     return Column(
       children: [
         Container(
@@ -438,21 +413,22 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  Widget _buildProfileAvatar(ProfileLoaded state, ColorScheme colors) {
+  Widget _buildProfileAvatar(ApiProfileLoaded state, ColorScheme colors) {
     Widget avatarContent;
+    final photoUrl = state.userData['photoUrl'];
 
     if (state.localPreviewFile != null) {
       avatarContent = CircleAvatar(
         radius: 36,
         backgroundImage: FileImage(state.localPreviewFile!),
       );
-    } else if (state.photoUrl != null) {
+    } else if (photoUrl != null) {
       avatarContent = CircleAvatar(
         radius: 36,
         backgroundColor: colors.surfaceContainerHighest,
         child: ClipOval(
           child: Image.network(
-            state.photoUrl!,
+            photoUrl,
             fit: BoxFit.cover,
             width: 72,
             height: 72,
@@ -545,7 +521,7 @@ class _ProfilePageState extends State<ProfilePage>
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
-                if (state.photoUrl != null || state.localPreviewFile != null)
+                if (photoUrl != null || state.localPreviewFile != null)
                   PopupMenuItem<String>(
                     value: 'delete_photo',
                     child: ListTile(
@@ -565,7 +541,7 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  Widget _buildProfileInfoSection(BuildContext context, ProfileLoaded state, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildProfileInfoSection(BuildContext context, ApiProfileLoaded state, ColorScheme colors, TextTheme textTheme) {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
@@ -643,7 +619,7 @@ class _ProfilePageState extends State<ProfilePage>
                 children: [
                   _buildInfoField(
                     'Username',
-                    _username ?? 'N/A',
+                    state.userData['username'] ?? 'N/A',
                     Icons.person_outline_rounded,
                     colors,
                     textTheme,
@@ -651,7 +627,7 @@ class _ProfilePageState extends State<ProfilePage>
                   const SizedBox(height: 12),
                   _buildInfoField(
                     'Email',
-                    state.email ?? 'N/A',
+                    state.userData['email'] ?? 'N/A',
                     Icons.email_outlined,
                     colors,
                     textTheme,
@@ -709,9 +685,9 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  Widget _buildAchievementsSection(BuildContext context, ProfileLoaded state, ColorScheme colors, TextTheme textTheme) {
-    final completedCount = state.completedAchievementTitles.length;
-    final totalCount = state.allAchievements.length;
+  Widget _buildAchievementsSection(BuildContext context, ApiProfileLoaded state, ColorScheme colors, TextTheme textTheme) {
+    final completedCount = state.completedAchievementTitles?.length ?? 0;
+    final totalCount = state.allAchievements?.length ?? 0;
 
     return Container(
       decoration: BoxDecoration(
@@ -879,7 +855,7 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  Widget _buildAchievementsGrid(ProfileLoaded state, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildAchievementsGrid(ApiProfileLoaded state, ColorScheme colors, TextTheme textTheme) {
     if (state.achievementsLoading) {
       return Container(
         padding: const EdgeInsets.all(32),
@@ -947,6 +923,9 @@ class _ProfilePageState extends State<ProfilePage>
         ),
       );
     }
+    if (state.allAchievements == null) {
+      return const Center(child: Text("No achievements available."));
+    }
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Scrollbar(
@@ -964,10 +943,10 @@ class _ProfilePageState extends State<ProfilePage>
             mainAxisSpacing: 16,
             childAspectRatio: 1.2,
           ),
-          itemCount: state.allAchievements.length,
+          itemCount: state.allAchievements!.length,
           itemBuilder: (context, index) {
-            final achievement = state.allAchievements[index];
-            final isCompleted = achievement['completed'] == true;
+            final achievement = state.allAchievements![index];
+            final isCompleted = state.completedAchievementTitles?.contains(achievement['title']) ?? false;
             return _buildAchievementCard(achievement, isCompleted, colors, textTheme);
           },
         ),
@@ -977,7 +956,6 @@ class _ProfilePageState extends State<ProfilePage>
 
   Widget _buildAchievementCard(dynamic achievement, bool isCompleted, ColorScheme colors, TextTheme textTheme) {
     final description = achievement['description'] ?? 'No description';
-    final iconUrl = achievement['icon'] ?? '';
 
     return Container(
       decoration: BoxDecoration(
@@ -1081,7 +1059,7 @@ class _ProfilePageState extends State<ProfilePage>
       icon: const Icon(Icons.logout_rounded),
       label: const Text('Logout'),
       onPressed: () {
-        context.read<AuthBloc>().add(AuthLogoutRequested());
+        context.read<ApiAuthBloc>().add(ApiAuthLogoutRequested());
         context.go('/');
       },
       style: FilledButton.styleFrom(

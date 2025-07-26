@@ -55,11 +55,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthVerifying());
       try {
         String emailToLogin;
-        if (event.identifier.contains('@') && event.identifier.contains('.')) {
-          emailToLogin = event.identifier;
+        if (event.username.contains('@') && event.username.contains('.')) {
+          emailToLogin = event.username;
         } else {
           try {
-            final userData = await _apiService.findEmailByUsername(event.identifier);
+            final userData = await _apiService.findEmailByUsername(event.username);
             if (userData is Map<String, dynamic> && userData['email'] != null) {
               emailToLogin = userData['email'] as String;
             } else if (userData is String) {

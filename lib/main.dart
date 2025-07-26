@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:ketchapp_flutter/features/auth/bloc/api_auth_bloc.dart';
+import 'package:ketchapp_flutter/features/profile/bloc/api_profile_bloc.dart';
+import 'package:ketchapp_flutter/services/api_auth_service.dart';
 import 'firebase_options.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:provider/provider.dart';
 import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
 import 'package:ketchapp_flutter/app/app.dart';
 import 'package:ketchapp_flutter/services/api_service.dart';
-import 'package:ketchapp_flutter/features/profile/bloc/profile_bloc.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ketchapp_flutter/features/profile/bloc/achievement_bloc.dart';
 import 'package:ketchapp_flutter/services/notification_service.dart';
 
 Future<void> main() async {
@@ -23,31 +23,35 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await NotificationService.initialize();
 
+  final apiService = ApiService();
+  await apiService.loadToken(); // Assicurati che il token venga caricato all'avvio
+
   runApp(
     MultiProvider(
       providers: [
         Provider<ApiService>(
-          create: (_) => ApiService(),
+          create: (_) => apiService,
+        ),
+        Provider<ApiAuthService>(
+          create: (context) => ApiAuthService(context.read<ApiService>()),
         ),
         BlocProvider<AuthBloc>(
           create: (context) => AuthBloc(
             firebaseAuth: FirebaseAuth.instance,
-            apiService: Provider.of<ApiService>(context, listen: false),
+            apiService: context.read<ApiService>(),
           ),
         ),
-        BlocProvider<ProfileBloc>(
-          create: (context) => ProfileBloc(
-            firebaseAuth: FirebaseAuth.instance,
-            firebaseStorage: FirebaseStorage.instance,
+        BlocProvider<ApiAuthBloc>(
+          create: (context) => ApiAuthBloc(
+            apiAuthService: context.read<ApiAuthService>(),
+            apiService: context.read<ApiService>(),
+          )..add(ApiAuthCheckRequested()), // Controlla lo stato dell'auth all'avvio
+        ),
+        BlocProvider<ApiProfileBloc>(
+          create: (context) => ApiProfileBloc(
+            apiService: context.read<ApiService>(),
+            apiAuthBloc: context.read<ApiAuthBloc>(),
             imagePicker: ImagePicker(),
-            apiService: context.read<ApiService>(),
-            authBloc: BlocProvider.of<AuthBloc>(context),
-          ),
-        ),
-        BlocProvider<AchievementBloc>(
-          create: (context) => AchievementBloc(
-            apiService: context.read<ApiService>(),
-            authBloc: BlocProvider.of<AuthBloc>(context),
           ),
         ),
       ],
@@ -55,4 +59,3 @@ Future<void> main() async {
     ),
   );
 }
-
