@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ketchapp_flutter/features/auth/bloc/api_auth_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
+
 import 'register_shimmer_page.dart';
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+  const RegisterPage({Key? key}) : super(key: key);
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMixin {
+class _RegisterPageState extends State<RegisterPage>
+    with TickerProviderStateMixin {
   late AnimationController _fadeAnimationController;
   late AnimationController _scaleAnimationController;
 
@@ -31,8 +33,6 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-
-
   }
 
   @override
@@ -48,29 +48,47 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
 
     final SystemUiOverlayStyle systemUiOverlayStyle = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: colors.brightness == Brightness.light
-          ? Brightness.dark
-          : Brightness.light,
+      statusBarIconBrightness:
+          colors.brightness == Brightness.light
+              ? Brightness.dark
+              : Brightness.light,
       statusBarBrightness: colors.brightness,
       systemNavigationBarColor: colors.surface,
-      systemNavigationBarIconBrightness: colors.brightness == Brightness.light
-          ? Brightness.dark
-          : Brightness.light,
+      systemNavigationBarIconBrightness:
+          colors.brightness == Brightness.light
+              ? Brightness.dark
+              : Brightness.light,
     );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: systemUiOverlayStyle,
       child: Scaffold(
         backgroundColor: colors.surface,
-        body: BlocListener<ApiAuthBloc, ApiAuthState>(
+        body: BlocListener<AuthBloc, AuthState>(
           listener: (context, state) {
-            if (state is ApiAuthFailure) {
+            if (state is AuthAuthenticated) {
               if (!mounted) return;
               ScaffoldMessenger.of(context)
                 ..hideCurrentSnackBar()
                 ..showSnackBar(
                   SnackBar(
-                    content: Text(state.error),
+                    content: Text('Registrazione effettuata con successo!'),
+                    backgroundColor: colors.primary,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                );
+              context.go('/home');
+            }
+            if (state is AuthError) {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
                     backgroundColor: colors.error,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
@@ -94,7 +112,8 @@ class _RegisterForm extends StatefulWidget {
   State<_RegisterForm> createState() => _RegisterFormState();
 }
 
-class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMixin {
+class _RegisterFormState extends State<_RegisterForm>
+    with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _usernameController;
   late final TextEditingController _emailController;
@@ -137,21 +156,19 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeAnimationController,
-      curve: Curves.easeOutCubic,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _fadeAnimationController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.95,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _scaleAnimationController,
-      curve: Curves.easeOutBack,
-    ));
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _scaleAnimationController,
+        curve: Curves.easeOutBack,
+      ),
+    );
   }
 
   @override
@@ -169,13 +186,13 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
     HapticFeedback.lightImpact();
     FocusScope.of(context).unfocus();
     if (_formKey.currentState!.validate()) {
-      context.read<ApiAuthBloc>().add(
-            ApiAuthRegisterRequested(
-              username: _usernameController.text.trim(),
-              email: _emailController.text.trim(),
-              password: _passwordController.text,
-            ),
-          );
+      context.read<AuthBloc>().add(
+        AuthRegisterRequested(
+          username: _usernameController.text,
+          email: _emailController.text,
+          password: _passwordController.text,
+        ),
+      );
     }
   }
 
@@ -184,7 +201,7 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
     final ColorScheme colors = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
     final Size size = MediaQuery.of(context).size;
-    final isLoading = context.watch<ApiAuthBloc>().state is ApiAuthLoading;
+    final isLoading = context.watch<AuthBloc>().state is AuthLoading;
 
     if (_showShimmer) {
       return const RegisterShimmerPage();
@@ -210,7 +227,6 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-
                         Container(
                           margin: const EdgeInsets.only(bottom: 48),
                           decoration: BoxDecoration(
@@ -257,7 +273,6 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                         ),
                         const SizedBox(height: 48),
 
-
                         Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
@@ -271,7 +286,9 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                           ),
                           child: TextFormField(
                             controller: _usernameController,
-                            style: textTheme.bodyLarge?.copyWith(color: colors.onSurface),
+                            style: textTheme.bodyLarge?.copyWith(
+                              color: colors.onSurface,
+                            ),
                             decoration: InputDecoration(
                               labelText: 'Username',
                               hintText: 'Choose a unique username',
@@ -289,11 +306,17 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: colors.primary, width: 2.0),
+                                borderSide: BorderSide(
+                                  color: colors.primary,
+                                  width: 2.0,
+                                ),
                               ),
                               errorBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: colors.error, width: 2.0),
+                                borderSide: BorderSide(
+                                  color: colors.error,
+                                  width: 2.0,
+                                ),
                               ),
                               filled: true,
                               fillColor: colors.surface,
@@ -330,7 +353,9 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                           ),
                           child: TextFormField(
                             controller: _emailController,
-                            style: textTheme.bodyLarge?.copyWith(color: colors.onSurface),
+                            style: textTheme.bodyLarge?.copyWith(
+                              color: colors.onSurface,
+                            ),
                             decoration: InputDecoration(
                               labelText: 'Email',
                               hintText: 'Enter your email address',
@@ -348,11 +373,17 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: colors.primary, width: 2.0),
+                                borderSide: BorderSide(
+                                  color: colors.primary,
+                                  width: 2.0,
+                                ),
                               ),
                               errorBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: colors.error, width: 2.0),
+                                borderSide: BorderSide(
+                                  color: colors.error,
+                                  width: 2.0,
+                                ),
                               ),
                               filled: true,
                               fillColor: colors.surface,
@@ -367,7 +398,9 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                               if (value == null || value.isEmpty) {
                                 return 'Please enter your email';
                               }
-                              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                              if (!RegExp(
+                                r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                              ).hasMatch(value)) {
                                 return 'Please enter a valid email address';
                               }
                               return null;
@@ -389,7 +422,9 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                           ),
                           child: TextFormField(
                             controller: _passwordController,
-                            style: textTheme.bodyLarge?.copyWith(color: colors.onSurface),
+                            style: textTheme.bodyLarge?.copyWith(
+                              color: colors.onSurface,
+                            ),
                             decoration: InputDecoration(
                               labelText: 'Password',
                               hintText: 'Create a strong password',
@@ -407,11 +442,17 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: colors.primary, width: 2.0),
+                                borderSide: BorderSide(
+                                  color: colors.primary,
+                                  width: 2.0,
+                                ),
                               ),
                               errorBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: colors.error, width: 2.0),
+                                borderSide: BorderSide(
+                                  color: colors.error,
+                                  width: 2.0,
+                                ),
                               ),
                               filled: true,
                               fillColor: colors.surface,
@@ -448,7 +489,9 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                           ),
                           child: TextFormField(
                             controller: _confirmPasswordController,
-                            style: textTheme.bodyLarge?.copyWith(color: colors.onSurface),
+                            style: textTheme.bodyLarge?.copyWith(
+                              color: colors.onSurface,
+                            ),
                             decoration: InputDecoration(
                               labelText: 'Confirm Password',
                               hintText: 'Confirm your password',
@@ -466,11 +509,17 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: colors.primary, width: 2.0),
+                                borderSide: BorderSide(
+                                  color: colors.primary,
+                                  width: 2.0,
+                                ),
                               ),
                               errorBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: colors.error, width: 2.0),
+                                borderSide: BorderSide(
+                                  color: colors.error,
+                                  width: 2.0,
+                                ),
                               ),
                               filled: true,
                               fillColor: colors.surface,
@@ -508,32 +557,36 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               elevation: 2,
-                              shadowColor: colors.primary.withValues(alpha: 0.3),
+                              shadowColor: colors.primary.withValues(
+                                alpha: 0.3,
+                              ),
                               textStyle: textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
                                 letterSpacing: 0.5,
                               ),
                             ),
-                            child: isLoading
-                                ? SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: colors.onPrimary,
-                                    ),
-                                  )
-                                : const Text('Create Account'),
+                            child:
+                                isLoading
+                                    ? SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        color: colors.onPrimary,
+                                      ),
+                                    )
+                                    : const Text('Create Account'),
                           ),
                         ),
 
                         const SizedBox(height: 32),
 
-
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: colors.surfaceContainerHighest.withValues(alpha: 0.3),
+                            color: colors.surfaceContainerHighest.withValues(
+                              alpha: 0.3,
+                            ),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Row(
@@ -542,7 +595,9 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                               Text(
                                 "Already have an account?",
                                 style: textTheme.bodyMedium?.copyWith(
-                                  color: colors.onSurface.withValues(alpha: 0.7),
+                                  color: colors.onSurface.withValues(
+                                    alpha: 0.7,
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -553,7 +608,9 @@ class _RegisterFormState extends State<_RegisterForm> with TickerProviderStateMi
                                 },
                                 style: TextButton.styleFrom(
                                   foregroundColor: colors.primary,
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
                                   textStyle: textTheme.bodyMedium?.copyWith(
                                     fontWeight: FontWeight.w600,
                                   ),

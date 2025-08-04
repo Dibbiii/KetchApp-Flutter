@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 
-
 import './page_one_view.dart';
 import './page_two_view.dart';
 import './page_three_view.dart';
@@ -15,7 +14,8 @@ class WelcomePage extends StatefulWidget {
   _WelcomePageState createState() => _WelcomePageState();
 }
 
-class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin {
+class _WelcomePageState extends State<WelcomePage>
+    with TickerProviderStateMixin {
   final _introKey = GlobalKey<IntroductionScreenState>();
 
   late AnimationController _fadeAnimationController;
@@ -46,21 +46,19 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeAnimationController,
-      curve: Curves.easeOutCubic,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _fadeAnimationController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.95,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _scaleAnimationController,
-      curve: Curves.easeOutBack,
-    ));
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _scaleAnimationController,
+        curve: Curves.easeOutBack,
+      ),
+    );
   }
 
   @override
@@ -76,14 +74,8 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     final textTheme = Theme.of(context).textTheme;
 
     final List<PageViewModel> pages = [
-      buildPageOneViewModel(
-        colors: colors,
-        primaryAccentColor: colors.primary,
-      ),
-      buildPageTwoViewModel(
-        colors: colors,
-        primaryAccentColor: colors.primary,
-      ),
+      buildPageOneViewModel(colors: colors, primaryAccentColor: colors.primary),
+      buildPageTwoViewModel(colors: colors, primaryAccentColor: colors.primary),
       buildPageThreeViewModel(
         colors: colors,
         primaryAccentColor: colors.primary,
@@ -97,14 +89,16 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
 
     final SystemUiOverlayStyle systemUiOverlayStyle = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: colors.brightness == Brightness.light
-          ? Brightness.dark
-          : Brightness.light,
+      statusBarIconBrightness:
+          colors.brightness == Brightness.light
+              ? Brightness.dark
+              : Brightness.light,
       statusBarBrightness: colors.brightness,
       systemNavigationBarColor: colors.surface,
-      systemNavigationBarIconBrightness: colors.brightness == Brightness.light
-          ? Brightness.dark
-          : Brightness.light,
+      systemNavigationBarIconBrightness:
+          colors.brightness == Brightness.light
+              ? Brightness.dark
+              : Brightness.light,
     );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -141,7 +135,9 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
+                        color: colors.surfaceContainerHighest.withValues(
+                          alpha: 0.5,
+                        ),
                         borderRadius: BorderRadius.circular(25),
                         border: Border.all(
                           color: colors.outline.withValues(alpha: 0.3),
@@ -195,13 +191,10 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                           ),
                         ],
                       ),
-                      child: Text(
-                        'Start',
-                        style: textTheme.titleMedium?.copyWith(
-                          color: colors.onPrimary,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5,
-                        ),
+                      child: Icon(
+                        Icons.arrow_forward_rounded,
+                        color: colors.onPrimary,
+                        size: 24,
                       ),
                     ),
                     dotsDecorator: DotsDecorator(
@@ -220,7 +213,12 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                     isProgressTap: false,
                     freeze: false,
                     bodyPadding: EdgeInsets.zero,
-                    controlsPadding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 48.0),
+                    controlsPadding: const EdgeInsets.fromLTRB(
+                      24.0,
+                      24.0,
+                      24.0,
+                      48.0,
+                    ),
                     globalBackgroundColor: Colors.transparent,
                   ),
                 ),

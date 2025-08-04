@@ -3,12 +3,10 @@ import 'package:flutter/material.dart';
 class CalendarTimeDialog extends StatefulWidget {
   final String initialStart;
   final String initialEnd;
-  final bool isGoogleCalendarEvent;
 
   const CalendarTimeDialog({
     this.initialStart = '',
     this.initialEnd = '',
-    required this.isGoogleCalendarEvent,
     super.key,
   });
 

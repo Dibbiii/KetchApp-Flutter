@@ -31,7 +31,7 @@ class _PlanCreationLoadingPageState extends State<PlanCreationLoadingPage> {
     try {
       await ApiService().createPlan(widget.plan);
       final api = ApiService();
-      final tomatoes = await api.getTodaysTomatoes(widget.plan.userUUID);
+      final tomatoes = await api.getTodaysTomatoes();
       if (mounted && tomatoes.isNotEmpty) {
         context.go('/timer/${tomatoes.first.id}');
       } else if (mounted) {

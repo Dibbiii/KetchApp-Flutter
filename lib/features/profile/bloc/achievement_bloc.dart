@@ -10,20 +10,21 @@ class AchievementBloc extends Bloc<AchievementEvent, AchievementState> {
   final AuthBloc _authBloc;
 
   AchievementBloc({required ApiService apiService, required AuthBloc authBloc})
-      : _apiService = apiService,
-        _authBloc = authBloc,
-        super(AchievementInitial()) {
+    : _apiService = apiService,
+      _authBloc = authBloc,
+      super(AchievementInitial()) {
     on<LoadAchievements>(_onLoadAchievements);
   }
 
   Future<void> _onLoadAchievements(
-      LoadAchievements event, Emitter<AchievementState> emit) async {
+    LoadAchievements event,
+    Emitter<AchievementState> emit,
+  ) async {
     final authState = _authBloc.state;
-    if (authState is Authenticated) {
+    if (authState is AuthAuthenticated) {
       emit(AchievementLoading());
       try {
-        final achievementsData = await _apiService.getAchievements(authState.userUuid);
-        final achievements = achievementsData.map((json) => Achievement.fromJson(json)).toList();
+        final achievements = await _apiService.getUserAchievements();
         emit(AchievementLoaded(achievements));
       } catch (e) {
         emit(AchievementError(e.toString()));

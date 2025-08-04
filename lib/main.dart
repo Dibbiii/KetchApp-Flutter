@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:ketchapp_flutter/features/auth/bloc/api_auth_bloc.dart';
 import 'package:ketchapp_flutter/features/profile/bloc/api_profile_bloc.dart';
-import 'package:ketchapp_flutter/services/api_auth_service.dart';
-import 'firebase_options.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:provider/provider.dart';
 import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
@@ -20,39 +15,25 @@ Future<void> main() async {
   usePathUrlStrategy();
 
   await initializeDateFormatting('it_IT', null);
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await NotificationService.initialize();
 
   final apiService = ApiService();
-  await apiService.loadToken(); // Assicurati che il token venga caricato all'avvio
+  await apiService
+      .loadToken(); // Assicurati che il token venga caricato all'avvio
 
   runApp(
     MultiProvider(
       providers: [
-        Provider<ApiService>(
-          create: (_) => apiService,
-        ),
-        Provider<ApiAuthService>(
-          create: (context) => ApiAuthService(context.read<ApiService>()),
-        ),
+        Provider<ApiService>(create: (_) => apiService),
         BlocProvider<AuthBloc>(
-          create: (context) => AuthBloc(
-            firebaseAuth: FirebaseAuth.instance,
-            apiService: context.read<ApiService>(),
-          ),
-        ),
-        BlocProvider<ApiAuthBloc>(
-          create: (context) => ApiAuthBloc(
-            apiAuthService: context.read<ApiAuthService>(),
-            apiService: context.read<ApiService>(),
-          )..add(ApiAuthCheckRequested()), // Controlla lo stato dell'auth all'avvio
+          create: (context) => AuthBloc(apiService: context.read<ApiService>()),
         ),
         BlocProvider<ApiProfileBloc>(
-          create: (context) => ApiProfileBloc(
-            apiService: context.read<ApiService>(),
-            apiAuthBloc: context.read<ApiAuthBloc>(),
-            imagePicker: ImagePicker(),
-          ),
+          create:
+              (context) => ApiProfileBloc(
+                apiService: context.read<ApiService>(),
+                imagePicker: ImagePicker(),
+              ),
         ),
       ],
       child: const MyApp(),
