@@ -511,7 +511,6 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
     );
   }
 
-
   Future<void> _toggleWhiteNoise(bool enable) async {
     if (enable) {
       _audioPlayer ??= AudioPlayer();
@@ -531,7 +530,6 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
       await _audioPlayer?.stop();
     }
   }
-
 
   int _getPomodoroDuration() {
     return 25 * 60;
@@ -563,10 +561,10 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
       create: (context) {
         final apiService = Provider.of<ApiService>(context, listen: false);
         final authState = context.read<AuthBloc>().state;
-        if (authState is Authenticated) {
+        if (authState is AuthAuthenticated) {
           final bloc = TimerBloc(
             apiService: apiService,
-            userUUID: authState.userUuid,
+            userUUID: authState.id,
             tomatoId: widget.tomatoes[_currentTomatoIndex].id,
           );
           bloc.add(
@@ -648,7 +646,6 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
   }
 
   void _handleTimerStateChanges(BuildContext context, TimerState state) {
-
     switch (state.runtimeType) {
       case const (WaitingNextTomato):
         _handleNextTomato(state as WaitingNextTomato);
@@ -1199,9 +1196,7 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
                                             ? colors.tertiaryContainer
                                             : colors.primaryContainer)
                                         .withValues(alpha: 0.3),
-                                    borderRadius: BorderRadius.circular(
-                                      3,
-                                    ),
+                                    borderRadius: BorderRadius.circular(3),
                                   ),
                                   child: Text(
                                     'remaining',
@@ -1257,7 +1252,6 @@ class _TimerViewState extends State<TimerView> with TickerProviderStateMixin {
     ColorScheme colors,
     ThemeData theme,
   ) {
-
     if (state is WaitingFirstTomato ||
         state is WaitingNextTomato ||
         state is TomatoTimerReady) {

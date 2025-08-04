@@ -15,24 +15,14 @@ class AuthRegisterRequested extends AuthEvent {
   final String email;
   final String password;
 
-  AuthRegisterRequested({required this.username, required this.email, required this.password});
+  AuthRegisterRequested({
+    required this.username,
+    required this.email,
+    required this.password,
+  });
 }
 
-class AuthLogoutRequested extends AuthEvent {
-  final String? token;
-  AuthLogoutRequested({this.token});
-
-}
-
-class AuthGoogleSignInRequested extends AuthEvent {
-  final String? token;
-  AuthGoogleSignInRequested({this.token});
-} 
-
-class _AuthUserChanged extends AuthEvent {
-  final User? user;
-  _AuthUserChanged(this.user);
-}
+class AuthLogoutRequested extends AuthEvent {}
 
 class AuthPasswordResetRequested extends AuthEvent {
   final String email;

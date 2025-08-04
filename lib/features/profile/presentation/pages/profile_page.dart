@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:ketchapp_flutter/features/auth/bloc/api_auth_bloc.dart';
+import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
 import 'package:ketchapp_flutter/features/profile/bloc/api_profile_bloc.dart';
 import 'package:ketchapp_flutter/features/profile/bloc/api_profile_event.dart';
 import 'package:ketchapp_flutter/features/profile/bloc/api_profile_state.dart';
@@ -55,21 +55,19 @@ class _ProfilePageState extends State<ProfilePage>
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeAnimationController,
-      curve: Curves.easeOutCubic,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _fadeAnimationController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.95,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _scaleAnimationController,
-      curve: Curves.easeOutBack,
-    ));
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _scaleAnimationController,
+        curve: Curves.easeOutBack,
+      ),
+    );
   }
 
   @override
@@ -82,7 +80,8 @@ class _ProfilePageState extends State<ProfilePage>
 
   void _dispatchPickImage(ImageSource source) async {
     final currentBlocState = context.read<ApiProfileBloc>().state;
-    if (currentBlocState is ApiProfileLoaded && currentBlocState.isUploadingImage) {
+    if (currentBlocState is ApiProfileLoaded &&
+        currentBlocState.isUploadingImage) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
@@ -102,7 +101,9 @@ class _ProfilePageState extends State<ProfilePage>
           ..hideCurrentSnackBar()
           ..showSnackBar(
             SnackBar(
-              content: const Text('Permesso fotocamera negato in modo permanente. Abilitalo dalle impostazioni.'),
+              content: const Text(
+                'Permesso fotocamera negato in modo permanente. Abilitalo dalle impostazioni.',
+              ),
               action: SnackBarAction(
                 label: 'Impostazioni',
                 onPressed: () => openAppSettings(),
@@ -132,7 +133,9 @@ class _ProfilePageState extends State<ProfilePage>
           ..hideCurrentSnackBar()
           ..showSnackBar(
             SnackBar(
-              content: const Text('Permesso libreria foto negato in modo permanente. Abilitalo dalle impostazioni.'),
+              content: const Text(
+                'Permesso libreria foto negato in modo permanente. Abilitalo dalle impostazioni.',
+              ),
               action: SnackBarAction(
                 label: 'Impostazioni',
                 onPressed: () => openAppSettings(),
@@ -155,7 +158,8 @@ class _ProfilePageState extends State<ProfilePage>
 
   void _dispatchDeleteProfileImage() {
     final currentBlocState = context.read<ApiProfileBloc>().state;
-    if (currentBlocState is ApiProfileLoaded && currentBlocState.isUploadingImage) {
+    if (currentBlocState is ApiProfileLoaded &&
+        currentBlocState.isUploadingImage) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
@@ -173,14 +177,16 @@ class _ProfilePageState extends State<ProfilePage>
 
     final SystemUiOverlayStyle systemUiOverlayStyle = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: colors.brightness == Brightness.light
-          ? Brightness.dark
-          : Brightness.light,
+      statusBarIconBrightness:
+          colors.brightness == Brightness.light
+              ? Brightness.dark
+              : Brightness.light,
       statusBarBrightness: colors.brightness,
       systemNavigationBarColor: colors.surface,
-      systemNavigationBarIconBrightness: colors.brightness == Brightness.light
-          ? Brightness.dark
-          : Brightness.light,
+      systemNavigationBarIconBrightness:
+          colors.brightness == Brightness.light
+              ? Brightness.dark
+              : Brightness.light,
     );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -202,12 +208,19 @@ class _ProfilePageState extends State<ProfilePage>
             listener: _handleProfileStateChanges,
             child: BlocBuilder<ApiProfileBloc, ApiProfileState>(
               builder: (context, state) {
-                if (_showShimmer || state is ApiProfileLoading || state is ApiProfileInitial) {
+                if (_showShimmer ||
+                    state is ApiProfileLoading ||
+                    state is ApiProfileInitial) {
                   return const ProfileShrimmerPage();
                 }
 
                 if (state is ApiProfileError) {
-                  return _buildErrorState(context, state.message, colors, textTheme);
+                  return _buildErrorState(
+                    context,
+                    state.message,
+                    colors,
+                    textTheme,
+                  );
                 }
 
                 if (state is ApiProfileLoaded) {
@@ -229,25 +242,37 @@ class _ProfilePageState extends State<ProfilePage>
     if (state is ApiProfileUpdateSuccess) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: Text(state.message),
-          backgroundColor: colors.primary,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ));
+        ..showSnackBar(
+          SnackBar(
+            content: Text(state.message),
+            backgroundColor: colors.primary,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
     } else if (state is ApiProfileError) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: Text(state.message),
-          backgroundColor: colors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ));
+        ..showSnackBar(
+          SnackBar(
+            content: Text(state.message),
+            backgroundColor: colors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
     }
   }
 
-  Widget _buildInitializingState(BuildContext context, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildInitializingState(
+    BuildContext context,
+    ColorScheme colors,
+    TextTheme textTheme,
+  ) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -283,7 +308,12 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  Widget _buildErrorState(BuildContext context, String error, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildErrorState(
+    BuildContext context,
+    String error,
+    ColorScheme colors,
+    TextTheme textTheme,
+  ) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -337,11 +367,15 @@ class _ProfilePageState extends State<ProfilePage>
             FilledButton.tonalIcon(
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Try Again'),
-              onPressed: () => context.read<ApiProfileBloc>().add(LoadApiProfile()),
+              onPressed:
+                  () => context.read<ApiProfileBloc>().add(LoadApiProfile()),
               style: FilledButton.styleFrom(
                 backgroundColor: colors.primaryContainer,
                 foregroundColor: colors.onPrimaryContainer,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -353,7 +387,12 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  Widget _buildLoadedState(BuildContext context, ApiProfileLoaded state, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildLoadedState(
+    BuildContext context,
+    ApiProfileLoaded state,
+    ColorScheme colors,
+    TextTheme textTheme,
+  ) {
     return SafeArea(
       child: FadeTransition(
         opacity: _fadeAnimation,
@@ -370,7 +409,12 @@ class _ProfilePageState extends State<ProfilePage>
                     const SizedBox(height: 24),
                     _buildProfileInfoSection(context, state, colors, textTheme),
                     const SizedBox(height: 24),
-                    _buildAchievementsSection(context, state, colors, textTheme),
+                    _buildAchievementsSection(
+                      context,
+                      state,
+                      colors,
+                      textTheme,
+                    ),
                     const SizedBox(height: 24),
                     _buildLogoutSection(context, colors, textTheme),
                     const SizedBox(height: 32),
@@ -384,7 +428,12 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  Widget _buildProfileHeader(BuildContext context, ApiProfileLoaded state, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildProfileHeader(
+    BuildContext context,
+    ApiProfileLoaded state,
+    ColorScheme colors,
+    TextTheme textTheme,
+  ) {
     return Column(
       children: [
         Container(
@@ -480,10 +529,7 @@ class _ProfilePageState extends State<ProfilePage>
             decoration: BoxDecoration(
               color: colors.primaryContainer,
               shape: BoxShape.circle,
-              border: Border.all(
-                color: colors.surface,
-                width: 2,
-              ),
+              border: Border.all(color: colors.surface, width: 2),
             ),
             child: PopupMenuButton<String>(
               icon: Icon(
@@ -504,36 +550,46 @@ class _ProfilePageState extends State<ProfilePage>
                   _dispatchDeleteProfileImage();
                 }
               },
-              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                PopupMenuItem<String>(
-                  value: 'take_photo',
-                  child: ListTile(
-                    leading: Icon(Icons.photo_camera_rounded, color: colors.primary),
-                    title: const Text('Take Photo'),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-                PopupMenuItem<String>(
-                  value: 'library_photo',
-                  child: ListTile(
-                    leading: Icon(Icons.photo_library_rounded, color: colors.primary),
-                    title: const Text('Photo Library'),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-                if (photoUrl != null || state.localPreviewFile != null)
-                  PopupMenuItem<String>(
-                    value: 'delete_photo',
-                    child: ListTile(
-                      leading: Icon(Icons.delete_rounded, color: colors.error),
-                      title: Text(
-                        'Delete Photo',
-                        style: TextStyle(color: colors.error),
+              itemBuilder:
+                  (BuildContext context) => <PopupMenuEntry<String>>[
+                    PopupMenuItem<String>(
+                      value: 'take_photo',
+                      child: ListTile(
+                        leading: Icon(
+                          Icons.photo_camera_rounded,
+                          color: colors.primary,
+                        ),
+                        title: const Text('Take Photo'),
+                        contentPadding: EdgeInsets.zero,
                       ),
-                      contentPadding: EdgeInsets.zero,
                     ),
-                  ),
-              ],
+                    PopupMenuItem<String>(
+                      value: 'library_photo',
+                      child: ListTile(
+                        leading: Icon(
+                          Icons.photo_library_rounded,
+                          color: colors.primary,
+                        ),
+                        title: const Text('Photo Library'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    if (photoUrl != null || state.localPreviewFile != null)
+                      PopupMenuItem<String>(
+                        value: 'delete_photo',
+                        child: ListTile(
+                          leading: Icon(
+                            Icons.delete_rounded,
+                            color: colors.error,
+                          ),
+                          title: Text(
+                            'Delete Photo',
+                            style: TextStyle(color: colors.error),
+                          ),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                  ],
             ),
           ),
         ),
@@ -541,7 +597,12 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  Widget _buildProfileInfoSection(BuildContext context, ApiProfileLoaded state, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildProfileInfoSection(
+    BuildContext context,
+    ApiProfileLoaded state,
+    ColorScheme colors,
+    TextTheme textTheme,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
@@ -604,7 +665,9 @@ class _ProfilePageState extends State<ProfilePage>
                         Text(
                           "Your account details",
                           style: textTheme.bodySmall?.copyWith(
-                            color: colors.onPrimaryContainer.withAlpha((255 * 0.8).round()),
+                            color: colors.onPrimaryContainer.withAlpha(
+                              (255 * 0.8).round(),
+                            ),
                           ),
                         ),
                       ],
@@ -627,7 +690,10 @@ class _ProfilePageState extends State<ProfilePage>
                   const SizedBox(height: 12),
                   _buildInfoField(
                     'Email',
-                    state.userData['email'] ?? 'N/A',
+                    state.userData['email'] != null &&
+                            state.userData['email'].toString().isNotEmpty
+                        ? state.userData['email']
+                        : 'N/A',
                     Icons.email_outlined,
                     colors,
                     textTheme,
@@ -641,7 +707,13 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  Widget _buildInfoField(String label, String value, IconData icon, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildInfoField(
+    String label,
+    String value,
+    IconData icon,
+    ColorScheme colors,
+    TextTheme textTheme,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceContainerHigh.withAlpha((255 * 0.6).round()),
@@ -658,11 +730,7 @@ class _ProfilePageState extends State<ProfilePage>
             color: colors.primaryContainer.withAlpha((255 * 0.8).round()),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(
-            icon,
-            color: colors.primary,
-            size: 20,
-          ),
+          child: Icon(icon, color: colors.primary, size: 20),
         ),
         title: Text(
           label,
@@ -678,16 +746,22 @@ class _ProfilePageState extends State<ProfilePage>
             fontWeight: FontWeight.w600,
           ),
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
 
-  Widget _buildAchievementsSection(BuildContext context, ApiProfileLoaded state, ColorScheme colors, TextTheme textTheme) {
-    final completedCount = state.completedAchievementTitles?.length ?? 0;
-    final totalCount = state.allAchievements?.length ?? 0;
+  Widget _buildAchievementsSection(
+    BuildContext context,
+    ApiProfileLoaded state,
+    ColorScheme colors,
+    TextTheme textTheme,
+  ) {
+    // Usa solo gli achievements dell'utente
+    final achievements = state.allAchievements ?? [];
+    final completedCount =
+        achievements.where((a) => a.completed == true).length;
+    final totalCount = achievements.length;
 
     return Container(
       decoration: BoxDecoration(
@@ -775,14 +849,19 @@ class _ProfilePageState extends State<ProfilePage>
                   ),
                   const SizedBox(width: 10),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
                           colors.primaryContainer,
-                          colors.secondaryContainer.withAlpha((255 * 0.8).round()),
+                          colors.secondaryContainer.withAlpha(
+                            (255 * 0.8).round(),
+                          ),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(12),
@@ -810,7 +889,9 @@ class _ProfilePageState extends State<ProfilePage>
                         Text(
                           '/$totalCount',
                           style: textTheme.titleMedium?.copyWith(
-                            color: colors.onPrimaryContainer.withAlpha((255 * 0.8).round()),
+                            color: colors.onPrimaryContainer.withAlpha(
+                              (255 * 0.8).round(),
+                            ),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -824,11 +905,7 @@ class _ProfilePageState extends State<ProfilePage>
               height: 5 * 80.0,
               child: Stack(
                 children: [
-                  _buildAchievementsGrid(
-                    state,
-                    colors,
-                    textTheme,
-                  ),
+                  _buildAchievementsGrid(state, colors, textTheme),
 
                   Positioned.fill(
                     child: IgnorePointer(
@@ -855,7 +932,11 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  Widget _buildAchievementsGrid(ApiProfileLoaded state, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildAchievementsGrid(
+    ApiProfileLoaded state,
+    ColorScheme colors,
+    TextTheme textTheme,
+  ) {
     if (state.achievementsLoading) {
       return Container(
         padding: const EdgeInsets.all(32),
@@ -923,7 +1004,8 @@ class _ProfilePageState extends State<ProfilePage>
         ),
       );
     }
-    if (state.allAchievements == null) {
+    final achievements = state.allAchievements ?? [];
+    if (achievements.isEmpty) {
       return const Center(child: Text("No achievements available."));
     }
     return Padding(
@@ -943,136 +1025,147 @@ class _ProfilePageState extends State<ProfilePage>
             mainAxisSpacing: 16,
             childAspectRatio: 1.2,
           ),
-          itemCount: state.allAchievements!.length,
+          itemCount: achievements.length,
           itemBuilder: (context, index) {
-            final achievement = state.allAchievements![index];
-            final isCompleted = state.completedAchievementTitles?.contains(achievement['title']) ?? false;
-            return _buildAchievementCard(achievement, isCompleted, colors, textTheme);
+            final achievement = achievements[index];
+            final isCompleted = achievement.completed == true;
+            return _buildAchievementCard(
+              achievement,
+              isCompleted,
+              colors,
+              textTheme,
+            );
           },
         ),
       ),
     );
+    // Fallback return per evitare errori di return mancante
+    return const SizedBox.shrink();
   }
+}
 
-  Widget _buildAchievementCard(dynamic achievement, bool isCompleted, ColorScheme colors, TextTheme textTheme) {
-    final description = achievement['description'] ?? 'No description';
+Widget _buildAchievementCard(
+  dynamic achievement,
+  bool isCompleted,
+  ColorScheme colors,
+  TextTheme textTheme,
+) {
+  final description = achievement.description ?? 'No description';
 
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isCompleted
-              ? [
+  return Container(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors:
+            isCompleted
+                ? [
                   colors.primaryContainer.withAlpha((255 * 0.9).round()),
                   colors.secondaryContainer.withAlpha((255 * 0.7).round()),
                 ]
-              : [
+                : [
                   colors.surfaceContainerHigh.withAlpha((255 * 0.8).round()),
                   colors.surfaceContainer.withAlpha((255 * 0.6).round()),
                 ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isCompleted
-              ? colors.primary.withAlpha((255 * 0.4).round())
-              : colors.outline.withAlpha((255 * 0.15).round()),
-          width: isCompleted ? 2 : 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isCompleted
-                ? colors.primary.withAlpha((255 * 0.15).round())
-                : colors.shadow.withAlpha((255 * 0.05).round()),
-            blurRadius: isCompleted ? 8 : 4,
-            offset: const Offset(0, 3),
-          ),
-        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    description,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: isCompleted ? colors.onPrimaryContainer : colors.onSurfaceVariant,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      height: 1.2,
-                    ),
-                    textAlign: TextAlign.left,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(
+        color:
+            isCompleted
+                ? colors.primary.withAlpha((255 * 0.4).round())
+                : colors.outline.withAlpha((255 * 0.15).round()),
+        width: isCompleted ? 2 : 1,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color:
+              isCompleted
+                  ? colors.primary.withAlpha((255 * 0.15).round())
+                  : colors.shadow.withAlpha((255 * 0.05).round()),
+          blurRadius: isCompleted ? 8 : 4,
+          offset: const Offset(0, 3),
+        ),
+      ],
+    ),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  description,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color:
+                        isCompleted
+                            ? colors.onPrimaryContainer
+                            : colors.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    height: 1.2,
                   ),
-                ],
-              ),
+                  textAlign: TextAlign.left,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-            if (isCompleted)
-              Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        colors.primary,
-                        colors.secondary,
-                      ],
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: colors.primary.withAlpha((255 * 0.3).round()),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                    border: Border.all(
-                      color: colors.secondary,
-                      width: 2.5,
-                    ),
+          ),
+          if (isCompleted)
+            Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [colors.primary, colors.secondary],
                   ),
-                  child: Icon(
-                    Icons.emoji_events_rounded,
-                    color: colors.onPrimary,
-                    size: 20,
-                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.primary.withAlpha((255 * 0.3).round()),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                  border: Border.all(color: colors.secondary, width: 2.5),
+                ),
+                child: Icon(
+                  Icons.emoji_events_rounded,
+                  color: colors.onPrimary,
+                  size: 20,
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
-
-  Widget _buildLogoutSection(BuildContext context, ColorScheme colors, TextTheme textTheme) {
-    return FilledButton.icon(
-      icon: const Icon(Icons.logout_rounded),
-      label: const Text('Logout'),
-      onPressed: () {
-        context.read<ApiAuthBloc>().add(ApiAuthLogoutRequested());
-        context.go('/');
-      },
-      style: FilledButton.styleFrom(
-        backgroundColor: colors.error,
-        foregroundColor: colors.onError,
-        minimumSize: const Size.fromHeight(52),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.0),
-        ),
-        textStyle: textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
+Widget _buildLogoutSection(
+  BuildContext context,
+  ColorScheme colors,
+  TextTheme textTheme,
+) {
+  return FilledButton.icon(
+    icon: const Icon(Icons.logout_rounded),
+    label: const Text('Logout'),
+    onPressed: () {
+      context.read<AuthBloc>().add(AuthLogoutRequested());
+      context.go('/');
+    },
+    style: FilledButton.styleFrom(
+      backgroundColor: colors.error,
+      foregroundColor: colors.onError,
+      minimumSize: const Size.fromHeight(52),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+      textStyle: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+    ),
+  );
 }

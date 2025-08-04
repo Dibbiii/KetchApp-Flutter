@@ -6,15 +6,21 @@ abstract class AuthState {
 }
 
 class AuthInitial extends AuthState {}
+
 class AuthLoading extends AuthState {}
+
 class AuthVerifying extends AuthState {}
-class Authenticated extends AuthState {
-  final User user;
-  final String userUuid;
-  final bool isGoogleSignIn;
-  const Authenticated(this.user, this.userUuid, {this.isGoogleSignIn = false});
+
+class AuthAuthenticated extends AuthState {
+  final String id;
+  final String username;
+  final String email;
+  final String token;
+  const AuthAuthenticated(this.id, this.username, this.email, this.token);
 }
+
 class Unauthenticated extends AuthState {}
+
 class AuthError extends AuthState {
   final String message;
   const AuthError(this.message);

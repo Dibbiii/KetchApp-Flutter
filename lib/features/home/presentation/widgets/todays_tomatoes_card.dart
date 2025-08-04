@@ -15,7 +15,7 @@ class TodaysTomatoesCard extends StatefulWidget {
 
 class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
     with TickerProviderStateMixin {
-  late Future<List<Tomato>> _tomatoesFuture;
+  late Future<List<Tomato>> _tomatoesFuture = Future.value([]);
   late AnimationController _pulseAnimationController;
   late AnimationController _slideAnimationController;
   late Animation<double> _pulseAnimation;
@@ -28,11 +28,21 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
     super.initState();
     _initializeAnimations();
     _scrollController = ScrollController();
+    _loadTomatoes();
+  }
+
+  Future<void> _loadTomatoes() async {
     final authState = context.read<AuthBloc>().state;
-    if (authState is Authenticated) {
-      _tomatoesFuture = ApiService().getTodaysTomatoes(authState.userUuid);
+    final apiService = context.read<ApiService>();
+    if (authState is AuthAuthenticated) {
+      final tomatoes = await apiService.getTodaysTomatoes();
+      setState(() {
+        _tomatoesFuture = Future.value(tomatoes);
+      });
     } else {
-      _tomatoesFuture = Future.value([]);
+      setState(() {
+        _tomatoesFuture = Future.value([]);
+      });
     }
   }
 
@@ -46,29 +56,26 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
       vsync: this,
     );
 
-    _pulseAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.02,
-    ).animate(CurvedAnimation(
-      parent: _pulseAnimationController,
-      curve: Curves.easeInOut,
-    ));
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.02).animate(
+      CurvedAnimation(
+        parent: _pulseAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
 
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideAnimationController,
-      curve: Curves.easeOutCubic,
-    ));
+    ).animate(
+      CurvedAnimation(
+        parent: _slideAnimationController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _slideAnimationController,
-      curve: Curves.easeOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _slideAnimationController, curve: Curves.easeOut),
+    );
 
     _slideAnimationController.forward();
     _pulseAnimationController.repeat(reverse: true);
@@ -85,18 +92,16 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
-        if (state is Authenticated) {
+      listener: (context, state) async {
+        if (state is AuthAuthenticated) {
+          final apiService = context.read<ApiService>();
+          final tomatoes = await apiService.getTodaysTomatoes();
+          final uniqueSubjects = <String, Tomato>{};
+          for (final tomato in tomatoes) {
+            uniqueSubjects[tomato.subject] = tomato;
+          }
           setState(() {
-            _tomatoesFuture = ApiService()
-                .getTodaysTomatoes(state.userUuid)
-                .then((tomatoes) {
-              final uniqueSubjects = <String, Tomato>{};
-              for (final tomato in tomatoes) {
-                uniqueSubjects[tomato.subject] = tomato;
-              }
-              return uniqueSubjects.values.toList();
-            });
+            _tomatoesFuture = Future.value(uniqueSubjects.values.toList());
           });
           _slideAnimationController.reset();
           _slideAnimationController.forward();
@@ -141,9 +146,7 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
           ],
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: colors.outline.withValues(alpha: 0.1),
-        ),
+        border: Border.all(color: colors.outline.withValues(alpha: 0.1)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -218,9 +221,7 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
           ],
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: colors.error.withValues(alpha: 0.1),
-        ),
+        border: Border.all(color: colors.error.withValues(alpha: 0.1)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -265,9 +266,7 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
             decoration: BoxDecoration(
               color: colors.surfaceContainerHighest.withValues(alpha: 0.8),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: colors.outline.withValues(alpha: 0.1),
-              ),
+              border: Border.all(color: colors.outline.withValues(alpha: 0.1)),
             ),
             child: Text(
               'Check your connection and try again',
@@ -298,9 +297,7 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
           ],
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: colors.outline.withValues(alpha: 0.08),
-        ),
+        border: Border.all(color: colors.outline.withValues(alpha: 0.08)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -328,9 +325,7 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
             decoration: BoxDecoration(
               color: colors.surfaceContainerHighest.withValues(alpha: 0.8),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: colors.outline.withValues(alpha: 0.1),
-              ),
+              border: Border.all(color: colors.outline.withValues(alpha: 0.1)),
             ),
             child: Text(
               'Create your first focus session to boost productivity',
@@ -403,7 +398,12 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
     );
   }
 
-  Widget _buildTomatoCard(BuildContext context, Tomato tomato, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildTomatoCard(
+    BuildContext context,
+    Tomato tomato,
+    ColorScheme colors,
+    TextTheme textTheme,
+  ) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
@@ -485,9 +485,14 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
                       ),
                       const SizedBox(height: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
-                          color: colors.surfaceContainerHighest.withValues(alpha: 0.8),
+                          color: colors.surfaceContainerHighest.withValues(
+                            alpha: 0.8,
+                          ),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: colors.outline.withValues(alpha: 0.1),
@@ -503,7 +508,9 @@ class _TodaysTomatoesCardState extends State<TodaysTomatoesCard>
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              TimeOfDay.fromDateTime(tomato.startAt.toLocal()).format(context),
+                              TimeOfDay.fromDateTime(
+                                tomato.startAt.toLocal(),
+                              ).format(context),
                               style: textTheme.bodyMedium?.copyWith(
                                 color: colors.onSurfaceVariant,
                                 fontWeight: FontWeight.w600,

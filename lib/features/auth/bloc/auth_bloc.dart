@@ -1,227 +1,63 @@
-import 'dart:async';
 import 'package:bloc/bloc.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:googleapis/calendar/v3.dart' as cal;
 import 'package:ketchapp_flutter/services/api_service.dart';
 import 'package:meta/meta.dart';
-import '../../../services/api_exceptions.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
 
-const String webClientId = "1049541862968-7fa3abk4ja0794u5822ou6h9hem1j2go.apps.googleusercontent.com";
-
-const List<String> calendarScopes = <String>[
-  cal.CalendarApi.calendarScope,
-];
-
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final FirebaseAuth _firebaseAuth;
   final ApiService _apiService;
-  final GoogleSignIn _googleSignIn;
-  StreamSubscription<User?>? _userSubscription;
 
-  AuthBloc({
-    required FirebaseAuth firebaseAuth,
-    required ApiService apiService,
-  })  : _firebaseAuth = firebaseAuth,
-        _apiService = apiService,
-        _googleSignIn = GoogleSignIn(
-          clientId: kIsWeb ? webClientId : null,
-          scopes: calendarScopes,
-        ),
-        super(AuthInitial()) {
-    _userSubscription = _firebaseAuth.authStateChanges().listen((user) {
-      add(_AuthUserChanged(user));
-    });
-
-    on<_AuthUserChanged>((event, emit) async {
-      if (event.user != null) {
-        try {
-          final userUuid = await _apiService.getUserUUIDByFirebaseUid(event.user!.uid);
-          emit(Authenticated(event.user!, userUuid));
-        } catch (e) {
-          emit(AuthError(e.toString()));
-        }
-      } else {
-        emit(Unauthenticated());
-      }
-    });
-
+  AuthBloc({required ApiService apiService})
+    : _apiService = apiService,
+      super(AuthInitial()) {
     on<AuthLoginRequested>((event, emit) async {
-      emit(AuthVerifying());
+      emit(AuthLoading());
       try {
-        String emailToLogin;
-        if (event.username.contains('@') && event.username.contains('.')) {
-          emailToLogin = event.username;
-        } else {
-          try {
-            final userData = await _apiService.findEmailByUsername(event.username);
-            if (userData is Map<String, dynamic> && userData['email'] != null) {
-              emailToLogin = userData['email'] as String;
-            } else if (userData is String) {
-              emailToLogin = userData;
-            }
-            else {
-              emit(const AuthError('Username non trovato o email non associata.'));
-              return;
-            }
-          } on NotFoundException {
-            emit(const AuthError('Username non trovato.'));
-            return;
-          } on ApiException catch (e) {
-            emit(AuthError('Errore nel recuperare l\'email per l\'username: ${e.message}'));
-            return;
-          } catch (e) {
-            emit(const AuthError('Errore sconosciuto nel recuperare l\'email per l\'username.'));
-            return;
-          }
-        }
-
-        await _firebaseAuth.signInWithEmailAndPassword(
-          email: emailToLogin,
-          password: event.password,
+        final response = await _apiService.postData('auth/login', {
+          'username': event.username,
+          'password': event.password,
+        });
+        await _apiService.setAuthToken(response['token']);
+        emit(
+          AuthAuthenticated(
+            response['id'],
+            response['username'],
+            response['email'],
+            response['token'],
+          ),
         );
-      } on FirebaseAuthException catch (e) {
-        emit(AuthError(_mapAuthErrorCodeToMessage(e.code)));
       } catch (e) {
-        emit(const AuthError('Errore sconosciuto durante il login.'));
+        emit(AuthError('Login fallito: ${e.toString()}'));
       }
     });
 
     on<AuthRegisterRequested>((event, emit) async {
-      emit(AuthVerifying());
-      UserCredential? userCredential;
-
+      emit(AuthLoading());
       try {
-        userCredential =
-        await _firebaseAuth.createUserWithEmailAndPassword(
-          email: event.email,
-          password: event.password,
+        final response = await _apiService.postData('auth/register', {
+          'username': event.username,
+          'email': event.email,
+          'password': event.password,
+        });
+        await _apiService.setAuthToken(response['token']);
+        emit(
+          AuthAuthenticated(
+            response['id'],
+            response['username'],
+            response['email'],
+            response['token'],
+          ),
         );
-
-        if (userCredential.user != null) {
-          await _apiService.postData('users', {
-            'firebaseUid': userCredential.user!.uid,
-            'email': event.email,
-            'username': event.username,
-          });
-        } else {
-          emit(const AuthError('Registrazione Firebase riuscita ma utente nullo.'));
-        }
-      } on FirebaseAuthException catch (e) {
-        emit(AuthError(_mapAuthErrorCodeToMessage(e.code)));
-      } on UsernameAlreadyExistsException catch (e) {
-        await userCredential?.user?.delete();
-        emit(AuthError(e.message));
-      } on EmailAlreadyExistsInBackendException catch (e) {
-        await userCredential?.user?.delete();
-        emit(AuthError(e.message));
-      } on ConflictException catch (e) {
-        await userCredential?.user?.delete();
-        emit(AuthError(e.message));
-      } on ApiException catch (e) {
-        await userCredential?.user?.delete();
-        emit(AuthError(
-            'Registrazione Firebase riuscita, ma errore del server: ${e.message}'));
       } catch (e) {
-        await userCredential?.user?.delete();
-        emit(AuthError('Errore sconosciuto durante la registrazione: ${e.toString()}'));
-      }
-    });
-
-    on<AuthGoogleSignInRequested>((event, emit) async {
-      emit(AuthVerifying());
-      try {
-        if (kIsWeb && _googleSignIn.clientId == null) {
-        }
-
-        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-        if (googleUser == null) {
-          emit(Unauthenticated());
-          return;
-        }
-
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-        final AuthCredential credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        );
-
-        final UserCredential userCredential = await _firebaseAuth.signInWithCredential(credential);
-
-
-        if (userCredential.user != null && userCredential.additionalUserInfo?.isNewUser == true) {
-          try {
-            await _apiService.postData('users', {
-              'firebaseUid': userCredential.user!.uid,
-              'email': userCredential.user!.email,
-              'username': userCredential.user!.displayName ?? userCredential.user!.email?.split('@')[0],
-              'displayName': userCredential.user!.displayName,
-            });
-          } on ApiException catch (e) {
-            await _firebaseAuth.signOut();
-            await _googleSignIn.signOut();
-            emit(AuthError('Login Google riuscito, ma errore registrazione backend: ${e.message}'));
-            return;
-          }
-        }
-
-      } on FirebaseAuthException catch (e) {
-        emit(AuthError(_mapAuthErrorCodeToMessage(e.code)));
-      } on ApiException catch (e) {
-        emit(AuthError('Errore API durante il login con Google: ${e.message}'));
-      } catch (e) {
-        emit(AuthError('Errore sconosciuto durante il login con Google: ${e.toString()}'));
+        emit(AuthError('Registrazione fallita: ${e.toString()}'));
       }
     });
 
     on<AuthLogoutRequested>((event, emit) async {
-      emit(AuthVerifying());
-      try {
-        await _googleSignIn.signOut();
-        await _firebaseAuth.signOut();
-      } catch (e) {
-        emit(const AuthError('Errore durante il logout.'));
-      }
+      emit(AuthLoading());
+      await _apiService.clearAuthToken();
+      emit(Unauthenticated());
     });
-
-    on<AuthPasswordResetRequested>((event, emit) async {
-      emit(AuthVerifying());
-      try {
-        await _firebaseAuth.sendPasswordResetEmail(email: event.email);
-        emit(AuthPasswordResetEmailSentSuccess('Email di reset inviata a ${event.email}. Controlla la tua casella di posta.'));
-      } on FirebaseAuthException catch (e) {
-        emit(AuthError(_mapAuthErrorCodeToMessage(e.code)));
-      } catch (e) {
-        emit(AuthError('Errore durante l\'invio dell\'email di reset: ${e.toString()}'));
-      }
-    });
-  }
-
-  String _mapAuthErrorCodeToMessage(String code) {
-    switch (code) {
-      case 'user-not-found':
-      case 'wrong-password':
-      case 'invalid-credential':
-        return 'Credenziali non valide.';
-      case 'invalid-email':
-        return 'L\'indirizzo email non è valido.';
-      case 'email-already-in-use':
-        return 'L\'account Firebase esiste già per questa email.';
-      case 'weak-password':
-        return 'La password fornita è troppo debole.';
-      default:
-        return 'Errore di autenticazione Firebase. Riprova.';
-    }
-  }
-
-  @override
-  Future<void> close() {
-    _userSubscription?.cancel();
-    return super.close();
   }
 }

@@ -6,8 +6,6 @@ import 'package:intl/intl.dart';
 import '../../../components/clock_widget.dart';
 import '../../../features/auth/bloc/auth_bloc.dart';
 import '../../../features/plan/models/plan_model.dart';
-import '../../../services/api_service.dart';
-import '../../../services/calendar_service.dart';
 
 class ShowBottomSheet extends StatefulWidget {
   const ShowBottomSheet({super.key});
@@ -22,7 +20,6 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
   final List<TextEditingController> _subjectControllers = [];
   final List<FocusNode> _subjectFocusNodes = [];
   final Map<int, double> _subjectDurations = {};
-
 
   final List<TextEditingController> _calendarControllers = [
     TextEditingController(text: 'Lunch'),
@@ -40,20 +37,11 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
   double _dialogBreakSelectedHours = 0.0;
   double _dialogSessionSelectedHours = 0.0;
 
-
   final Map<int, Map<String, String>> _calendarTimes = {
     0: {'start_at': '12:30', 'end_at': '13:30'},
     1: {'start_at': '19:30', 'end_at': '20:30'},
     2: {'start_at': '23:30', 'end_at': '07:30'},
   };
-  bool _syncWithGoogleCalendar = false;
-
-
-  final Set<int> _googleCalendarEvents = {};
-
-
-  final CalendarService _calendarService = CalendarService();
-
 
   late AnimationController _fadeAnimationController;
   late AnimationController _slideAnimationController;
@@ -70,7 +58,6 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
     _breakTimeController = TextEditingController(text: 'Add break time');
     _addSubject();
 
-
     _fadeAnimationController.forward();
     _slideAnimationController.forward();
   }
@@ -85,26 +72,26 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeAnimationController,
-      curve: Curves.easeOutCubic,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _fadeAnimationController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
 
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideAnimationController,
-      curve: Curves.easeOutCubic,
-    ));
+    ).animate(
+      CurvedAnimation(
+        parent: _slideAnimationController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
   }
 
   @override
   void dispose() {
-
     for (var controller in _subjectControllers) {
       controller.dispose();
     }
@@ -412,23 +399,22 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
 
   Future<void> _createPlan() async {
     if (!_formKey.currentState!.validate()) {
-
       return;
     }
     final authState = context.read<AuthBloc>().state;
-    if (authState is! Authenticated) {
+    if (authState is! AuthAuthenticated) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('You must be logged in to create a plan.')),
+            content: Text('You must be logged in to create a plan.'),
+          ),
         );
       }
       return;
     }
 
     try {
-      final firebaseUid = authState.user.uid;
-      final userUuid = await ApiService().getUserUUIDByFirebaseUid(firebaseUid);
+      final userUuid = authState.id;
       final calendar = <CalendarEntry>[];
       _calendarControllers.asMap().forEach((idx, controller) {
         final title = controller.text.trim();
@@ -437,33 +423,42 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
           final startAt = times['start_at']!;
           final endAt = times['end_at']!;
           calendar.add(
-              CalendarEntry(startAt: startAt, endAt: endAt, title: title));
+            CalendarEntry(startAt: startAt, endAt: endAt, title: title),
+          );
         }
       });
 
-      final subjects = _subjectControllers
-          .asMap()
-          .entries
-          .where((entry) => entry.value.text.trim().isNotEmpty)
-          .map((entry) {
-        final idx = entry.key;
-        final controller = entry.value;
-        final durationHmm = _subjectDurations[idx] ?? 0.0;
-        final durationString =
-            formatDurationFromHmm(durationHmm, defaultText: '0m');
+      final subjects =
+          _subjectControllers
+              .asMap()
+              .entries
+              .where((entry) => entry.value.text.trim().isNotEmpty)
+              .map((entry) {
+                final idx = entry.key;
+                final controller = entry.value;
+                final durationHmm = _subjectDurations[idx] ?? 0.0;
+                final durationString = formatDurationFromHmm(
+                  durationHmm,
+                  defaultText: '0m',
+                );
 
-        return SubjectEntry(
-          subject: controller.text,
-          duration: durationHmm > 0 ? durationString : null,
-        );
-      }).toList();
+                return SubjectEntry(
+                  subject: controller.text,
+                  duration: durationHmm > 0 ? durationString : null,
+                );
+              })
+              .toList();
 
       final plan = PlanModel(
         userUUID: userUuid,
-        session:
-            formatDurationFromHmm(_dialogSessionSelectedHours, defaultText: '0m'),
-        breakDuration:
-            formatDurationFromHmm(_dialogBreakSelectedHours, defaultText: '0m'),
+        session: formatDurationFromHmm(
+          _dialogSessionSelectedHours,
+          defaultText: '0m',
+        ),
+        breakDuration: formatDurationFromHmm(
+          _dialogBreakSelectedHours,
+          defaultText: '0m',
+        ),
         calendar: calendar,
         subjects: subjects,
       );
@@ -474,131 +469,9 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create plan: $e')),
-        );
-      }
-    }
-  }
-
-
-  void _clearGoogleCalendarEvents() {
-
-    final List<int> googleEventIndices = _googleCalendarEvents.toList()..sort();
-    for (int i = googleEventIndices.length - 1; i >= 0; i--) {
-      final idx = googleEventIndices[i];
-      if (idx < _calendarControllers.length) {
-        _calendarControllers[idx].dispose();
-        _calendarFocusNodes[idx].dispose();
-        _calendarControllers.removeAt(idx);
-        _calendarFocusNodes.removeAt(idx);
-        _calendarTimes.remove(idx);
-        final Map<int, Map<String, String>> updatedTimes = {};
-        _calendarTimes.forEach((key, value) {
-          if (key > idx) {
-            updatedTimes[key - 1] = value;
-          } else {
-            updatedTimes[key] = value;
-          }
-        });
-        _calendarTimes.clear();
-        _calendarTimes.addAll(updatedTimes);
-      }
-    }
-    _googleCalendarEvents.clear();
-    setState(() {});
-  }
-
-  void _syncGoogleCalendar() async {
-    if (!mounted) return;
-
-    try {
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text('Syncing with Google Calendar...'),
-            ],
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-
-
-      _clearGoogleCalendarEvents();
-
-
-      final events = await _calendarService.getEvents();
-
-      if (!mounted) return;
-
-      setState(() {
-
-        for (var event in events) {
-          final startTime = event.start?.dateTime?.toLocal();
-          final endTime = event.end?.dateTime?.toLocal();
-
-          if (startTime != null && endTime != null) {
-            final controller = TextEditingController(
-              text: event.summary ?? 'Untitled Event',
-            );
-            final focusNode = FocusNode();
-
-            _calendarControllers.add(controller);
-            _calendarFocusNodes.add(focusNode);
-
-            final newIndex = _calendarControllers.length - 1;
-            _calendarTimes[newIndex] = {
-              'start_at': DateFormat('HH:mm').format(startTime),
-              'end_at': DateFormat('HH:mm').format(endTime),
-              'date': DateFormat('E, d MMM').format(startTime),
-            };
-            _googleCalendarEvents.add(newIndex);
-          }
-        }
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Successfully synced ${events.length} events from Google Calendar'),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-      }
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to sync with Google Calendar: $error'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-
-
-        setState(() {
-          _syncWithGoogleCalendar = false;
-        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to create plan: $e')));
       }
     }
   }
@@ -611,9 +484,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
     return Form(
       key: _formKey,
       child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.transparent,
-        ),
+        decoration: const BoxDecoration(color: Colors.transparent),
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: SlideTransition(
@@ -634,7 +505,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                         const SizedBox(height: 24),
                         _buildCalendarSection(context, colors, textTheme),
                         const SizedBox(height: 32),
-                        _buildActionButtons(context, colors, textTheme)
+                        _buildActionButtons(context, colors, textTheme),
                       ],
                     ),
                   ),
@@ -647,7 +518,11 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
     );
   }
 
-  Widget _buildHeader(BuildContext context, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildHeader(
+    BuildContext context,
+    ColorScheme colors,
+    TextTheme textTheme,
+  ) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -663,7 +538,6 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
       ),
       child: Column(
         children: [
-
           Row(
             children: [
               Container(
@@ -708,15 +582,16 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
     );
   }
 
-
-  Widget _buildSubjectsSection(BuildContext context, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildSubjectsSection(
+    BuildContext context,
+    ColorScheme colors,
+    TextTheme textTheme,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colors.outline.withValues(alpha: 0.08),
-        ),
+        border: Border.all(color: colors.outline.withValues(alpha: 0.08)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -748,7 +623,10 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: colors.secondary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
@@ -789,7 +667,10 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                 label: const Text('Add Subject'),
                 style: TextButton.styleFrom(
                   foregroundColor: colors.primary,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -801,7 +682,10 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                 padding: const EdgeInsets.only(top: 8, left: 4),
                 child: Text(
                   'At least one subject is required',
-                  style: textTheme.bodySmall?.copyWith(color: colors.error, fontWeight: FontWeight.w600),
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colors.error,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
           ],
@@ -810,14 +694,17 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
     );
   }
 
-  Widget _buildSubjectItem(BuildContext context, int index, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildSubjectItem(
+    BuildContext context,
+    int index,
+    ColorScheme colors,
+    TextTheme textTheme,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceContainerHigh.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: colors.outline.withValues(alpha: 0.1),
-        ),
+        border: Border.all(color: colors.outline.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
             color: colors.shadow.withValues(alpha: 0.05),
@@ -928,7 +815,9 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: colors.tertiaryContainer.withValues(alpha: 0.8),
+                            color: colors.tertiaryContainer.withValues(
+                              alpha: 0.8,
+                            ),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
@@ -976,18 +865,20 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
             ),
           ],
         ),
-      )
+      ),
     );
   }
 
-  Widget _buildTimingSection(BuildContext context, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildTimingSection(
+    BuildContext context,
+    ColorScheme colors,
+    TextTheme textTheme,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colors.outline.withValues(alpha: 0.08),
-        ),
+        border: Border.all(color: colors.outline.withValues(alpha: 0.08)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -1068,9 +959,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
       decoration: BoxDecoration(
         color: colors.surfaceContainerHigh.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: colors.outline.withValues(alpha: 0.1),
-        ),
+        border: Border.all(color: colors.outline.withValues(alpha: 0.1)),
       ),
       child: Material(
         color: Colors.transparent,
@@ -1088,11 +977,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                     color: iconColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    icon,
-                    color: iconColor,
-                    size: 20,
-                  ),
+                  child: Icon(icon, color: iconColor, size: 20),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -1104,7 +989,8 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  controller.text == 'Add session time' || controller.text == 'Add break time'
+                  controller.text == 'Add session time' ||
+                          controller.text == 'Add break time'
                       ? 'Set time'
                       : controller.text,
                   style: textTheme.titleMedium?.copyWith(
@@ -1117,7 +1003,10 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
                       'Session time must be > 0',
-                      style: textTheme.bodySmall?.copyWith(color: colors.error, fontWeight: FontWeight.w600),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colors.error,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 if (label == 'Break Time' && (_dialogBreakSelectedHours <= 0))
@@ -1125,25 +1014,30 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
                       'Break time must be > 0',
-                      style: textTheme.bodySmall?.copyWith(color: colors.error, fontWeight: FontWeight.w600),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colors.error,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
               ],
             ),
           ),
         ),
-      )
+      ),
     );
   }
 
-  Widget _buildCalendarSection(BuildContext context, ColorScheme colors, TextTheme textTheme) {
+  Widget _buildCalendarSection(
+    BuildContext context,
+    ColorScheme colors,
+    TextTheme textTheme,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colors.outline.withValues(alpha: 0.08),
-        ),
+        border: Border.all(color: colors.outline.withValues(alpha: 0.08)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -1175,7 +1069,10 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: colors.tertiary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
@@ -1203,32 +1100,9 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.sync_rounded,
-                      color: colors.primary,
-                      size: 16,
-                    ),
+                    Icon(Icons.sync_rounded, color: colors.primary, size: 16),
                     const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Sync with Google Calendar',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colors.onSurface,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    Switch(
-                      value: _syncWithGoogleCalendar,
-                      onChanged: (value) {
-                        setState(() {
-                          _syncWithGoogleCalendar = value;
-                        });
-                        if (value) {
-                          _syncGoogleCalendar();
-                        }
-                      },
-                    ),
+                    Expanded(child: Container()),
                   ],
                 ),
               ),
@@ -1259,7 +1133,10 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                 label: const Text('Add Custom Event'),
                 style: TextButton.styleFrom(
                   foregroundColor: colors.tertiary,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -1272,10 +1149,13 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
     );
   }
 
-  Widget _buildCalendarItem(BuildContext context, int index, ColorScheme colors, TextTheme textTheme) {
-    final isGoogleEvent = _googleCalendarEvents.contains(index);
+  Widget _buildCalendarItem(
+    BuildContext context,
+    int index,
+    ColorScheme colors,
+    TextTheme textTheme,
+  ) {
     final isFixedEvent = index < 3;
-
 
     IconData? fixedIcon;
     Color? fixedColor;
@@ -1302,226 +1182,237 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
 
     return Container(
       decoration: BoxDecoration(
-        gradient: isFixedEvent
-            ? LinearGradient(
-                colors: [
-                  fixedColor!.withValues(alpha: 0.12),
-                  colors.surfaceContainerHigh.withValues(alpha: 0.6),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              )
-            : null,
-        color: !isFixedEvent
-            ? colors.surfaceContainerHigh.withValues(alpha: 0.6)
-            : null,
+        gradient:
+            isFixedEvent
+                ? LinearGradient(
+                  colors: [
+                    fixedColor!.withValues(alpha: 0.12),
+                    colors.surfaceContainerHigh.withValues(alpha: 0.6),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+                : null,
+        color:
+            !isFixedEvent
+                ? colors.surfaceContainerHigh.withValues(alpha: 0.6)
+                : null,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isGoogleEvent
-              ? colors.primary.withValues(alpha: 0.3)
-              : isFixedEvent
+          color:
+              isFixedEvent
                   ? fixedColor!.withValues(alpha: 0.3)
                   : colors.outline.withValues(alpha: 0.1),
-          width: isGoogleEvent || isFixedEvent ? 1.8 : 1,
+          width: isFixedEvent ? 1.8 : 1,
         ),
-        boxShadow: isFixedEvent
-            ? [
-                BoxShadow(
-                  color: fixedColor!.withValues(alpha: 0.10),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : [],
+        boxShadow:
+            isFixedEvent
+                ? [
+                  BoxShadow(
+                    color: fixedColor!.withValues(alpha: 0.10),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+                : [],
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        child: isFixedEvent
-            ? Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: fixedColor!.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
+        child:
+            isFixedEvent
+                ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: fixedColor!.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(fixedIcon, color: fixedColor, size: 28),
                     ),
-                    child: Icon(fixedIcon, color: fixedColor, size: 28),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                fixedLabel!,
-                                style: textTheme.titleMedium?.copyWith(
-                                  color: fixedColor,
-                                  fontWeight: FontWeight.bold,
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  fixedLabel!,
+                                  style: textTheme.titleMedium?.copyWith(
+                                    color: fixedColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline_rounded),
-                              color: colors.error,
-                              tooltip: 'Rimuovi',
-                              onPressed: () {
-                                setState(() {
-                                  _calendarControllers.removeAt(index);
-                                  _calendarFocusNodes.removeAt(index);
-                                  _calendarTimes.remove(index);
-                                  for (int i = index + 1; i < 3; i++) {
-                                    if (_calendarTimes.containsKey(i)) {
-                                      _calendarTimes[i - 1] = _calendarTimes[i]!;
-                                      _calendarTimes.remove(i);
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline_rounded),
+                                color: colors.error,
+                                tooltip: 'Rimuovi',
+                                onPressed: () {
+                                  setState(() {
+                                    _calendarControllers.removeAt(index);
+                                    _calendarFocusNodes.removeAt(index);
+                                    _calendarTimes.remove(index);
+                                    for (int i = index + 1; i < 3; i++) {
+                                      if (_calendarTimes.containsKey(i)) {
+                                        _calendarTimes[i - 1] =
+                                            _calendarTimes[i]!;
+                                        _calendarTimes.remove(i);
+                                      }
                                     }
-                                  }
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Text(
-                              'Time:',
-                              style: textTheme.labelMedium?.copyWith(
-                                color: colors.onSurfaceVariant,
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Text(
+                                'Time:',
+                                style: textTheme.labelMedium?.copyWith(
+                                  color: colors.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${_calendarTimes[index]?['start_at']} - ${_calendarTimes[index]?['end_at']}',
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: fixedColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          OutlinedButton.icon(
+                            onPressed: () => _editCalendarTime(context, index),
+                            icon: const Icon(Icons.edit_rounded, size: 18),
+                            label: const Text('Edit Time'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: fixedColor,
+                              side: BorderSide(color: fixedColor),
+                              textStyle: textTheme.labelLarge,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${_calendarTimes[index]?['start_at']} - ${_calendarTimes[index]?['end_at']}',
-                              style: textTheme.bodyMedium?.copyWith(
-                                color: fixedColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        OutlinedButton.icon(
-                          onPressed: () => _editCalendarTime(context, index),
-                          icon: const Icon(Icons.edit_rounded, size: 18),
-                          label: const Text('Edit Time'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: fixedColor,
-                            side: BorderSide(color: fixedColor),
-                            textStyle: textTheme.labelLarge,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                )
+                : Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color:
+                            isFixedEvent
+                                ? fixedColor!.withValues(alpha: 0.18)
+                                : colors.errorContainer.withValues(alpha: 0.8),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        isFixedEvent ? fixedIcon : Icons.event_rounded,
+                        color: isFixedEvent ? fixedColor : colors.error,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _calendarControllers[index],
+                        focusNode: _calendarFocusNodes[index],
+                        enabled: !isFixedEvent,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        validator: (value) {
+                          if (!isFixedEvent &&
+                              (value == null || value.trim().isEmpty)) {
+                            return 'Event name cannot be empty';
+                          }
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          hintText: isFixedEvent ? fixedLabel : null,
+                          hintStyle: textTheme.bodyLarge?.copyWith(
+                            color: fixedColor?.withValues(alpha: 0.7),
+                          ),
+                          errorStyle: textTheme.bodySmall?.copyWith(
+                            color: colors.error,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ],
-              )
-            : Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(7),
-                    decoration: BoxDecoration(
-                      color: isGoogleEvent
-                          ? colors.primaryContainer
-                          : isFixedEvent
-                              ? fixedColor!.withValues(alpha: 0.18)
-                              : colors.errorContainer.withValues(alpha: 0.8),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      isGoogleEvent
-                          ? Icons.sync_rounded
-                          : isFixedEvent
-                              ? fixedIcon
-                              : Icons.event_rounded,
-                      color: isGoogleEvent
-                          ? colors.primary
-                          : isFixedEvent
-                              ? fixedColor
-                              : colors.error,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _calendarControllers[index],
-                      focusNode: _calendarFocusNodes[index],
-                      enabled: !isGoogleEvent && !isFixedEvent,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                      validator: (value) {
-                        if (!isFixedEvent && !isGoogleEvent && (value == null || value.trim().isEmpty)) {
-                          return 'Event name cannot be empty';
-                        }
-                        return null;
-                      },
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        hintText: isFixedEvent ? fixedLabel : null,
-                        hintStyle: textTheme.bodyLarge?.copyWith(color: fixedColor?.withValues(alpha: 0.7)),
-                        errorStyle: textTheme.bodySmall?.copyWith(color: colors.error, fontWeight: FontWeight.w600),
-                      ),
-                      style: textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: isGoogleEvent
-                            ? colors.onSurfaceVariant
-                            : isFixedEvent
-                                ? fixedColor
-                                : colors.onSurface,
+                        style: textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: isFixedEvent ? fixedColor : colors.onSurface,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: isFixedEvent ? fixedColor!.withValues(alpha: 0.10) : colors.surfaceContainerHigh.withValues(alpha: 0.10),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '${_calendarTimes[index]?['start_at']} - ${_calendarTimes[index]?['end_at']}',
-                      style: textTheme.bodySmall?.copyWith(
-                        color: isFixedEvent ? fixedColor : colors.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color:
+                            isFixedEvent
+                                ? fixedColor!.withValues(alpha: 0.10)
+                                : colors.surfaceContainerHigh.withValues(
+                                  alpha: 0.10,
+                                ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${_calendarTimes[index]?['start_at']} - ${_calendarTimes[index]?['end_at']}',
+                        style: textTheme.bodySmall?.copyWith(
+                          color:
+                              isFixedEvent
+                                  ? fixedColor
+                                  : colors.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: () => _removecalendarAt(index),
-                    icon: const Icon(Icons.remove_circle_outline_rounded),
-                    iconSize: 18,
-                    color: colors.error,
-                    padding: const EdgeInsets.all(4),
-                    constraints: const BoxConstraints(),
-                    tooltip: 'Delete',
-                  ),
-                  if (!isFixedEvent)
+                    const SizedBox(width: 8),
                     IconButton(
-                      onPressed: () => _editCalendarTime(context, index),
-                      icon: const Icon(Icons.edit_rounded),
+                      onPressed: () => _removecalendarAt(index),
+                      icon: const Icon(Icons.remove_circle_outline_rounded),
                       iconSize: 18,
-                      color: colors.onSurfaceVariant,
+                      color: colors.error,
                       padding: const EdgeInsets.all(4),
                       constraints: const BoxConstraints(),
+                      tooltip: 'Delete',
                     ),
-                ],
-              ),
+                    if (!isFixedEvent)
+                      IconButton(
+                        onPressed: () => _editCalendarTime(context, index),
+                        icon: const Icon(Icons.edit_rounded),
+                        iconSize: 18,
+                        color: colors.onSurfaceVariant,
+                        padding: const EdgeInsets.all(4),
+                        constraints: const BoxConstraints(),
+                      ),
+                  ],
+                ),
       ),
     );
   }
 
-
-
-
-
   void _editCalendarTime(BuildContext context, int index) {
-    final currentTimes = _calendarTimes[index] ?? {'start_at': '12:00', 'end_at': '13:00'};
+    final currentTimes =
+        _calendarTimes[index] ?? {'start_at': '12:00', 'end_at': '13:00'};
 
     showDialog(
       context: context,
@@ -1542,7 +1433,9 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                       color: Theme.of(context).colorScheme.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.outline.withValues(alpha: 0.2),
                       ),
                     ),
                     child: ListTile(
@@ -1563,7 +1456,8 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                         );
                         if (picked != null) {
                           dialogSetState(() {
-                            startTime = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+                            startTime =
+                                '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
                           });
                         }
                       },
@@ -1575,7 +1469,9 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                       color: Theme.of(context).colorScheme.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.outline.withValues(alpha: 0.2),
                       ),
                     ),
                     child: ListTile(
@@ -1596,7 +1492,8 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
                         );
                         if (picked != null) {
                           dialogSetState(() {
-                            endTime = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+                            endTime =
+                                '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
                           });
                         }
                       },
@@ -1629,8 +1526,13 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, ColorScheme colors, TextTheme textTheme) {
-    final bool hasFormErrors = _formKey.currentState == null || !_formKey.currentState!.validate();
+  Widget _buildActionButtons(
+    BuildContext context,
+    ColorScheme colors,
+    TextTheme textTheme,
+  ) {
+    final bool hasFormErrors =
+        _formKey.currentState == null || !_formKey.currentState!.validate();
     return Row(
       children: [
         Expanded(
@@ -1638,9 +1540,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
             decoration: BoxDecoration(
               color: colors.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: colors.outline.withValues(alpha: 0.2),
-              ),
+              border: Border.all(color: colors.outline.withValues(alpha: 0.2)),
             ),
             child: TextButton.icon(
               onPressed: () => Navigator.of(context).pop(),
@@ -1664,10 +1564,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  colors.primary,
-                  colors.primary.withValues(alpha: 0.8),
-                ],
+                colors: [colors.primary, colors.primary.withValues(alpha: 0.8)],
               ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [

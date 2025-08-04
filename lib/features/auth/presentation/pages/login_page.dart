@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ketchapp_flutter/features/auth/bloc/auth_bloc.dart';
+
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ketchapp_flutter/features/auth/bloc/api_auth_bloc.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'login_shrimmer_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -11,7 +12,7 @@ class LoginPage extends StatefulWidget {
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
-            
+
 class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   late AnimationController _fadeAnimationController;
   late AnimationController _scaleAnimationController;
@@ -46,29 +47,47 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
     final SystemUiOverlayStyle systemUiOverlayStyle = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: colors.brightness == Brightness.light
-          ? Brightness.dark
-          : Brightness.light,
+      statusBarIconBrightness:
+          colors.brightness == Brightness.light
+              ? Brightness.dark
+              : Brightness.light,
       statusBarBrightness: colors.brightness,
       systemNavigationBarColor: colors.surface,
-      systemNavigationBarIconBrightness: colors.brightness == Brightness.light
-          ? Brightness.dark
-          : Brightness.light,
+      systemNavigationBarIconBrightness:
+          colors.brightness == Brightness.light
+              ? Brightness.dark
+              : Brightness.light,
     );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: systemUiOverlayStyle,
       child: Scaffold(
         backgroundColor: colors.surface,
-        body: BlocListener<ApiAuthBloc, ApiAuthState>(
+        body: BlocListener<AuthBloc, AuthState>(
           listener: (context, state) {
-            if (state is ApiAuthFailure) {
+            if (state is AuthAuthenticated) {
               if (!mounted) return;
               ScaffoldMessenger.of(context)
                 ..hideCurrentSnackBar()
                 ..showSnackBar(
                   SnackBar(
-                    content: Text(state.error),
+                    content: Text('Login effettuato con successo!'),
+                    backgroundColor: colors.primary,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                );
+              context.go('/home');
+            }
+            if (state is AuthError) {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
                     backgroundColor: colors.error,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
@@ -131,21 +150,19 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeAnimationController,
-      curve: Curves.easeOutCubic,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _fadeAnimationController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.95,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _scaleAnimationController,
-      curve: Curves.easeOutBack,
-    ));
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _scaleAnimationController,
+        curve: Curves.easeOutBack,
+      ),
+    );
   }
 
   @override
@@ -161,12 +178,12 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
     HapticFeedback.lightImpact();
     FocusScope.of(context).unfocus();
     if (_formKey.currentState!.validate()) {
-      context.read<ApiAuthBloc>().add(
-            ApiAuthLoginRequested(
-              _usernameController.text.trim(),
-              _passwordController.text,
-            ),
-          );
+      context.read<AuthBloc>().add(
+        AuthLoginRequested(
+          username: _usernameController.text.trim(),
+          password: _passwordController.text,
+        ),
+      );
     }
   }
 
@@ -175,7 +192,7 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
     final ColorScheme colors = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
     final Size size = MediaQuery.of(context).size;
-    final isLoading = context.watch<ApiAuthBloc>().state is ApiAuthLoading;
+    final isLoading = context.watch<AuthBloc>().state is AuthLoading;
 
     if (_showShimmer) {
       return const LoginShimmerPage();
@@ -201,7 +218,6 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-
                         Container(
                           margin: const EdgeInsets.only(bottom: 48),
                           decoration: BoxDecoration(
@@ -229,7 +245,6 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                           ),
                         ),
 
-
                         Text(
                           'Welcome Back',
                           style: textTheme.headlineLarge?.copyWith(
@@ -250,7 +265,6 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                         ),
                         const SizedBox(height: 48),
 
-
                         Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
@@ -264,7 +278,9 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                           ),
                           child: TextFormField(
                             controller: _usernameController,
-                            style: textTheme.bodyLarge?.copyWith(color: colors.onSurface),
+                            style: textTheme.bodyLarge?.copyWith(
+                              color: colors.onSurface,
+                            ),
                             decoration: InputDecoration(
                               labelText: 'Username',
                               hintText: 'Inserisci il tuo username',
@@ -282,11 +298,17 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: colors.primary, width: 2.0),
+                                borderSide: BorderSide(
+                                  color: colors.primary,
+                                  width: 2.0,
+                                ),
                               ),
                               errorBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: colors.error, width: 2.0),
+                                borderSide: BorderSide(
+                                  color: colors.error,
+                                  width: 2.0,
+                                ),
                               ),
                               filled: true,
                               fillColor: colors.surface,
@@ -320,7 +342,9 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                           ),
                           child: TextFormField(
                             controller: _passwordController,
-                            style: textTheme.bodyLarge?.copyWith(color: colors.onSurface),
+                            style: textTheme.bodyLarge?.copyWith(
+                              color: colors.onSurface,
+                            ),
                             decoration: InputDecoration(
                               labelText: 'Password',
                               hintText: 'Enter your password',
@@ -338,11 +362,17 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: colors.primary, width: 2.0),
+                                borderSide: BorderSide(
+                                  color: colors.primary,
+                                  width: 2.0,
+                                ),
                               ),
                               errorBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: colors.error, width: 2.0),
+                                borderSide: BorderSide(
+                                  color: colors.error,
+                                  width: 2.0,
+                                ),
                               ),
                               filled: true,
                               fillColor: colors.surface,
@@ -376,7 +406,10 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                             },
                             style: TextButton.styleFrom(
                               foregroundColor: colors.primary,
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               textStyle: textTheme.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
                               ),
@@ -385,7 +418,6 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                           ),
                         ),
                         const SizedBox(height: 32),
-
 
                         SizedBox(
                           width: double.infinity,
@@ -405,26 +437,28 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                                 letterSpacing: 0.5,
                               ),
                             ),
-                            child: isLoading
-                                ? SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: colors.onPrimary,
-                                    ),
-                                  )
-                                : const Text('Sign In'),
+                            child:
+                                isLoading
+                                    ? SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        color: colors.onPrimary,
+                                      ),
+                                    )
+                                    : const Text('Sign In'),
                           ),
                         ),
 
                         const SizedBox(height: 32),
 
-
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: colors.surfaceContainerHighest.withOpacity(0.3),
+                            color: colors.surfaceContainerHighest.withOpacity(
+                              0.3,
+                            ),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Row(
@@ -444,7 +478,9 @@ class _LoginFormState extends State<_LoginForm> with TickerProviderStateMixin {
                                 },
                                 style: TextButton.styleFrom(
                                   foregroundColor: colors.primary,
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
                                   textStyle: textTheme.bodyMedium?.copyWith(
                                     fontWeight: FontWeight.w600,
                                   ),
