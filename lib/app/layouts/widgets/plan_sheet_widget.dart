@@ -450,7 +450,7 @@ class _ShowBottomSheetState extends State<ShowBottomSheet>
               .toList();
 
       final plan = PlanModel(
-        userUUID: userUuid,
+        userId: userUuid,
         session: formatDurationFromHmm(
           _dialogSessionSelectedHours,
           defaultText: '0m',

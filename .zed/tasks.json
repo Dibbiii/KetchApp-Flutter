@@ -1,0 +1,14 @@
+[
+  {
+    "label": "Flutter Run Chrome",
+    "command": "flutter run -d chrome",
+    "env": {},
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+    "hide": "never",
+    "shell": "system",
+    "show_summary": true,
+    "tags": ["development", "web"]
+  }
+]
