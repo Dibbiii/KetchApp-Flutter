@@ -33,18 +33,15 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     final authState = _authBloc.state;
     if (authState is AuthAuthenticated) {
       try {
-        final userData = await _apiService.fetchData('users/${authState.id}');
+        final userData = await _apiService.fetchData('users/@me');
         emit(
           ProfileLoaded(
             username: userData['username'] as String?,
-            displayName: userData['username'] as String?,
             email: userData['email'] as String?,
-            photoUrl: userData['photoUrl'] as String?,
-            isUploadingImage: false,
-            localPreviewFile: null,
           ),
         );
         add(LoadAchievements());
+        print('User: ${userData}');
       } catch (e) {
         emit(ProfileError('Errore nel caricamento profilo: ${e.toString()}'));
       }

@@ -30,6 +30,7 @@ class _PlanCreationLoadingPageState extends State<PlanCreationLoadingPage> {
   Future<void> _createPlanAndNavigate() async {
     try {
       await ApiService().createPlan(widget.plan);
+      print("plan: ${widget.plan}");
       final api = ApiService();
       final tomatoes = await api.getTodaysTomatoes();
       if (mounted && tomatoes.isNotEmpty) {
